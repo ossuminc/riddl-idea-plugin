@@ -1,0 +1,33 @@
+<idea-plugin>
+    <id>com.ossuminc.riddl.plugins.idea</id>
+    <name>RIDDL4IDEA</name>
+    <version>0.0.1</version>
+    <vendor>ossuminc</vendor>
+
+    <description>A RIDDL language plugin for IntelliJ platform written in Scala and built with SBT</description>
+
+    <idea-version since-build="231.0"/>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.properties</depends>
+
+    <resource-bundle>messages.RiddlIdeaPluginBundle</resource-bundle>
+
+    <actions>
+        <action id="com.ossuminc.riddl.plugins.idea.actions.PopupDialogAction"
+                class="com.ossuminc.riddl.plugins.idea.actions.PopupDialogAction" text="PopupDialogAction">
+            <add-to-group group-id="ToolsMenu" anchor="first"/>
+        </action>
+    </actions>
+
+    <applicationListeners>
+        <listener class="com.ossuminc.riddl.plugins.idea.listeners.FileOpenedListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    </applicationListeners>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
+        <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory" id="RiddlToolWindow" anchor="bottom"/>
+        <!-- <completion.contributor implementationClass="com.ossuminc.riddl.plugins.idea.completion.SimpleCompletionContributor" language="Properties"/> -->
+    </extensions>
+
+</idea-plugin>

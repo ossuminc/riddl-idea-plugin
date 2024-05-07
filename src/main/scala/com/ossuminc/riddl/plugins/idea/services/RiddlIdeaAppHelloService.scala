@@ -4,6 +4,7 @@ package com.ossuminc.riddl.plugins.idea.services
 
 import com.intellij.openapi.application.{ApplicationInfo, ApplicationManager}
 import com.intellij.openapi.components.Service
+import com.ossuminc.riddl.plugins.idea
 import com.ossuminc.riddl.plugins.idea.RiddlIdeaPluginBundle
 
 @Service

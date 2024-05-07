@@ -10,12 +10,10 @@ import com.intellij.openapi.actionSystem.{
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.pom.Navigatable
+import com.ossuminc.riddl.plugins.idea
 import com.ossuminc.riddl.plugins.idea.RiddlIdeaPluginBundle
+import com.ossuminc.riddl.plugins.idea.services.*
 import org.jetbrains.annotations.{Nls, NotNull, Nullable}
-import com.ossuminc.riddl.plugins.idea.services.{
-  RiddlIdeaAppHelloService,
-  RiddlIdeaProjectHelloService
-}
 
 import javax.swing.*
 
@@ -38,7 +36,7 @@ class PopupDialogAction extends AnAction() {
 
     // If an element is selected in the editor, add info about it.
     val nav = event.getData(CommonDataKeys.NAVIGATABLE)
-    if (nav != null)
+    if nav != null then
       dlgMsg.append(
         RiddlIdeaPluginBundle.message(
           "selected.element.tostring",

@@ -10,7 +10,7 @@ package object utils {
   def parseASTFromSource(projectURI: URI): Either[Messages, AST.Root] = {
     TopLevelParser
       .parseInput(
-        RiddlParserInput(projectURI.toURL)
+        RiddlParserInput(projectURI)
       )
   }
 }

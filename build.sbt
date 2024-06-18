@@ -1,8 +1,7 @@
-import kotlin.Keys.*
+import kotlin.Keys._
 
 enablePlugins(OssumIncPlugin)
 
-import org.jetbrains.sbtidea.Keys.*
 import sbt.ThisBuild
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
@@ -25,7 +24,7 @@ lazy val riddlIdeaPlugin: Project = Root(
     // NOTE: check community/.idea/libraries/kotlin_stdlib.xml in intellij monorepo when updating intellijVersion
     // NOTE: keep versions in sync with ultimate/.idea/kotlinc.xml and community/.idea/kotlinc.xml
     kotlinVersion := "1.9.22",
-    kotlincJvmTarget := "17",
+    kotlincJvmTarget := "22",
     kotlinRuntimeProvided := true,
     buildInfoPackage := "com.ossuminc.riddl.plugins.idea",
     buildInfoObject := "RiddlIDEAPluginBuildInfo",
@@ -34,15 +33,18 @@ lazy val riddlIdeaPlugin: Project = Root(
     Test / parallelExecution := false,
     scalaVersion := "3.4.1",
     ThisBuild / intellijPluginName := "RIDDL4IDEA",
-    ThisBuild / intellijBuild := "241.15989.150",
+    ThisBuild / intellijBuild := "241.17011.79",
     ThisBuild / intellijPlatform := IntelliJPlatform.IdeaUltimate,
     ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
     intellijPlugins ++= Seq("com.intellij.properties".toPlugin),
     Global / intellijAttachSources := true,
-    Compile / javacOptions ++= "--release" :: "17" :: Nil,
+    Compile / javacOptions ++= "--release" :: "22" :: Nil,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     Test / unmanagedResourceDirectories += baseDirectory.value / "testResources",
     intellijRuntimePlugins := Seq(
       "org.jetbrains.kotlin".toPlugin
-    )
+    ),
+    runIDE / javaOptions += "-Didea.http.proxy.port=5432,-DurlSchemes=http://localhost"
+
+
   )

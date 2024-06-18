@@ -3,7 +3,7 @@
     <name>RIDDL4IDEA</name>
     <version>0.0.1</version>
     <vendor url="https://github.com/ossuminc">ossuminc</vendor>
-    <idea-version since-build="IU-241.14494.320" until-build="IU-241.*"/>
+    <idea-version since-build="IU-241.17011.79" until-build="IU-241.*"/>
 
     <description>A RIDDL language plugin for IntelliJ platform written in Scala and built with SBT</description>
 
@@ -23,7 +23,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
-        <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory" id="RiddlToolWindow" anchor="bottom"/>
+        <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory" id="RiddlToolWindow" anchor="bottom" icon="../../src/main/resources/images/RIDDL-Logo.jpg"/>
         <!-- <completion.contributor implementationClass="com.ossuminc.riddl.plugins.idea.completion.SimpleCompletionContributor" language="Properties"/> -->
     </extensions>
 

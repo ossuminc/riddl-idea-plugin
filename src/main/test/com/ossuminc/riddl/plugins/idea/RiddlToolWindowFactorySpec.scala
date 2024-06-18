@@ -2,7 +2,6 @@ package com.ossuminc.riddl.plugins.idea
 
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl.MockToolWindow
 import com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory
@@ -31,7 +30,7 @@ class RiddlToolWindowFactorySpec
       val proj = new MockProject(null, getTestRootDisposable)
       val window = new MockToolWindow(proj)
 
-      factory.createToolWindowContent(proj, window)
+      factory.createToolWindowContent(proj, window) mustEqual ()
     }
   }
 }

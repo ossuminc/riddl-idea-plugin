@@ -1,4 +1,3 @@
-// Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.ossuminc.riddl.plugins.idea.actions
 
 import com.intellij.openapi.actionSystem.{
@@ -7,15 +6,10 @@ import com.intellij.openapi.actionSystem.{
   AnActionEvent,
   CommonDataKeys
 }
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.pom.Navigatable
 import com.ossuminc.riddl.plugins.idea
 import com.ossuminc.riddl.plugins.idea.RiddlIdeaPluginBundle
 import com.ossuminc.riddl.plugins.idea.services.*
-import org.jetbrains.annotations.{Nls, NotNull, Nullable}
-
-import javax.swing.*
 
 class PopupDialogAction extends AnAction() {
 

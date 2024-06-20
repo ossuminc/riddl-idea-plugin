@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.ossuminc.riddl.plugins.utils.parseASTFromSource
+import com.ossuminc.riddl.plugins.utils.{displayNotification, parseASTFromSource, riddlPluginState}
 import com.ossuminc.riddl.language.Messages.{Message, Messages}
 import com.ossuminc.riddl.language.{AST, Messages}
 
@@ -32,14 +32,14 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
       project: Project,
       toolWindow: ToolWindow
   ): Unit = {
-          val toolWindowContent = new RiddlToolWindowContent(toolWindow)
-          val content = ContentFactory.getInstance().createContent(
-            toolWindowContent.getContentPanel,
-            "RIDDL",
-            false
-          )
-          toolWindow.getContentManager.addContent(content)
-    }
+    val toolWindowContent = new RiddlToolWindowContent(toolWindow)
+    val content = ContentFactory.getInstance().createContent(
+      toolWindowContent.getContentPanel,
+      "RIDDL",
+      false
+    )
+    toolWindow.getContentManager.addContent(content)
+  }
 
   private class RiddlToolWindowContent(toolWindow: ToolWindow) {
     private val contentPanel = new JPanel()
@@ -53,7 +53,7 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
 
     private def createRiddlProjectOutputPanel = {
       val calendarPanel = new JPanel()
-      if toolWindow.getProject.getBasePath != null && toolWindow.getProject.getBasePath != ""
+      if toolWindow.getProject.getBasePath != null && !toolWindow.getProject.getBasePath.isBlank
       then {
         setWindowOutput(label)
         calendarPanel.add(label)
@@ -62,32 +62,46 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
     }
 
     private def setWindowOutput(label: JLabel): Unit = {
-      val astOrMessages: Either[Messages, AST.Root] = {
-        val baseDir = new File(toolWindow.getProject.getBasePath + "/src/main/riddl")
+      val baseDir = new File(toolWindow.getProject.getBasePath + "/" + riddlPluginState.riddlConfPath)
 
-        val topRiddl = {
-          if baseDir.exists && baseDir.isDirectory then
-            baseDir.listFiles.filter(_.getName.endsWith(".riddl")).head.getName
+      def parseFromConf(): Option[Either[Messages, AST.Root]] = {
+        val confFile = {
+          if baseDir.exists && baseDir.isDirectory then {
+            val confs = baseDir.listFiles.filter(_.getName.endsWith(".conf"))
+            if confs.length != 1 then "" else confs.head.getName
+          }
           else ""
         }
 
-        if topRiddl.isBlank then Left(List(Message(0, "Top level .riddl file not found!")))
-        else parseASTFromSource(
-          URI.create("file://" + baseDir + "/" + topRiddl)
-        )
+        if confFile.isBlank then {
+          displayNotification("RIDDL: project's .conf file not found, please configure in setting")
+          None
+        }
+        else Some(parseASTFromSource(
+          URI.create("file://" + baseDir + "/" + confFile)
+        ))
       }
 
       val textOutput =
-        if astOrMessages.isRight then "Compilation succeed without errors! :)"
-        else
-          astOrMessages match {
-            case Left(msgs) =>
-              msgs.foreach(m =>
-                println(m.toString)
-                label.setText(m.toString))
-              msgs
-            case _          => ""
-          }
+        if baseDir.exists() then
+          val astOrMsgsOpt = parseFromConf()
+          if astOrMsgsOpt.isDefined then
+            astOrMsgsOpt.map(astOrMessages =>
+              if astOrMessages.isRight then "Compilation succeed without errors! :)"
+              else astOrMessages match {
+                case Left(msgs) =>
+                  msgs.foreach(m =>
+                    println(m.toString)
+                    label.setText(m.toString))
+                  msgs
+                case _          => ""
+              }
+            )
+          else ""
+        else {
+          displayNotification("RIDDL: project's .conf file not configured in settings")
+          ""
+        }
     }
   }
 }

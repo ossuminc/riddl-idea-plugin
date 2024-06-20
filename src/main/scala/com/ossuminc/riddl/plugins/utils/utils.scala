@@ -1,8 +1,11 @@
 package com.ossuminc.riddl.plugins
 
+import com.intellij.notification.{Notification, NotificationType, Notifications}
+import com.intellij.openapi.application.ApplicationManager
 import com.ossuminc.riddl.language.Messages.Messages
 import com.ossuminc.riddl.language.{AST, Messages}
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
+import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 
 import java.net.URI
 
@@ -13,4 +16,17 @@ package object utils {
         RiddlParserInput(projectURI)
       )
   }
+
+  def displayNotification(text: String) = Notifications.Bus.notify(
+    new Notification(
+      "Riddl Plugin Notification",
+      text,
+      NotificationType.INFORMATION
+    )
+  )
+
+  def riddlPluginState: RiddlIdeaSettings.State =
+    ApplicationManager.getApplication
+      .getService(classOf[RiddlIdeaSettings])
+      .getState
 }

@@ -26,8 +26,9 @@ object Dep {
   val riddlUtils = "com.ossuminc" %% "riddl-utils" % V.ossumRiddl
   val riddlPasses = "com.ossuminc" %% "riddl-passes" % V.ossumRiddl
   val riddlTestkit = "com.ossuminc" %% "riddl-testkit" % V.ossumRiddl % "test"
-  val minimalJson =
+  val minimalJson = {
     "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources ()
+  }
 
   val basic: Seq[ModuleID] = Seq(minimalJson, scalactic, scalatest, scalacheck)
   val riddl: Seq[ModuleID] = Seq(

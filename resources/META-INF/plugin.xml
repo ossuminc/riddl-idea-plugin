@@ -17,14 +17,11 @@
         </action>
     </actions>
 
-    <applicationListeners>
-        <listener class="com.ossuminc.riddl.plugins.idea.listeners.FileOpenedListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
-    </applicationListeners>
-
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
-        <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory" id="RiddlToolWindow" anchor="bottom" icon="../../src/main/resources/images/RIDDL-Logo.jpg"/>
-        <!-- <completion.contributor implementationClass="com.ossuminc.riddl.plugins.idea.completion.SimpleCompletionContributor" language="Properties"/> -->
+        <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory"
+                    id="RiddlToolWindow" anchor="bottom" icon="images/RIDDL-Logo.jpg"/>
+        <!-- <configurationType implementation="com.ossuminc.riddl.plugins.idea.configuration.RiddlRunConfigurationType"/> -->
     </extensions>
 
 </idea-plugin>

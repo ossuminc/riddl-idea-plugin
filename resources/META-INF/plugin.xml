@@ -10,18 +10,16 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.properties</depends>
 
-    <actions>
-        <action id="com.ossuminc.riddl.plugins.idea.actions.PopupDialogAction"
-                class="com.ossuminc.riddl.plugins.idea.actions.PopupDialogAction" text="PopupDialogAction">
-            <add-to-group group-id="ToolsMenu" anchor="first"/>
-        </action>
-    </actions>
-
     <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings$State"/>
+        <applicationConfigurable parentId="tools" instance="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable"
+                                 id="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable"
+                                 displayName="RIDDL Project Settings"/>
         <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
         <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory"
-                    id="RiddlToolWindow" anchor="bottom" icon="images/RIDDL-Logo.jpg"/>
+                    id="RIDDL_TOOL_WINDOW" anchor="bottom" icon="images/RIDDL-Logo.jpg"/>
         <!-- <configurationType implementation="com.ossuminc.riddl.plugins.idea.configuration.RiddlRunConfigurationType"/> -->
+
     </extensions>
 
 </idea-plugin>

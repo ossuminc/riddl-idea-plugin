@@ -5,103 +5,128 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
+import com.intellij.ui.components.{JBLabel, JBPanel}
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.ossuminc.riddl.plugins.utils.{displayNotification, parseASTFromSource, riddlPluginState}
-import com.ossuminc.riddl.language.Messages.{Message, Messages}
-import com.ossuminc.riddl.language.{AST, Messages}
+import com.intellij.util.messages.Topic
+import com.ossuminc.riddl.plugins.utils.{
+  fullPathToConf,
+  getRiddlIdeaState,
+  parseASTFromSource
+}
+import com.ossuminc.riddl.language.Messages.Message
+import com.ossuminc.riddl.language.Messages
+import com.ossuminc.riddl.plugins.idea.settings.ChangeActionNotifier
 
 import java.net.URI
 import java.awt.BorderLayout
 import java.io.File
 import java.util.concurrent.TimeUnit
-import javax.swing.{BorderFactory, JLabel, JPanel}
+import javax.swing.{BorderFactory, JPanel}
 
 class RiddlToolWindowFactory extends ToolWindowFactory {
+  private var toolWindowContent: Option[RiddlToolWindowContent] = None
 
-  private def invokeLater[T](body: => T): Unit = ApplicationManager.getApplication.invokeLater(() => body)
+  //  @Topic.ProjectLevel
+  //  private trait UPDATE_TOOL_WINDOW_TOPIC
+//  
+  //  private object UPDATE_TOOL_WINDOW_TOPIC {
+  //    def createTopic: Topic[ChangeActionNotifier] =
+  //      Topic.create("updateRiddlToolWindow", classOf[ChangeActionNotifier])
+//  
+  //    def updateWindow(): Unit = update()
+  //  }
 
-  private def schedulePeriodicTask(delay: Long, unit: TimeUnit, parentDisposable: Disposable)(body: => Unit): Unit = {
-    val task = AppExecutorUtil.getAppScheduledExecutorService.scheduleWithFixedDelay(() => body, delay, delay, unit)
-    Disposer.register(parentDisposable, () => {
-      task.cancel(true)
-    })
+  private def invokeLater[T](body: => T): Unit =
+    ApplicationManager.getApplication.invokeLater(() => body)
+
+  private def schedulePeriodicTask(
+      delay: Long,
+      unit: TimeUnit,
+      parentDisposable: Disposable
+  )(body: => Unit): Unit = {
+    val task = AppExecutorUtil.getAppScheduledExecutorService
+      .scheduleWithFixedDelay(() => body, delay, delay, unit)
+    Disposer.register(
+      parentDisposable,
+      () => {
+        task.cancel(true)
+      }
+    )
   }
 
   override def createToolWindowContent(
       project: Project,
       toolWindow: ToolWindow
   ): Unit = {
-    val toolWindowContent = new RiddlToolWindowContent(toolWindow)
-    val content = ContentFactory.getInstance().createContent(
-      toolWindowContent.getContentPanel,
-      "RIDDL",
-      false
-    )
+    val newTW = new RiddlToolWindowContent(toolWindow, project)
+    val content = ContentFactory
+      .getInstance()
+      .createContent(
+        newTW.getContentPanel,
+        "RIDDL",
+        false
+      )
     toolWindow.getContentManager.addContent(content)
+    toolWindowContent = Some(newTW)
+
+    //Topic.create(
+    //  "RIDDL_TOOL_WINDOW",
+    //  classOf[ChangeActionNotifier]
+    //)
   }
 
-  private class RiddlToolWindowContent(toolWindow: ToolWindow) {
-    private val contentPanel = new JPanel()
-    private val label = new JLabel()
+  def update(): Unit = {
+    println(toolWindowContent)
+    if toolWindowContent.isDefined then toolWindowContent.get.updateLabel()
+  }
+
+  private class RiddlToolWindowContent(
+      toolWindow: ToolWindow,
+      project: Project
+  ) {
+    private val contentPanel = new JBPanel()
+    private val label = new JBLabel()
+
+    updateLabel()
 
     contentPanel.setLayout(new BorderLayout(0, 20))
     contentPanel.setBorder(BorderFactory.createEmptyBorder(40, 0, 0, 0))
-    contentPanel.add(createRiddlProjectOutputPanel)
+    contentPanel.add(label)
 
     def getContentPanel: JPanel = contentPanel
 
-    private def createRiddlProjectOutputPanel = {
-      val calendarPanel = new JPanel()
-      if toolWindow.getProject.getBasePath != null && !toolWindow.getProject.getBasePath.isBlank
-      then {
-        setWindowOutput(label)
-        calendarPanel.add(label)
-      }
-      calendarPanel
-    }
+    def updateLabel(): Unit = {
+      val statePath: String = getRiddlIdeaState.riddlConfPath
 
-    private def setWindowOutput(label: JLabel): Unit = {
-      val baseDir = new File(toolWindow.getProject.getBasePath + "/" + riddlPluginState.riddlConfPath)
-
-      def parseFromConf(): Option[Either[Messages, AST.Root]] = {
-        val confFile = {
-          if baseDir.exists && baseDir.isDirectory then {
-            val confs = baseDir.listFiles.filter(_.getName.endsWith(".conf"))
-            if confs.length != 1 then "" else confs.head.getName
-          }
-          else ""
-        }
-
-        if confFile.isBlank then {
-          displayNotification("RIDDL: project's .conf file not found, please configure in setting")
-          None
-        }
-        else Some(parseASTFromSource(
-          URI.create("file://" + baseDir + "/" + confFile)
-        ))
+      if statePath.isBlank then {
+        label.setText(
+          "RIDDL: project's .conf file not configured in settings"
+        )
+        return
       }
 
-      val textOutput =
-        if baseDir.exists() then
-          val astOrMsgsOpt = parseFromConf()
-          if astOrMsgsOpt.isDefined then
-            astOrMsgsOpt.map(astOrMessages =>
-              if astOrMessages.isRight then "Compilation succeed without errors! :)"
-              else astOrMessages match {
-                case Left(msgs) =>
-                  msgs.foreach(m =>
-                    println(m.toString)
-                    label.setText(m.toString))
-                  msgs
-                case _          => ""
-              }
+      val confPath = fullPathToConf(
+        toolWindow.getProject.getBasePath,
+        statePath
+      )
+
+      val confFile = File(confPath)
+
+      if !confFile.exists() then
+        label.setText(
+          "RIDDL: project's .conf file not found, please configure in setting"
+        )
+      else
+        parseASTFromSource(URI(confPath)) match {
+          case Left(msgs: List[Messages.Message]) =>
+            msgs.foreach(m =>
+              println(m.toString)
+              label.setText(m.toString)
             )
-          else ""
-        else {
-          displayNotification("RIDDL: project's .conf file not configured in settings")
-          ""
+          case _ => label.setText("Compilation succeed without errors! :)")
         }
+        ()
     }
   }
 }

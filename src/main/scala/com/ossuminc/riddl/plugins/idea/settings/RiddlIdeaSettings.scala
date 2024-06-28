@@ -1,7 +1,7 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.components.{PersistentStateComponent, RoamingType, State, Storage, StoragePathMacros}
-import com.ossuminc.riddl.plugins.utils.{getRiddlIdeaState, getToolWindow}
+import com.ossuminc.riddl.plugins.utils.getRiddlIdeaState
 
 @State(
   name = "RiddlIdeaSettings",
@@ -30,7 +30,6 @@ object RiddlIdeaSettings {
 
     def setConfPath(newPath: String): Unit = {
       riddlConfPath = newPath
-      //getToolWindow.update()
     }
   }
 

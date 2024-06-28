@@ -3,21 +3,29 @@ package com.ossuminc.riddl.plugins.idea.settings
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
+import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaTopics.UpdateToolWindow.UpdateToolWindowListener
+import com.ossuminc.riddl.plugins.utils.{getIdFromTopicClass, getRiddlIdeaState}
 
-import java.io.File
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 
 class RiddlIdeaSettingsComponent {
-  private val confFilePath: Option[File] = None
-  private val confFileText = ""
   private val confFileTextField = new JBTextField()
+
+  private val topicString: String =
+    getIdFromTopicClass[UpdateToolWindowListener](
+      new UpdateToolWindowListener {}
+    )
+
+  confFileTextField.setText(
+    if getRiddlIdeaState != null then getRiddlIdeaState.riddlConfPath else ""
+  )
 
   var modified = false
 
   confFileTextField.getDocument.addDocumentListener(new DocumentAdapter {
     override def textChanged(e: DocumentEvent): Unit = {
-      toggleModified()
+      modified = true
     }
   })
 
@@ -34,6 +42,4 @@ class RiddlIdeaSettingsComponent {
   def getPanel: JPanel = riddlMainPanel
 
   def getConfFieldText: String = confFileTextField.getText
-
-  def toggleModified(): Unit = modified = !modified
 }

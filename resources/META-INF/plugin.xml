@@ -11,9 +11,8 @@
     <depends>com.intellij.properties</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings$State"/>
         <applicationConfigurable parentId="tools" instance="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable"
-                                 id="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable"
+                                 id="RIDDL_IDEA_SETTINGS"
                                  displayName="RIDDL Project Settings"/>
         <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
         <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory"
@@ -21,5 +20,11 @@
         <!-- <configurationType implementation="com.ossuminc.riddl.plugins.idea.configuration.RiddlRunConfigurationType"/> -->
 
     </extensions>
+
+    <applicationListeners>
+        <listener
+                class="com.ossuminc.riddl.plugins.idea.settings.TopicsNotifier"
+                topic="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaTopics"/>
+    </applicationListeners>
 
 </idea-plugin>

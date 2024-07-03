@@ -1,8 +1,7 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.options.Configurable
-import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaTopics.UpdateToolWindow.UpdateToolWindowListener
-import com.ossuminc.riddl.plugins.utils.{getProject, getRiddlIdeaState}
+import com.ossuminc.riddl.plugins.utils.{getRiddlIdeaState, getToolWindow}
 
 import javax.swing.JComponent
 
@@ -21,16 +20,11 @@ class RiddlIdeaSettingsConfigurable extends Configurable {
     } else false
 
   override def apply(): Unit = {
-    val toolListener = new UpdateToolWindowListener
-
-    println("applying save")
     if getRiddlIdeaState != null then
-      getRiddlIdeaState.setConfPath(component.getConfFieldText)
-    println("applying message")
-    getProject.getMessageBus
-      .syncPublisher(
-        toolListener.listenerTopic.TOPIC
-      )
-      .settingsChanged()
+      getRiddlIdeaState.getState.setConfPath(component.getConfFieldText)
+      
+    getToolWindow.getComponent
+      .getClientProperty("updateLabel")
+      .asInstanceOf[() => Unit]()
   }
 }

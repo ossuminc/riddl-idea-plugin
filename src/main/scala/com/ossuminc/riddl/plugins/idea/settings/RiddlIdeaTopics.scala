@@ -14,24 +14,9 @@ trait TopicWithID[T: ClassTag](topicId: String) {
   )
 }
 
-object RiddlIdeaTopics {
-  trait MessageListener[T: ClassTag](topicIdParam: String) {
-    def settingsChanged(): Unit = {}
-
-    abstract class ListenerTopic extends TopicWithID[T](topicIdParam) {}
-
-    val listenerTopic: ListenerTopic
-
-  }
-
-  object UpdateToolWindow {
-    class UpdateToolWindowListener
-        extends MessageListener[UpdateToolWindowListener](topicIdParam =
-          "UpdateRiddlToolWindow"
-        ) {
-      private class ToolWindowListenerTopic extends ListenerTopic {}
-
-      override val listenerTopic: ListenerTopic = new ToolWindowListenerTopic()
-    }
+class RiddlIdeaTopics {
+  class UpdateToolWindow[T: ClassTag] {
+    private class ToolWindowListenerTopic
+        extends TopicWithID[T]("UpdateRiddlToolWindow") {}
   }
 }

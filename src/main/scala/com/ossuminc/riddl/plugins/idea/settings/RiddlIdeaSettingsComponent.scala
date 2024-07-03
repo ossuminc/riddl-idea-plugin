@@ -3,8 +3,7 @@ package com.ossuminc.riddl.plugins.idea.settings
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
-import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaTopics.UpdateToolWindow.UpdateToolWindowListener
-import com.ossuminc.riddl.plugins.utils.{getIdFromTopicClass, getRiddlIdeaState}
+import com.ossuminc.riddl.plugins.utils.getRiddlIdeaState
 
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
@@ -12,13 +11,9 @@ import javax.swing.event.DocumentEvent
 class RiddlIdeaSettingsComponent {
   private val confFileTextField = new JBTextField()
 
-  private val topicString: String =
-    getIdFromTopicClass[UpdateToolWindowListener](
-      new UpdateToolWindowListener {}
-    )
-
   confFileTextField.setText(
-    if getRiddlIdeaState != null then getRiddlIdeaState.riddlConfPath else ""
+    if getRiddlIdeaState != null then getRiddlIdeaState.getState.riddlConfPath
+    else ""
   )
 
   var modified = false

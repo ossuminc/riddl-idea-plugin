@@ -33,5 +33,5 @@ object RiddlIdeaSettings {
     }
   }
 
-  def getInstance: RiddlIdeaSettings.State = getRiddlIdeaState
+  def getInstance: RiddlIdeaSettings = getRiddlIdeaState
 }

@@ -11,6 +11,7 @@
     <depends>com.intellij.properties</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings"/>
         <applicationConfigurable parentId="tools" instance="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable"
                                  id="RIDDL_IDEA_SETTINGS"
                                  displayName="RIDDL Project Settings"/>

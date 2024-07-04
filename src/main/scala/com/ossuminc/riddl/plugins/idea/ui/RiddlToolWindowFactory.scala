@@ -50,7 +50,7 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
       .getInstance()
       .createContent(
         newTW.getContentPanel,
-        "RIDDL_TOOL_WINDOW",
+        "riddlc",
         false
       )
     toolWindow.getContentManager.addContent(content)
@@ -81,7 +81,7 @@ class RiddlToolWindowContent(
 
     if statePath == null || statePath.isBlank then {
       label.setText(
-        "RIDDL: project's .conf file not configured in settings"
+        "riddlc: project's .conf file not configured in settings"
       )
       return
     }
@@ -104,7 +104,7 @@ class RiddlToolWindowContent(
     } else {
       label.setText(
         "File: " + confPath +
-          "\nRIDDL: project's .conf file not found, please configure in setting"
+          "\nriddlc: project's .conf file not found, please configure in setting"
       )
     }
   }

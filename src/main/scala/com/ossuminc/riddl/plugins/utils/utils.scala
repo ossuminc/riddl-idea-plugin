@@ -37,7 +37,7 @@ package object utils {
     .getInstance(
       getProject
     )
-    .getToolWindow("RIDDL_TOOL_WINDOW")
+    .getToolWindow("riddl")
     .getContentManager
     .getContent(0)
 

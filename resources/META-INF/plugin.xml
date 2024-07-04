@@ -13,11 +13,11 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings"/>
         <applicationConfigurable parentId="tools" instance="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable"
-                                 id="RIDDL_IDEA_SETTINGS"
-                                 displayName="RIDDL Project Settings"/>
+                                 id="riddl settings"
+                                 displayName="riddl Project Settings"/>
         <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
         <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory"
-                    id="RIDDL_TOOL_WINDOW" anchor="bottom" icon="images/RIDDL-Logo.jpg"/>
+                    id="riddl" anchor="bottom" icon="images/RIDDL-Logo.jpg"/>
         <!-- <configurationType implementation="com.ossuminc.riddl.plugins.idea.configuration.RiddlRunConfigurationType"/> -->
 
     </extensions>

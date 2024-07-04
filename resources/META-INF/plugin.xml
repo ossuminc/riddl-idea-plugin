@@ -2,32 +2,30 @@
     <id>com.ossuminc.riddl.plugins.idea</id>
     <name>RIDDL4IDEA</name>
     <version>0.0.1</version>
-    <vendor>ossuminc</vendor>
+    <vendor url="https://github.com/ossuminc">ossuminc</vendor>
+    <idea-version since-build="IU-241.17890.1" until-build="IU-241.*"/>
 
     <description>A RIDDL language plugin for IntelliJ platform written in Scala and built with SBT</description>
-
-    <idea-version since-build="231.0"/>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.properties</depends>
 
-    <resource-bundle>messages.RiddlIdeaPluginBundle</resource-bundle>
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings"/>
+        <applicationConfigurable parentId="tools" instance="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable"
+                                 id="riddl settings"
+                                 displayName="riddl Project Settings"/>
+        <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
+        <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory"
+                    id="riddl" anchor="bottom" icon="images/RIDDL-Logo.jpg"/>
+        <!-- <configurationType implementation="com.ossuminc.riddl.plugins.idea.configuration.RiddlRunConfigurationType"/> -->
 
-    <actions>
-        <action id="com.ossuminc.riddl.plugins.idea.actions.PopupDialogAction"
-                class="com.ossuminc.riddl.plugins.idea.actions.PopupDialogAction" text="PopupDialogAction">
-            <add-to-group group-id="ToolsMenu" anchor="first"/>
-        </action>
-    </actions>
+    </extensions>
 
     <applicationListeners>
-        <listener class="com.ossuminc.riddl.plugins.idea.listeners.FileOpenedListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+        <listener
+                class="com.ossuminc.riddl.plugins.idea.settings.TopicsNotifier"
+                topic="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaTopics"/>
     </applicationListeners>
-
-    <extensions defaultExtensionNs="com.intellij">
-        <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
-        <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory" id="RiddlToolWindow" anchor="bottom"/>
-        <!-- <completion.contributor implementationClass="com.ossuminc.riddl.plugins.idea.completion.SimpleCompletionContributor" language="Properties"/> -->
-    </extensions>
 
 </idea-plugin>

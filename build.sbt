@@ -24,7 +24,7 @@ lazy val riddlIdeaPlugin: Project = Root(
     // NOTE: check community/.idea/libraries/kotlin_stdlib.xml in intellij monorepo when updating intellijVersion
     // NOTE: keep versions in sync with ultimate/.idea/kotlinc.xml and community/.idea/kotlinc.xml
     kotlinVersion := "1.9.22",
-    kotlincJvmTarget := "22",
+    kotlincJvmTarget := "21",
     kotlinRuntimeProvided := true,
     buildInfoPackage := "com.ossuminc.riddl.plugins.idea",
     buildInfoObject := "RiddlIDEAPluginBuildInfo",
@@ -38,7 +38,7 @@ lazy val riddlIdeaPlugin: Project = Root(
     ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
     intellijPlugins ++= Seq("com.intellij.properties".toPlugin),
     Global / intellijAttachSources := true,
-    Compile / javacOptions ++= "--release" :: "22" :: Nil,
+    Compile / javacOptions ++= "--release" :: "21" :: Nil,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     Test / unmanagedResourceDirectories += baseDirectory.value / "testResources",
     intellijRuntimePlugins := Seq(

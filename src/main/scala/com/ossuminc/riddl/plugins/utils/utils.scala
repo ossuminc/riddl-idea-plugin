@@ -29,7 +29,7 @@ package object utils {
   )
 
   def fullPathToConf(basePath: String, confFileName: String): String =
-    "file://" + basePath + "/src/main/riddl/" + confFileName
+    basePath + "/" + confFileName
 
   private val application = ApplicationManager.getApplication
 

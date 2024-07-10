@@ -1,4 +1,4 @@
-import kotlin.Keys._
+import kotlin.Keys.*
 
 enablePlugins(OssumIncPlugin)
 
@@ -45,6 +45,4 @@ lazy val riddlIdeaPlugin: Project = Root(
       "org.jetbrains.kotlin".toPlugin
     ),
     runIDE / javaOptions += "-Didea.http.proxy.port=5432,-DurlSchemes=http://localhost"
-
-
   )

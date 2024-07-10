@@ -7,7 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.ossuminc.riddl.plugins.utils.{displayNotification, parseASTFromSource, riddlPluginState}
+import com.ossuminc.riddl.plugins.idea.{displayNotification, parseASTFromSource, riddlPluginState}
 import com.ossuminc.riddl.language.Messages.{Message, Messages}
 import com.ossuminc.riddl.language.{AST, Messages}
 
@@ -18,16 +18,6 @@ import java.util.concurrent.TimeUnit
 import javax.swing.{BorderFactory, JLabel, JPanel}
 
 class RiddlToolWindowFactory extends ToolWindowFactory {
-
-  private def invokeLater[T](body: => T): Unit = ApplicationManager.getApplication.invokeLater(() => body)
-
-  private def schedulePeriodicTask(delay: Long, unit: TimeUnit, parentDisposable: Disposable)(body: => Unit): Unit = {
-    val task = AppExecutorUtil.getAppScheduledExecutorService.scheduleWithFixedDelay(() => body, delay, delay, unit)
-    Disposer.register(parentDisposable, () => {
-      task.cancel(true)
-    })
-  }
-
   override def createToolWindowContent(
       project: Project,
       toolWindow: ToolWindow
@@ -78,7 +68,7 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
           None
         }
         else Some(parseASTFromSource(
-          URI.create("file://" + baseDir + "/" + confFile)
+          URI.create("file://" + baseDir)
         ))
       }
 

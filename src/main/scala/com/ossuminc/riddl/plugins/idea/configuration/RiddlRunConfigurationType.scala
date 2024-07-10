@@ -5,15 +5,18 @@ import com.intellij.openapi.project.DumbAware
 import com.ossuminc.riddl.plugins.idea.RiddlIdeaPluginBundle
 
 import javax.swing.Icon
+import com.ossuminc.riddl.plugins.idea.Icons.RIDDL_ICON
 
 class RiddlRunConfigurationType extends ConfigurationType with DumbAware {
-  val confFactory = new RiddlRunConfigurationFactory(this)
+  private val confFactory = new RiddlRunConfigurationFactory(this)
 
   override def getDisplayName: String = RiddlIdeaPluginBundle.message("riddl.plugins.idea.displayName")
 
   override def getConfigurationTypeDescription: String = RiddlIdeaPluginBundle.message("riddl.plugins.idea.description")
 
-  override def getConfigurationFactories: Array[ConfigurationFactory] = Array[ConfigurationFactory](confFactory)
+  override def getConfigurationFactories: Array[ConfigurationFactory] = Array(confFactory)
 
   override def getId: String = "RiddlRunConfiguration"
+
+  override def getIcon: Icon = RIDDL_ICON
 }

@@ -1,7 +1,7 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.options.{Configurable, ConfigurationException}
-import com.ossuminc.riddl.plugins.utils.{displayNotification, riddlPluginState}
+import com.ossuminc.riddl.plugins.idea.{displayNotification, riddlPluginState}
 
 import java.io.File
 import javax.swing.JComponent

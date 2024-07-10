@@ -94,7 +94,7 @@ class RiddlToolWindowContent(
     val confFile = File(confPath)
     if confFile.exists() then {
       println(confPath)
-      parseASTFromSource(URI(confPath)) match {
+      parseASTFromSource(URI("file://" + confPath)) match {
         case Left(msgs: List[Messages.Message]) =>
           msgs.foreach(m => println(m.toString))
           label.setText(msgs.mkString("\n"))

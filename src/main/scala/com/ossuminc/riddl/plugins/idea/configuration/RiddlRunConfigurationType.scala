@@ -16,7 +16,7 @@ class RiddlRunConfigurationType extends ConfigurationType with DumbAware {
 
   override def getConfigurationFactories: Array[ConfigurationFactory] = Array(confFactory)
 
-  override def getId: String = "RiddlRunConfiguration"
-
   override def getIcon: Icon = RIDDL_ICON
+  
+  override def getId: String = "riddlRunConfiguration"
 }

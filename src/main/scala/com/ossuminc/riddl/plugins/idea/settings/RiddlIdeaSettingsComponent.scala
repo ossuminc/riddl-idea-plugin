@@ -50,8 +50,6 @@ class RiddlIdeaSettingsComponent {
     .createSingleFileDescriptor()
     .withFileFilter(ConfCondition())
 
-  fileDescriptor.setRoots(getProject.getProjectFile)
-
   confFileTextField.addBrowseFolderListener(
     RiddlIdeaPluginBundle.message(
       "riddl.plugins.idea.choose.conf.path"

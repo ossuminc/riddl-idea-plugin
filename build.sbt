@@ -41,10 +41,5 @@ lazy val riddlIdeaPlugin: Project = Root(
     Compile / javacOptions ++= "--release" :: "21" :: Nil,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     Test / unmanagedResourceDirectories += baseDirectory.value / "testResources",
-    intellijRuntimePlugins := Seq(
-      "org.jetbrains.kotlin".toPlugin
-    ),
     runIDE / javaOptions += "-Didea.http.proxy.port=5432,-DurlSchemes=http://localhost"
-
-
   )

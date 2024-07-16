@@ -11,7 +11,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.ossuminc.riddl.language.Messages.Message
 import com.ossuminc.riddl.language.Messages
 import com.ossuminc.riddl.plugins.utils.{
-  fullPathToConf,
   getRiddlIdeaState,
   parseASTFromSource
 }
@@ -86,15 +85,10 @@ class RiddlToolWindowContent(
       return
     }
 
-    val confPath = fullPathToConf(
-      toolWindow.getProject.getBasePath,
-      statePath
-    )
-
-    val confFile = File(confPath)
+    val confFile = File(statePath)
     if confFile.exists() then {
-      println(confPath)
-      parseASTFromSource(URI("file://" + confPath)) match {
+      println(statePath)
+      parseASTFromSource(URI("file://" + statePath)) match {
         case Left(msgs: List[Messages.Message]) =>
           msgs.foreach(m => println(m.toString))
           label.setText(msgs.mkString("\n"))
@@ -103,7 +97,7 @@ class RiddlToolWindowContent(
       }
     } else {
       label.setText(
-        "File: " + confPath +
+        "File: " + statePath +
           "\nriddlc: project's .conf file not found, please configure in setting"
       )
     }

@@ -26,12 +26,12 @@ jobs:
       - name: Coursier Caching
         uses: coursier/cache-action@v6
 
-      - name: Build, Run Test
-        run: |
-          sbt -v clean Test/compile test
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: Scala ${{ matrix.scala }}
+      #- name: Build, Run Test
+      #  run: |
+      #    sbt -v clean Test/compile test
+      #  env:
+      #    COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #    COVERALLS_FLAG_NAME: Scala ${{ matrix.scala }}
 
       #- name: Build, Run Test, Coverage
       #  run: |

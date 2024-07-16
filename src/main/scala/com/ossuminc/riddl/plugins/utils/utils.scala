@@ -27,10 +27,7 @@ package object utils {
       NotificationType.INFORMATION
     )
   )
-
-  def fullPathToConf(basePath: String, confFileName: String): String =
-    basePath + "/" + confFileName
-
+  
   private val application = ApplicationManager.getApplication
 
   def getToolWindow: Content = ToolWindowManager

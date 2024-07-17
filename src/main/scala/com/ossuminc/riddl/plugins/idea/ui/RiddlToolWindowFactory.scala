@@ -91,7 +91,7 @@ class RiddlToolWindowContent(
       parseASTFromSource(URI("file://" + statePath)) match {
         case Left(msgs: List[Messages.Message]) =>
           msgs.foreach(m => println(m.toString))
-          label.setText(s"<html>Conf path: $statePath<br>Error messages: $msgs</html>")
+          label.setText(s"<html>Conf path: $statePath<br>Error messages: ${msgs.mkString("<br")}</html>")
 
         case _ =>
           label.setText("Compilation succeed without errors! :)")

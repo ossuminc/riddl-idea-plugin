@@ -22,10 +22,4 @@
 
     </extensions>
 
-    <applicationListeners>
-        <listener
-                class="com.ossuminc.riddl.plugins.idea.settings.TopicsNotifier"
-                topic="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaTopics"/>
-    </applicationListeners>
-
 </idea-plugin>

@@ -1,8 +1,10 @@
 package com.ossuminc.riddl.plugins.idea.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.{ActionManager, DefaultActionGroup}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.{JBLabel, JBPanel}
@@ -10,10 +12,8 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.ossuminc.riddl.language.Messages.Message
 import com.ossuminc.riddl.language.Messages
-import com.ossuminc.riddl.plugins.utils.{
-  getRiddlIdeaState,
-  parseASTFromSource
-}
+import com.ossuminc.riddl.plugins.idea.actions.RiddlToolWindowCompileAction
+import com.ossuminc.riddl.plugins.utils.{getRiddlIdeaState, parseASTFromSource}
 
 import java.net.URI
 import java.awt.BorderLayout
@@ -60,16 +60,23 @@ class RiddlToolWindowContent(
     toolWindow: ToolWindow,
     project: Project
 ) {
+  private val topBar: SimpleToolWindowPanel = new SimpleToolWindowPanel(false, false)
+  private val actionGroup = new DefaultActionGroup("ToolbarRunGroup", false)
+  actionGroup.add(new RiddlToolWindowCompileAction)
+  private val actionToolbar = ActionManager.getInstance().createActionToolbar("", actionGroup, true)
+  topBar.setToolbar(actionToolbar.getComponent)
 
   private val contentPanel: JBPanel[Nothing] = new JBPanel()
-  private val label: JBLabel = new JBLabel()
+
+  private val outputLabel: JBLabel = new JBLabel()
 
   updateLabel()
 
   contentPanel.putClientProperty("updateLabel", () => updateLabel())
   contentPanel.setLayout(new BorderLayout(0, 20))
   contentPanel.setBorder(BorderFactory.createEmptyBorder(40, 0, 0, 0))
-  contentPanel.add(label)
+  contentPanel.add(outputLabel, BorderLayout.CENTER)
+  contentPanel.add(topBar, BorderLayout.NORTH)
 
   def getContentPanel: JBPanel[Nothing] = contentPanel
 
@@ -79,7 +86,7 @@ class RiddlToolWindowContent(
       else ""
 
     if statePath == null || statePath.isBlank then {
-      label.setText(
+      outputLabel.setText(
         "riddlc: project's .conf file not configured in settings"
       )
       return
@@ -91,13 +98,13 @@ class RiddlToolWindowContent(
       parseASTFromSource(URI("file://" + statePath)) match {
         case Left(msgs: List[Messages.Message]) =>
           msgs.foreach(m => println(m.toString))
-          label.setText(s"<html>Conf path: $statePath<br>Error messages: ${msgs.mkString("<br")}</html>")
+          outputLabel.setText(s"<html>Conf path: $statePath<br>Error messages: ${msgs.mkString("<br")}</html>")
 
         case _ =>
-          label.setText("Compilation succeed without errors! :)")
+          outputLabel.setText("Compilation succeed without errors! :)")
       }
     } else {
-      label.setText(
+      outputLabel.setText(
         "File: " + statePath +
           "\nriddlc: project's .conf file not found, please configure in setting"
       )

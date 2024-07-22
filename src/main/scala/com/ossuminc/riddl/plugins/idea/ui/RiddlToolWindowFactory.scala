@@ -10,7 +10,6 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.ossuminc.riddl.plugins.utils.{getRiddlIdeaState, parseFromCmdLine}
 
-import java.net.URI
 import java.awt.BorderLayout
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -21,10 +20,10 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
     ApplicationManager.getApplication.invokeLater(() => body)
 
   private def schedulePeriodicTask(
-                                    delay: Long,
-                                    unit: TimeUnit,
-                                    parentDisposable: Disposable
-                                  )(body: => Unit): Unit = {
+      delay: Long,
+      unit: TimeUnit,
+      parentDisposable: Disposable
+  )(body: => Unit): Unit = {
     val task = AppExecutorUtil.getAppScheduledExecutorService
       .scheduleWithFixedDelay(() => body, delay, delay, unit)
     Disposer.register(
@@ -36,9 +35,9 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
   }
 
   override def createToolWindowContent(
-                                        project: Project,
-                                        toolWindow: ToolWindow
-                                      ): Unit = {
+      project: Project,
+      toolWindow: ToolWindow
+  ): Unit = {
     val newTW = new RiddlToolWindowContent(toolWindow, project)
     val content = ContentFactory
       .getInstance()
@@ -52,9 +51,9 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
 }
 
 class RiddlToolWindowContent(
-                              toolWindow: ToolWindow,
-                              project: Project
-                            ) {
+    toolWindow: ToolWindow,
+    project: Project
+) {
 
   private val contentPanel: JBPanel[Nothing] = new JBPanel()
   private val label: JBLabel = new JBLabel()
@@ -83,12 +82,14 @@ class RiddlToolWindowContent(
     val confFile = File(statePath)
     if confFile.exists() then {
       println(statePath)
-      parseFromCmdLine(new URI("file", null, statePath, null))
-    }
-    else {
+      label.setText(
+        s"<html>riddlc output: <br>${parseFromCmdLine(statePath)}<html/>"
+      )
+    } else {
       label.setText(
         "File: " + statePath +
-          "\nriddlc: project's .conf file not found, please configure in setting")
+          "<html><br>riddlc: project's .conf file not found, please configure in setting<html/>"
+      )
     }
   }
 }

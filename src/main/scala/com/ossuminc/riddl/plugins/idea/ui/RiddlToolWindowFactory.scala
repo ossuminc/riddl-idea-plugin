@@ -8,12 +8,7 @@ import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.{JBLabel, JBPanel}
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.ossuminc.riddl.language.Messages.Message
-import com.ossuminc.riddl.language.Messages
-import com.ossuminc.riddl.plugins.utils.{
-  getRiddlIdeaState,
-  parseASTFromSource
-}
+import com.ossuminc.riddl.plugins.utils.{getRiddlIdeaState, parseFromCmdLine}
 
 import java.net.URI
 import java.awt.BorderLayout
@@ -26,10 +21,10 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
     ApplicationManager.getApplication.invokeLater(() => body)
 
   private def schedulePeriodicTask(
-      delay: Long,
-      unit: TimeUnit,
-      parentDisposable: Disposable
-  )(body: => Unit): Unit = {
+                                    delay: Long,
+                                    unit: TimeUnit,
+                                    parentDisposable: Disposable
+                                  )(body: => Unit): Unit = {
     val task = AppExecutorUtil.getAppScheduledExecutorService
       .scheduleWithFixedDelay(() => body, delay, delay, unit)
     Disposer.register(
@@ -41,9 +36,9 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
   }
 
   override def createToolWindowContent(
-      project: Project,
-      toolWindow: ToolWindow
-  ): Unit = {
+                                        project: Project,
+                                        toolWindow: ToolWindow
+                                      ): Unit = {
     val newTW = new RiddlToolWindowContent(toolWindow, project)
     val content = ContentFactory
       .getInstance()
@@ -57,9 +52,9 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
 }
 
 class RiddlToolWindowContent(
-    toolWindow: ToolWindow,
-    project: Project
-) {
+                              toolWindow: ToolWindow,
+                              project: Project
+                            ) {
 
   private val contentPanel: JBPanel[Nothing] = new JBPanel()
   private val label: JBLabel = new JBLabel()
@@ -88,19 +83,12 @@ class RiddlToolWindowContent(
     val confFile = File(statePath)
     if confFile.exists() then {
       println(statePath)
-      parseASTFromSource(URI("file://" + statePath)) match {
-        case Left(msgs: List[Messages.Message]) =>
-          msgs.foreach(m => println(m.toString))
-          label.setText(s"<html>Conf path: $statePath<br>Error messages: ${msgs.mkString("<br")}</html>")
-
-        case _ =>
-          label.setText("Compilation succeed without errors! :)")
-      }
-    } else {
+      parseFromCmdLine(new URI("file", null, statePath, null))
+    }
+    else {
       label.setText(
         "File: " + statePath +
-          "\nriddlc: project's .conf file not found, please configure in setting"
-      )
+          "\nriddlc: project's .conf file not found, please configure in setting")
     }
   }
 }

@@ -21,22 +21,14 @@ object Dep {
   val scalacheck = "org.scalacheck" %% "scalacheck" % V.scalacheck
   val scopt = "com.github.scopt" %% "scopt" % V.scopt
   val slf4j = "org.slf4j" % "slf4j-nop" % V.slf4j
-  val riddlAnalyses = "com.ossuminc" %% "riddl-analyses" % V.ossumRiddl
-  val riddlLang = "com.ossuminc" %% "riddl-language" % V.ossumRiddl
-  val riddlUtils = "com.ossuminc" %% "riddl-utils" % V.ossumRiddl
-  val riddlPasses = "com.ossuminc" %% "riddl-passes" % V.ossumRiddl
-  val riddlTestkit = "com.ossuminc" %% "riddl-testkit" % V.ossumRiddl % "test"
+  val riddlCommands = "com.ossuminc" %% "riddl-commands" % V.ossumRiddl
   val minimalJson = {
     "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources ()
   }
 
   val basic: Seq[ModuleID] = Seq(minimalJson, scalactic, scalatest, scalacheck)
   val riddl: Seq[ModuleID] = Seq(
-    riddlTestkit,
-    riddlAnalyses,
-    riddlLang,
-    riddlUtils,
-    riddlPasses
+    riddlCommands
   )
 
   val testing: Seq[ModuleID] =

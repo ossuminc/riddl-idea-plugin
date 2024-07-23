@@ -1,37 +1,33 @@
 package com.ossuminc.riddl.plugins
 
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.util.ExecUtil
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
-import com.ossuminc.riddl.language.Messages.Messages
-import com.ossuminc.riddl.language.{AST, Messages}
-import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
+import com.ossuminc.riddl.command.CommandPlugin
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.utils.Logger
 
-import java.net.URI
 import scala.jdk.CollectionConverters.*
 
-package object utils {
-  def parseASTFromSource(projectURI: URI): Either[Messages, AST.Root] = {
-    TopLevelParser
-      .parseInput(
-        RiddlParserInput(projectURI)
-      )
-  }
+case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
+    extends Logger {
+  import com.ossuminc.riddl.plugins.utils.getRiddlIdeaState
 
-  def parseFromCmdLine(projectURI: URI): String = {
-    val cmdProcess = new GeneralCommandLine()
-    cmdProcess.addParameter("riddlc")
-    cmdProcess.addParameter("from")
-    cmdProcess.addParameter(s"\n${projectURI.toString}\n")
-    val output = ExecUtil.execAndGetOutput(cmdProcess)
-    (if output.getExitCode == 0 then
-      output.getStdoutLines
-    else output.getStderrLines).asScala.mkString("<br>")
+  override def write(level: Logger.Lvl, s: String): Unit = {
+    println("updating")
+    getRiddlIdeaState.getState.appendOutput(highlight(level, s))
+  }
+}
+
+package object utils {
+  def parseASTFromConfFile(confFile: String): Unit = {
+    CommandPlugin.runMain(
+      Array("from", confFile, "hugo"),
+      RiddlIdeaPluginLogger()
+    )
+    // updateToolWindow()
   }
 
   def displayNotification(text: String): Unit = Notifications.Bus.notify(
@@ -51,7 +47,7 @@ package object utils {
     .getToolWindow("riddl")
     .getContentManager
     .getContent(0)
-  
+
   def updateToolWindow(): Unit = getToolWindow.getComponent
     .getClientProperty("updateLabel")
     .asInstanceOf[() => Unit]()

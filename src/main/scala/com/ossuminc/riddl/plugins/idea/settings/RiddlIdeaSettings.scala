@@ -27,9 +27,19 @@ class RiddlIdeaSettings
 object RiddlIdeaSettings {
   class State {
     var riddlConfPath: String = ""
+    var riddlOutput: String = ""
 
     def setConfPath(newPath: String): Unit = {
       riddlConfPath = newPath
+    }
+
+    def appendOutput(newOutput: String): Unit = {
+      println("appending")
+      riddlOutput = riddlOutput + "<br>" + newOutput
+    }
+
+    def resetOutput(): Unit = {
+      riddlOutput = ""
     }
   }
 

@@ -10,12 +10,12 @@ import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.{JBLabel, JBPanel}
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.ossuminc.riddl.language.Messages.Message
-import com.ossuminc.riddl.language.Messages
 import com.ossuminc.riddl.plugins.idea.actions.RiddlToolWindowCompileAction
-import com.ossuminc.riddl.plugins.utils.{getRiddlIdeaState, parseASTFromSource}
+import com.ossuminc.riddl.plugins.utils.{
+  getRiddlIdeaState,
+  parseASTFromConfFile
+}
 
-import java.net.URI
 import java.awt.BorderLayout
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -26,10 +26,10 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
     ApplicationManager.getApplication.invokeLater(() => body)
 
   private def schedulePeriodicTask(
-                                    delay: Long,
-                                    unit: TimeUnit,
-                                    parentDisposable: Disposable
-                                  )(body: => Unit): Unit = {
+      delay: Long,
+      unit: TimeUnit,
+      parentDisposable: Disposable
+  )(body: => Unit): Unit = {
     val task = AppExecutorUtil.getAppScheduledExecutorService
       .scheduleWithFixedDelay(() => body, delay, delay, unit)
     Disposer.register(
@@ -41,9 +41,9 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
   }
 
   override def createToolWindowContent(
-                                        project: Project,
-                                        toolWindow: ToolWindow
-                                      ): Unit = {
+      project: Project,
+      toolWindow: ToolWindow
+  ): Unit = {
     val newTW = new RiddlToolWindowContent(toolWindow, project)
     val content = ContentFactory
       .getInstance()
@@ -60,10 +60,12 @@ class RiddlToolWindowContent(
     toolWindow: ToolWindow,
     project: Project
 ) {
-  private val topBar: SimpleToolWindowPanel = new SimpleToolWindowPanel(false, false)
+  private val topBar: SimpleToolWindowPanel =
+    new SimpleToolWindowPanel(false, false)
   private val actionGroup = new DefaultActionGroup("ToolbarRunGroup", false)
   actionGroup.add(new RiddlToolWindowCompileAction)
-  private val actionToolbar = ActionManager.getInstance().createActionToolbar("", actionGroup, true)
+  private val actionToolbar =
+    ActionManager.getInstance().createActionToolbar("", actionGroup, true)
   topBar.setToolbar(actionToolbar.getComponent)
 
   private val contentPanel: JBPanel[Nothing] = new JBPanel()
@@ -93,14 +95,17 @@ class RiddlToolWindowContent(
     }
 
     val confFile = File(statePath)
-    if confFile.exists() then {
+    if getRiddlIdeaState.getState.riddlOutput.nonEmpty then {
+      println("output")
+      getRiddlIdeaState.getState.riddlOutput
+    } else if confFile.exists() then {
       println(statePath)
-      parseFromCmdLine(new URI("file", null, statePath, null))
-    }
-    else {
-      label.setText(
+      parseASTFromConfFile(statePath)
+    } else {
+      outputLabel.setText(
         "File: " + statePath +
-          "\nriddlc: project's .conf file not found, please configure in setting")
+          "\nriddlc: project's .conf file not found, please configure in setting"
+      )
     }
   }
 }

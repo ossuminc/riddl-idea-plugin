@@ -27,14 +27,9 @@ class RiddlIdeaSettings
 object RiddlIdeaSettings {
   class State {
     var riddlConfPath: String = ""
-    var riddlExePath: String = ""
 
     def setConfPath(newPath: String): Unit = {
       riddlConfPath = newPath
-    }
-
-    def setExePath(newPath: String): Unit = {
-      riddlExePath = newPath
     }
   }
 

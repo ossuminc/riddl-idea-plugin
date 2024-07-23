@@ -22,4 +22,12 @@
 
     </extensions>
 
+    <actions>
+        <action id="compile_riddl_action" text="Compile Riddl Project"
+                class="com.ossuminc.riddl.plugins.idea.actions.RiddlToolWindowCompileAction"
+                icon="AllIcons.Actions.BuildLoadChanges">
+            <add-to-group group-id="ToolbarRunGroup" anchor="first" />
+        </action>
+    </actions>
+
 </idea-plugin>

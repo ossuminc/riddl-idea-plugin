@@ -37,6 +37,10 @@ package object utils {
     .getToolWindow("riddl")
     .getContentManager
     .getContent(0)
+  
+  def updateToolWindow(): Unit = getToolWindow.getComponent
+    .getClientProperty("updateLabel")
+    .asInstanceOf[() => Unit]()
 
   def getProject: Project = ProjectManager.getInstance().getOpenProjects.head
 

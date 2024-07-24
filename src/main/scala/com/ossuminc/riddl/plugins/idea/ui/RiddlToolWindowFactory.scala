@@ -10,12 +10,12 @@ import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.{JBLabel, JBPanel}
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.ossuminc.riddl.language.Messages.Message
-import com.ossuminc.riddl.language.Messages
 import com.ossuminc.riddl.plugins.idea.actions.RiddlToolWindowCompileAction
-import com.ossuminc.riddl.plugins.utils.{getRiddlIdeaState, parseASTFromSource}
+import com.ossuminc.riddl.plugins.utils.{
+  getRiddlIdeaState,
+  parseASTFromConfFile
+}
 
-import java.net.URI
 import java.awt.BorderLayout
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -60,10 +60,12 @@ class RiddlToolWindowContent(
     toolWindow: ToolWindow,
     project: Project
 ) {
-  private val topBar: SimpleToolWindowPanel = new SimpleToolWindowPanel(false, false)
+  private val topBar: SimpleToolWindowPanel =
+    new SimpleToolWindowPanel(false, false)
   private val actionGroup = new DefaultActionGroup("ToolbarRunGroup", false)
   actionGroup.add(new RiddlToolWindowCompileAction)
-  private val actionToolbar = ActionManager.getInstance().createActionToolbar("", actionGroup, true)
+  private val actionToolbar =
+    ActionManager.getInstance().createActionToolbar("", actionGroup, true)
   topBar.setToolbar(actionToolbar.getComponent)
 
   private val contentPanel: JBPanel[Nothing] = new JBPanel()
@@ -72,7 +74,10 @@ class RiddlToolWindowContent(
 
   updateLabel()
 
-  contentPanel.putClientProperty("updateLabel", () => updateLabel())
+  contentPanel.putClientProperty(
+    "updateLabel",
+    (fromReload: Boolean) => updateLabel(fromReload)
+  )
   contentPanel.setLayout(new BorderLayout(0, 20))
   contentPanel.setBorder(BorderFactory.createEmptyBorder(40, 0, 0, 0))
   contentPanel.add(outputLabel, BorderLayout.CENTER)
@@ -80,7 +85,7 @@ class RiddlToolWindowContent(
 
   def getContentPanel: JBPanel[Nothing] = contentPanel
 
-  def updateLabel(): Unit = {
+  def updateLabel(fromReload: Boolean = false): Unit = {
     val statePath: String =
       if getRiddlIdeaState != null then getRiddlIdeaState.getState.riddlConfPath
       else ""
@@ -93,20 +98,20 @@ class RiddlToolWindowContent(
     }
 
     val confFile = File(statePath)
-    if confFile.exists() then {
-      println(statePath)
-      parseASTFromSource(URI("file://" + statePath)) match {
-        case Left(msgs: List[Messages.Message]) =>
-          msgs.foreach(m => println(m.toString))
-          outputLabel.setText(s"<html>Conf path: $statePath<br>Error messages: ${msgs.mkString("<br")}</html>")
 
-        case _ =>
-          outputLabel.setText("Compilation succeed without errors! :)")
-      }
+    if fromReload & confFile.exists() && confFile.isFile then
+      parseASTFromConfFile(statePath)
+
+    if !getRiddlIdeaState.getState.riddlOutput.isBlank then {
+      outputLabel.setText(
+        s"<html>${getRiddlIdeaState.getState.riddlOutput}</html>"
+      )
+    } else if confFile.exists() && confFile.isFile then {
+      parseASTFromConfFile(statePath)
     } else {
       outputLabel.setText(
-        "File: " + statePath +
-          "\nriddlc: project's .conf file not found, please configure in setting"
+        s"<html>File: " + statePath +
+          "<br>riddlc: project's .conf file not found, please configure in setting</html>"
       )
     }
   }

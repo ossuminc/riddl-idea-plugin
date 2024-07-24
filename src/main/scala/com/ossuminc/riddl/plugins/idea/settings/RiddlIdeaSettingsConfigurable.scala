@@ -20,11 +20,13 @@ class RiddlIdeaSettingsConfigurable extends Configurable {
     } else false
 
   override def apply(): Unit = {
-    if getRiddlIdeaState != null then
+    if getRiddlIdeaState != null then {
       getRiddlIdeaState.getState.setConfPath(component.getConfFieldText)
-      
-    getToolWindow.getComponent
-      .getClientProperty("updateLabel")
-      .asInstanceOf[() => Unit]()
+      getRiddlIdeaState.getState.clearOutput()
+
+      getToolWindow.getComponent
+        .getClientProperty("updateLabel")
+        .asInstanceOf[(fromReload: Boolean) => Unit](false)
+    }
   }
 }

@@ -1,23 +1,32 @@
 package com.ossuminc.riddl.plugins
 
 import com.intellij.notification.{Notification, NotificationType, Notifications}
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
-import com.ossuminc.riddl.language.Messages.Messages
-import com.ossuminc.riddl.language.{AST, Messages}
-import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
+import com.ossuminc.riddl.command.CommandPlugin
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.utils.Logger
 
-import java.net.URI
+import scala.jdk.CollectionConverters.*
+
+case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
+    extends Logger {
+  import com.ossuminc.riddl.plugins.utils.getRiddlIdeaState
+
+  override def write(level: Logger.Lvl, s: String): Unit = {
+    getRiddlIdeaState.getState.appendOutput(highlight(level, s))
+  }
+}
 
 package object utils {
-  def parseASTFromSource(projectURI: URI): Either[Messages, AST.Root] = {
-    TopLevelParser
-      .parseInput(
-        RiddlParserInput(projectURI)
-      )
+  def parseASTFromConfFile(confFile: String): Unit = {
+    CommandPlugin.runMain(
+      Array("from", confFile, "hugo"),
+      RiddlIdeaPluginLogger()
+    )
+    updateToolWindow()
   }
 
   def displayNotification(text: String): Unit = Notifications.Bus.notify(
@@ -27,8 +36,8 @@ package object utils {
       NotificationType.INFORMATION
     )
   )
-  
-  private val application = ApplicationManager.getApplication
+
+  val application: Application = ApplicationManager.getApplication
 
   def getToolWindow: Content = ToolWindowManager
     .getInstance(
@@ -37,10 +46,10 @@ package object utils {
     .getToolWindow("riddl")
     .getContentManager
     .getContent(0)
-  
-  def updateToolWindow(): Unit = getToolWindow.getComponent
+
+  def updateToolWindow(fromReload: Boolean = false): Unit = getToolWindow.getComponent
     .getClientProperty("updateLabel")
-    .asInstanceOf[() => Unit]()
+    .asInstanceOf[(fromReload: Boolean) => Unit](fromReload)
 
   def getProject: Project = ProjectManager.getInstance().getOpenProjects.head
 

@@ -34,11 +34,11 @@ object RiddlIdeaSettings {
     }
 
     def appendOutput(newOutput: String): Unit = {
-      println("appending")
-      riddlOutput = riddlOutput + "<br>" + newOutput
+      println(newOutput)
+      riddlOutput += newOutput + "<br>"
     }
 
-    def resetOutput(): Unit = {
+    def clearOutput(): Unit = {
       riddlOutput = ""
     }
   }

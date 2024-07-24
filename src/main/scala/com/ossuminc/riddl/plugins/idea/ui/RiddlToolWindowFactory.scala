@@ -95,16 +95,16 @@ class RiddlToolWindowContent(
     }
 
     val confFile = File(statePath)
-    if getRiddlIdeaState.getState.riddlOutput.nonEmpty then {
-      println("output")
-      getRiddlIdeaState.getState.riddlOutput
-    } else if confFile.exists() then {
-      println(statePath)
+    if !getRiddlIdeaState.getState.riddlOutput.isBlank then {
+      outputLabel.setText(
+        s"<html>${getRiddlIdeaState.getState.riddlOutput}</html>"
+      )
+    } else if confFile.exists() && confFile.isFile then {
       parseASTFromConfFile(statePath)
     } else {
       outputLabel.setText(
-        "File: " + statePath +
-          "\nriddlc: project's .conf file not found, please configure in setting"
+        s"<html>File: " + statePath +
+          "<br>riddlc: project's .conf file not found, please configure in setting</html>"
       )
     }
   }

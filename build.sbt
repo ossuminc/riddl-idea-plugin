@@ -4,7 +4,6 @@ import org.jetbrains.sbtidea.Keys.*
 
 enablePlugins(OssumIncPlugin)
 
-
 Global / onChangedBuildSource := ReloadOnSourceChanges
 (Global / excludeLintKeys) ++= Set(mainClass)
 
@@ -40,5 +39,6 @@ lazy val riddlIdeaPlugin: Project = Root(
     Compile / javacOptions ++= "--release" :: "21" :: Nil,
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     Test / unmanagedResourceDirectories += baseDirectory.value / "testResources",
-    runIDE / javaOptions += "-Didea.http.proxy.port=5432,-DurlSchemes=http://localhost"
+    runIDE / javaOptions += "-Didea.http.proxy.port=5432,-DurlSchemes=http://localhost",
+    unmanagedBase := baseDirectory.value / "lib"
   )

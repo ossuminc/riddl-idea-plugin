@@ -1,7 +1,7 @@
 package com.ossuminc.riddl.plugins
 
 import com.intellij.notification.{Notification, NotificationType, Notifications}
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
@@ -16,7 +16,6 @@ case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
   import com.ossuminc.riddl.plugins.utils.getRiddlIdeaState
 
   override def write(level: Logger.Lvl, s: String): Unit = {
-    println("updating")
     getRiddlIdeaState.getState.appendOutput(highlight(level, s))
   }
 }
@@ -27,7 +26,7 @@ package object utils {
       Array("from", confFile, "hugo"),
       RiddlIdeaPluginLogger()
     )
-    // updateToolWindow()
+    updateToolWindow()
   }
 
   def displayNotification(text: String): Unit = Notifications.Bus.notify(
@@ -38,7 +37,7 @@ package object utils {
     )
   )
 
-  val application = ApplicationManager.getApplication
+  val application: Application = ApplicationManager.getApplication
 
   def getToolWindow: Content = ToolWindowManager
     .getInstance(

@@ -34,7 +34,6 @@ object RiddlIdeaSettings {
     }
 
     def appendOutput(newOutput: String): Unit = {
-      println(newOutput)
       riddlOutput += newOutput + "<br>"
     }
 

@@ -23,9 +23,10 @@ class RiddlIdeaSettingsConfigurable extends Configurable {
     if getRiddlIdeaState != null then {
       getRiddlIdeaState.getState.setConfPath(component.getConfFieldText)
       getRiddlIdeaState.getState.clearOutput()
+
+      getToolWindow.getComponent
+        .getClientProperty("updateLabel")
+        .asInstanceOf[(fromReload: Boolean) => Unit](false)
     }
-    getToolWindow.getComponent
-      .getClientProperty("updateLabel")
-      .asInstanceOf[(fromReload: Boolean) => Unit](false)
   }
 }

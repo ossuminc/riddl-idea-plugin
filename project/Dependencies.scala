@@ -1,5 +1,4 @@
 import sbt.*
-import sbt.Keys.unmanagedBase
 import sbt.librarymanagement.ModuleID
 
 /** V - Dependency Versions object */

@@ -26,6 +26,6 @@ class RiddlIdeaSettingsConfigurable extends Configurable {
     }
     getToolWindow.getComponent
       .getClientProperty("updateLabel")
-      .asInstanceOf[() => Unit]()
+      .asInstanceOf[(fromReload: Boolean) => Unit](false)
   }
 }

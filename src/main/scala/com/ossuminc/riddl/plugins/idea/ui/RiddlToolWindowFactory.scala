@@ -74,7 +74,10 @@ class RiddlToolWindowContent(
 
   updateLabel()
 
-  contentPanel.putClientProperty("updateLabel", () => updateLabel())
+  contentPanel.putClientProperty(
+    "updateLabel",
+    (fromReload: Boolean) => updateLabel(fromReload)
+  )
   contentPanel.setLayout(new BorderLayout(0, 20))
   contentPanel.setBorder(BorderFactory.createEmptyBorder(40, 0, 0, 0))
   contentPanel.add(outputLabel, BorderLayout.CENTER)
@@ -82,7 +85,7 @@ class RiddlToolWindowContent(
 
   def getContentPanel: JBPanel[Nothing] = contentPanel
 
-  def updateLabel(): Unit = {
+  def updateLabel(fromReload: Boolean = false): Unit = {
     val statePath: String =
       if getRiddlIdeaState != null then getRiddlIdeaState.getState.riddlConfPath
       else ""
@@ -95,6 +98,10 @@ class RiddlToolWindowContent(
     }
 
     val confFile = File(statePath)
+
+    if fromReload & confFile.exists() && confFile.isFile then
+      parseASTFromConfFile(statePath)
+
     if !getRiddlIdeaState.getState.riddlOutput.isBlank then {
       outputLabel.setText(
         s"<html>${getRiddlIdeaState.getState.riddlOutput}</html>"

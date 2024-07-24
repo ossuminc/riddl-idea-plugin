@@ -47,9 +47,9 @@ package object utils {
     .getContentManager
     .getContent(0)
 
-  def updateToolWindow(): Unit = getToolWindow.getComponent
+  def updateToolWindow(fromReload: Boolean = false): Unit = getToolWindow.getComponent
     .getClientProperty("updateLabel")
-    .asInstanceOf[() => Unit]()
+    .asInstanceOf[(fromReload: Boolean) => Unit](fromReload)
 
   def getProject: Project = ProjectManager.getInstance().getOpenProjects.head
 

@@ -2,11 +2,15 @@ package com.ossuminc.riddl.plugins
 
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
 import com.ossuminc.riddl.command.CommandPlugin
-import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.plugins.idea.settings.{
+  RiddlIdeaSettings,
+  RiddlIdeaSettingsConfigurable
+}
 import com.ossuminc.riddl.utils.Logger
 
 import scala.jdk.CollectionConverters.*
@@ -47,9 +51,13 @@ package object utils {
     .getContentManager
     .getContent(0)
 
-  def updateToolWindow(fromReload: Boolean = false): Unit = getToolWindow.getComponent
-    .getClientProperty("updateLabel")
-    .asInstanceOf[(fromReload: Boolean) => Unit](fromReload)
+  def updateToolWindow(fromReload: Boolean = false): Unit =
+    getToolWindow.getComponent
+      .getClientProperty("updateLabel")
+      .asInstanceOf[(fromReload: Boolean) => Unit](fromReload)
+
+  def openToolWindowSettings(): Unit = ShowSettingsUtil.getInstance
+    .editConfigurable(getProject, new RiddlIdeaSettingsConfigurable)
 
   def getProject: Project = ProjectManager.getInstance().getOpenProjects.head
 

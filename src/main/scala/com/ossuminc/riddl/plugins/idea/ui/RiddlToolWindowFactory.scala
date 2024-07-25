@@ -1,7 +1,11 @@
 package com.ossuminc.riddl.plugins.idea.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.{ActionManager, DefaultActionGroup}
+import com.intellij.openapi.actionSystem.{
+  ActionManager,
+  ActionPlaces,
+  DefaultActionGroup
+}
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -10,7 +14,10 @@ import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.{JBLabel, JBPanel}
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.ossuminc.riddl.plugins.idea.actions.RiddlToolWindowCompileAction
+import com.ossuminc.riddl.plugins.idea.actions.{
+  RiddlToolWindowCompileAction,
+  RiddlToolWindowSettingsOpenAction
+}
 import com.ossuminc.riddl.plugins.utils.{
   getRiddlIdeaState,
   parseASTFromConfFile
@@ -64,8 +71,11 @@ class RiddlToolWindowContent(
     new SimpleToolWindowPanel(false, false)
   private val actionGroup = new DefaultActionGroup("ToolbarRunGroup", false)
   actionGroup.add(new RiddlToolWindowCompileAction)
+  actionGroup.add(new RiddlToolWindowSettingsOpenAction)
   private val actionToolbar =
-    ActionManager.getInstance().createActionToolbar("", actionGroup, true)
+    ActionManager
+      .getInstance()
+      .createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, true)
   topBar.setToolbar(actionToolbar.getComponent)
 
   private val contentPanel: JBPanel[Nothing] = new JBPanel()
@@ -78,6 +88,7 @@ class RiddlToolWindowContent(
     "updateLabel",
     (fromReload: Boolean) => updateLabel(fromReload)
   )
+
   contentPanel.setLayout(new BorderLayout(0, 20))
   contentPanel.setBorder(BorderFactory.createEmptyBorder(40, 0, 0, 0))
   contentPanel.add(outputLabel, BorderLayout.CENTER)

@@ -12,21 +12,24 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings"/>
-        <applicationConfigurable parentId="tools" instance="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable"
+        <projectConfigurable parentId="tools" instance="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable"
                                  id="riddl settings"
                                  displayName="riddl Project Settings"/>
         <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
         <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory"
                     id="riddl" anchor="bottom" icon="images/RIDDL-Logo.jpg"/>
-        <!-- <configurationType implementation="com.ossuminc.riddl.plugins.idea.configuration.RiddlRunConfigurationType"/> -->
-
     </extensions>
 
     <actions>
-        <action id="compile_riddl_action" text="Compile Riddl Project"
+        <action id="compile_riddl_action" text="Compile Riddl Project" description="Compile Riddl Project"
                 class="com.ossuminc.riddl.plugins.idea.actions.RiddlToolWindowCompileAction"
                 icon="AllIcons.Actions.BuildLoadChanges">
             <add-to-group group-id="ToolbarRunGroup" anchor="first" />
+        </action>
+        <action id="riddl_settings_open_window_action" text="Open Tool Window" description="Open Tool Window"
+                class="com.ossuminc.riddl.plugins.idea.actions.RiddlToolWindowSettingsOpenAction"
+                icon="AllIcons.Actions.InlayGear">
+            <add-to-group group-id="ToolbarRunGroup" anchor="last" />
         </action>
     </actions>
 

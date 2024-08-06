@@ -1,3 +1,4 @@
+
 package com.ossuminc.riddl.plugins.idea.actions
 
 import com.intellij.icons.AllIcons

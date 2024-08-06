@@ -1,7 +1,7 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.options.Configurable
-import com.ossuminc.riddl.plugins.utils.{getRiddlIdeaState, getToolWindow}
+import com.ossuminc.riddl.plugins.utils.{getRiddlIdeaState, updateToolWindow}
 
 import javax.swing.JComponent
 
@@ -24,9 +24,7 @@ class RiddlIdeaSettingsConfigurable extends Configurable {
       getRiddlIdeaState.getState.setConfPath(component.getConfFieldText)
       getRiddlIdeaState.getState.clearOutput()
 
-      getToolWindow.getComponent
-        .getClientProperty("updateLabel")
-        .asInstanceOf[(fromReload: Boolean) => Unit](false)
+      updateToolWindow()
     }
   }
 }

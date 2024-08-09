@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.{
   DefaultActionGroup
 }
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
@@ -93,6 +95,17 @@ class RiddlToolWindowContent(
   contentPanel.setBorder(BorderFactory.createEmptyBorder(40, 0, 0, 0))
   contentPanel.add(outputLabel, BorderLayout.CENTER)
   contentPanel.add(topBar, BorderLayout.NORTH)
+
+  project.getMessageBus
+    .connect()
+    .subscribe(
+      FileDocumentManagerListener.TOPIC,
+      new FileDocumentManagerListener() {
+        override def beforeDocumentSaving(doc: Document): Unit = {
+          updateLabel(true)
+        }
+      }
+    )
 
   def getContentPanel: JBPanel[Nothing] = contentPanel
 

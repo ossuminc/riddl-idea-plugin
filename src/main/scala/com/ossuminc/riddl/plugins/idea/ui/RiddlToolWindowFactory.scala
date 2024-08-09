@@ -15,18 +15,15 @@ import com.ossuminc.riddl.plugins.idea.actions.{
   RiddlToolWindowSettingsOpenAction
 }
 import com.ossuminc.riddl.plugins.utils.{
+  formatParsedResults,
   getRiddlIdeaState,
   parseASTFromConfFile
 }
+import org.jdesktop.swingx.{HorizontalLayout, VerticalLayout}
 
-import java.awt.BorderLayout
+import java.awt.{GridBagConstraints, GridBagLayout}
 import java.io.File
-import javax.swing.{
-  JPanel,
-  JScrollPane,
-  ScrollPaneConstants,
-  ScrollPaneLayout,
-}
+import javax.swing.{JPanel, JScrollPane, ScrollPaneConstants, ScrollPaneLayout}
 
 class RiddlToolWindowFactory extends ToolWindowFactory {
   override def createToolWindowContent(
@@ -50,7 +47,9 @@ class RiddlToolWindowContent(
   private val notConfiguredMessage: String =
     "riddlc: project's .conf file not configured in settings"
 
-  private val contentPanel: JBPanel[Nothing] = new JBPanel()
+  private val contentPanel: JBPanel[?] = new JBPanel()
+  contentPanel.setLayout(VerticalLayout())
+  contentPanel.setLayout(GridBagLayout())
 
   private val outputLabel: JBLabel = new JBLabel()
   outputLabel.setText(notConfiguredMessage)
@@ -61,10 +60,10 @@ class RiddlToolWindowContent(
     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
   )
   scrollPane.setLayout(ScrollPaneLayout())
-  scrollPane.setSize(contentPanel.getSize)
 
   private val topBar: SimpleToolWindowPanel =
     new SimpleToolWindowPanel(true, false)
+  topBar.setLayout(HorizontalLayout())
   private val actionGroup = new DefaultActionGroup("ToolbarRunGroup", false)
   actionGroup.add(new RiddlToolWindowCompileAction)
   actionGroup.add(new RiddlToolWindowSettingsOpenAction)
@@ -79,8 +78,22 @@ class RiddlToolWindowContent(
     "updateLabel",
     (fromReload: Boolean) => updateLabel(fromReload)
   )
-  contentPanel.add(topBar, BorderLayout.NORTH)
-  contentPanel.add(scrollPane, BorderLayout.WEST)
+
+  private val topBarGBCs: GridBagConstraints = new GridBagConstraints();
+  topBarGBCs.gridx = 0
+  topBarGBCs.gridy = 0
+  topBarGBCs.weightx = 1
+  topBarGBCs.weighty = 0
+  topBarGBCs.fill = GridBagConstraints.HORIZONTAL
+  contentPanel.add(topBar, topBarGBCs)
+
+  private val panelGBCs: GridBagConstraints = new GridBagConstraints();
+  panelGBCs.gridx = 0
+  panelGBCs.gridy = 1
+  panelGBCs.weightx = 0
+  panelGBCs.weighty = 1
+  panelGBCs.fill = GridBagConstraints.BOTH
+  contentPanel.add(scrollPane, panelGBCs)
 
   def getContentPanel: JPanel = contentPanel
 
@@ -99,9 +112,9 @@ class RiddlToolWindowContent(
     if fromReload & confFile.exists() && confFile.isFile then
       parseASTFromConfFile(statePath)
 
-    if !getRiddlIdeaState.getState.riddlOutput.isBlank then {
+    if getRiddlIdeaState.getState.riddlOutput.nonEmpty then {
       outputLabel.setText(
-        s"<html>${getRiddlIdeaState.getState.riddlOutput}</html>"
+        s"<html>${formatParsedResults(getRiddlIdeaState.getState.riddlOutput)}</html>"
       )
     } else if confFile.exists() && confFile.isFile then {
       parseASTFromConfFile(statePath)

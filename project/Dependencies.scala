@@ -26,6 +26,7 @@ object Dep {
   val minimalJson = {
     "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources ()
   }
+  val fansi = "com.lihaoyi" %% "fansi" % "0.5.0"
 
   val basic: Seq[ModuleID] = Seq(minimalJson, scalactic, scalatest, scalacheck)
   val riddl: Seq[ModuleID] = Seq(

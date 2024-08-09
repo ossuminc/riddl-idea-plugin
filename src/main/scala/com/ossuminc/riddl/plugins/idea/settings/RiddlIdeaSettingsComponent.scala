@@ -8,10 +8,12 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel, JBTextField}
 import com.intellij.util.ui.{FormBuilder, JBDimension}
 import com.ossuminc.riddl.plugins.idea.RiddlIdeaPluginBundle
 import com.ossuminc.riddl.plugins.utils.{getProject, getRiddlIdeaState}
 
+import java.awt.ComponentOrientation
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 
@@ -39,6 +41,23 @@ class RiddlIdeaSettingsComponent {
     }
   })
 
+  private def createParamButton(
+      param: String
+  ): JBPanel[?] = {
+    val row = new JBPanel()
+    row.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT)
+    val checkBox = JBCheckBox()
+    row.add(checkBox)
+    val label = new JBLabel()
+    label.setText(param)
+    row.add(label)
+    val textField = new JBTextField()
+    row.add(textField)
+    row
+  }
+
+  val button: JBPanel[?] = createParamButton("show-times")
+
   private def riddlMainPanel = FormBuilder.createFormBuilder
     .addLabeledComponent(
       "Current conf file path:",
@@ -47,6 +66,7 @@ class RiddlIdeaSettingsComponent {
       false
     )
     .addComponentFillVertically(new JPanel(), 0)
+    .addComponent(button)
     .getPanel
 
   riddlMainPanel.setMinimumSize(JBDimension(750, 500))

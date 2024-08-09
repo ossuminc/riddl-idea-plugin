@@ -27,18 +27,18 @@ class RiddlIdeaSettings
 object RiddlIdeaSettings {
   class State {
     var riddlConfPath: String = ""
-    var riddlOutput: String = ""
+    var riddlOutput: Seq[String] = Seq()
 
     def setConfPath(newPath: String): Unit = {
       riddlConfPath = newPath
     }
 
     def appendOutput(newOutput: String): Unit = {
-      riddlOutput += newOutput + "<br>"
+      riddlOutput :+= newOutput
     }
 
     def clearOutput(): Unit = {
-      riddlOutput = ""
+      riddlOutput = Seq()
     }
   }
 

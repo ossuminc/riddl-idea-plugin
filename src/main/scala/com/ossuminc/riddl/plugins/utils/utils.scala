@@ -20,7 +20,11 @@ case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
   import com.ossuminc.riddl.plugins.utils.getRiddlIdeaState
 
   override def write(level: Logger.Lvl, s: String): Unit = {
-    getRiddlIdeaState.getState.appendOutput(highlight(level, s))
+    getRiddlIdeaState.getState.appendOutput(
+      fansi
+        .Str(highlight(level, s))
+        .plainText
+    )
   }
 }
 
@@ -32,6 +36,22 @@ package object utils {
     )
     updateToolWindow()
   }
+
+  def formatParsedResults(results: Seq[String]): String = results
+    .map { line =>
+      val lineArr = line.split("]", 2)
+      if lineArr.length > 1 then
+        (
+          lineArr.head.split("\\[")(1).map(char => char.toUpper),
+          lineArr(1)
+        )
+      else ("", line)
+    }
+    .groupBy(_._1)
+    .map { (kind, lines) =>
+      s"$kind output<br>---------<br>${lines.map(_._2.split("\\(0-9)").).mkString("<br>")}"
+    }
+    .mkString("<br><br>")
 
   def displayNotification(text: String): Unit = Notifications.Bus.notify(
     new Notification(

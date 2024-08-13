@@ -5,6 +5,9 @@ import com.intellij.openapi.actionSystem.{
   ActionPlaces,
   DefaultActionGroup
 }
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
@@ -95,7 +98,18 @@ class RiddlToolWindowContent(
   panelGBCs.fill = GridBagConstraints.BOTH
   contentPanel.add(scrollPane, panelGBCs)
 
-  def getContentPanel: JPanel = contentPanel
+  project.getMessageBus
+    .connect()
+    .subscribe(
+      FileDocumentManagerListener.TOPIC,
+      new FileDocumentManagerListener() {
+        override def beforeDocumentSaving(doc: Document): Unit = {
+          updateLabel(true)
+        }
+      }
+    )
+
+  def getContentPanel: JBPanel[Nothing] = contentPanel
 
   def updateLabel(fromReload: Boolean = false): Unit = {
     val statePath: String =

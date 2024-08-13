@@ -3,7 +3,7 @@
     <name>RIDDL4IDEA</name>
     <version>0.0.1</version>
     <vendor url="https://github.com/ossuminc">ossuminc</vendor>
-    <idea-version since-build="IU-242.20224.38" until-build="IU-242.*"/>
+    <idea-version since-build="IU-242.20224.159" until-build="IU-242.*"/>
 
     <description>A RIDDL language plugin for IntelliJ platform written in Scala and built with SBT</description>
 
@@ -17,7 +17,7 @@
                                  displayName="riddl Project Settings"/>
         <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
         <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory"
-                    id="riddl" anchor="bottom" icon="images/RIDDL-Logo.jpg"/>
+                    id="riddl" anchor="right" icon="images/RIDDL-Logo.jpg"/>
     </extensions>
 
     <actions>
@@ -29,7 +29,7 @@
         <action id="riddl_settings_open_window_action" text="Open Tool Window" description="Open Tool Window"
                 class="com.ossuminc.riddl.plugins.idea.actions.RiddlToolWindowSettingsOpenAction"
                 icon="AllIcons.Actions.InlayGear">
-            <add-to-group group-id="ToolbarRunGroup" anchor="last" />
+            <add-to-group group-id="ToolbarRunGroup" anchor="after" />
         </action>
     </actions>
 

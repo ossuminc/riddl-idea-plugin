@@ -1,6 +1,5 @@
 package com.ossuminc.riddl.plugins.idea.ui
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.{
   ActionManager,
   ActionPlaces,
@@ -11,90 +10,93 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.{JBLabel, JBPanel}
 import com.intellij.ui.content.ContentFactory
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.ossuminc.riddl.plugins.idea.actions.{
   RiddlToolWindowCompileAction,
   RiddlToolWindowSettingsOpenAction
 }
 import com.ossuminc.riddl.plugins.utils.{
+  formatParsedResults,
   getRiddlIdeaState,
   parseASTFromConfFile
 }
+import org.jdesktop.swingx.{HorizontalLayout, VerticalLayout}
 
-import java.awt.BorderLayout
+import java.awt.{GridBagConstraints, GridBagLayout}
 import java.io.File
-import java.util.concurrent.TimeUnit
-import javax.swing.BorderFactory
+import javax.swing.{JPanel, JScrollPane, ScrollPaneConstants, ScrollPaneLayout}
 
 class RiddlToolWindowFactory extends ToolWindowFactory {
-  private def invokeLater[T](body: => T): Unit =
-    ApplicationManager.getApplication.invokeLater(() => body)
-
-  private def schedulePeriodicTask(
-      delay: Long,
-      unit: TimeUnit,
-      parentDisposable: Disposable
-  )(body: => Unit): Unit = {
-    val task = AppExecutorUtil.getAppScheduledExecutorService
-      .scheduleWithFixedDelay(() => body, delay, delay, unit)
-    Disposer.register(
-      parentDisposable,
-      () => {
-        task.cancel(true)
-      }
-    )
-  }
-
   override def createToolWindowContent(
       project: Project,
       toolWindow: ToolWindow
-  ): Unit = {
-    val newTW = new RiddlToolWindowContent(toolWindow, project)
-    val content = ContentFactory
+  ): Unit = toolWindow.getContentManager.addContent(
+    ContentFactory
       .getInstance()
       .createContent(
-        newTW.getContentPanel,
+        new RiddlToolWindowContent(toolWindow, project).getContentPanel,
         "riddlc",
         false
       )
-    toolWindow.getContentManager.addContent(content)
-  }
+  )
 }
 
 class RiddlToolWindowContent(
     toolWindow: ToolWindow,
     project: Project
 ) {
+  private val notConfiguredMessage: String =
+    "riddlc: project's .conf file not configured in settings"
+
+  private val contentPanel: JBPanel[?] = new JBPanel()
+  contentPanel.setLayout(VerticalLayout())
+  contentPanel.setLayout(GridBagLayout())
+
+  private val outputLabel: JBLabel = new JBLabel()
+  outputLabel.setText(notConfiguredMessage)
+
+  private val scrollPane = new JScrollPane(
+    outputLabel,
+    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+  )
+  scrollPane.setLayout(ScrollPaneLayout())
+
   private val topBar: SimpleToolWindowPanel =
-    new SimpleToolWindowPanel(false, false)
+    new SimpleToolWindowPanel(true, false)
+  topBar.setLayout(HorizontalLayout())
   private val actionGroup = new DefaultActionGroup("ToolbarRunGroup", false)
   actionGroup.add(new RiddlToolWindowCompileAction)
   actionGroup.add(new RiddlToolWindowSettingsOpenAction)
-  private val actionToolbar =
-    ActionManager
-      .getInstance()
-      .createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, true)
+
+  private val actionToolbar = ActionManager
+    .getInstance()
+    .createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, true)
+  actionToolbar.setTargetComponent(topBar)
   topBar.setToolbar(actionToolbar.getComponent)
-
-  private val contentPanel: JBPanel[Nothing] = new JBPanel()
-
-  private val outputLabel: JBLabel = new JBLabel()
-
-  updateLabel()
 
   contentPanel.putClientProperty(
     "updateLabel",
     (fromReload: Boolean) => updateLabel(fromReload)
   )
 
-  contentPanel.setLayout(new BorderLayout(0, 20))
-  contentPanel.setBorder(BorderFactory.createEmptyBorder(40, 0, 0, 0))
-  contentPanel.add(outputLabel, BorderLayout.CENTER)
-  contentPanel.add(topBar, BorderLayout.NORTH)
+  private val topBarGBCs: GridBagConstraints = new GridBagConstraints();
+  topBarGBCs.gridx = 0
+  topBarGBCs.gridy = 0
+  topBarGBCs.weightx = 1
+  topBarGBCs.weighty = 0
+  topBarGBCs.fill = GridBagConstraints.HORIZONTAL
+  contentPanel.add(topBar, topBarGBCs)
+
+  private val panelGBCs: GridBagConstraints = new GridBagConstraints();
+  panelGBCs.gridx = 0
+  panelGBCs.gridy = 1
+  panelGBCs.weightx = 0
+  panelGBCs.weighty = 1
+  panelGBCs.fill = GridBagConstraints.BOTH
+  contentPanel.add(scrollPane, panelGBCs)
 
   project.getMessageBus
     .connect()
@@ -115,9 +117,7 @@ class RiddlToolWindowContent(
       else ""
 
     if statePath == null || statePath.isBlank then {
-      outputLabel.setText(
-        "riddlc: project's .conf file not configured in settings"
-      )
+      outputLabel.setText(notConfiguredMessage)
       return
     }
 
@@ -126,9 +126,9 @@ class RiddlToolWindowContent(
     if fromReload & confFile.exists() && confFile.isFile then
       parseASTFromConfFile(statePath)
 
-    if !getRiddlIdeaState.getState.riddlOutput.isBlank then {
+    if getRiddlIdeaState.getState.riddlOutput.nonEmpty then {
       outputLabel.setText(
-        s"<html>${getRiddlIdeaState.getState.riddlOutput}</html>"
+        s"<html>${formatParsedResults(getRiddlIdeaState.getState.riddlOutput)}</html>"
       )
     } else if confFile.exists() && confFile.isFile then {
       parseASTFromConfFile(statePath)
@@ -138,5 +138,6 @@ class RiddlToolWindowContent(
           "<br>riddlc: project's .conf file not found, please configure in setting</html>"
       )
     }
+
   }
 }

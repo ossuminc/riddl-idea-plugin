@@ -5,11 +5,11 @@ import com.intellij.openapi.actionSystem.{
   ActionPlaces,
   DefaultActionGroup
 }
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.{JBLabel, JBPanel}
 import com.intellij.ui.content.ContentFactory
@@ -18,6 +18,7 @@ import com.ossuminc.riddl.plugins.idea.actions.{
   RiddlToolWindowSettingsOpenAction
 }
 import com.ossuminc.riddl.plugins.utils.{
+  createGBCs,
   formatParsedResults,
   getRiddlIdeaState,
   parseASTFromConfFile
@@ -26,7 +27,7 @@ import org.jdesktop.swingx.{HorizontalLayout, VerticalLayout}
 
 import java.awt.{GridBagConstraints, GridBagLayout}
 import java.io.File
-import javax.swing.{JPanel, JScrollPane, ScrollPaneConstants, ScrollPaneLayout}
+import javax.swing.{JScrollPane, ScrollPaneConstants, ScrollPaneLayout}
 
 class RiddlToolWindowFactory extends ToolWindowFactory {
   override def createToolWindowContent(
@@ -82,34 +83,27 @@ class RiddlToolWindowContent(
     (fromReload: Boolean) => updateLabel(fromReload)
   )
 
-  private val topBarGBCs: GridBagConstraints = new GridBagConstraints();
-  topBarGBCs.gridx = 0
-  topBarGBCs.gridy = 0
-  topBarGBCs.weightx = 1
-  topBarGBCs.weighty = 0
-  topBarGBCs.fill = GridBagConstraints.HORIZONTAL
-  contentPanel.add(topBar, topBarGBCs)
-
-  private val panelGBCs: GridBagConstraints = new GridBagConstraints();
-  panelGBCs.gridx = 0
-  panelGBCs.gridy = 1
-  panelGBCs.weightx = 0
-  panelGBCs.weighty = 1
-  panelGBCs.fill = GridBagConstraints.BOTH
-  contentPanel.add(scrollPane, panelGBCs)
+  contentPanel.add(
+    topBar,
+    createGBCs(0, 0, 1, 0, GridBagConstraints.HORIZONTAL)
+  )
+  contentPanel.add(scrollPane, createGBCs(0, 1, 0, 1, GridBagConstraints.BOTH))
 
   project.getMessageBus
     .connect()
     .subscribe(
-      FileDocumentManagerListener.TOPIC,
-      new FileDocumentManagerListener() {
-        override def beforeDocumentSaving(doc: Document): Unit = {
-          updateLabel(true)
+      VirtualFileManager.VFS_CHANGES,
+      new BulkFileListener {
+        override def after(events: java.util.List[? <: VFileEvent]): Unit = {
+          if getRiddlIdeaState.getState.autoCompileOnSave then {
+            getRiddlIdeaState.getState.clearOutput()
+            updateLabel()
+          }
         }
       }
     )
 
-  def getContentPanel: JBPanel[Nothing] = contentPanel
+  def getContentPanel: JBPanel[?] = contentPanel
 
   def updateLabel(fromReload: Boolean = false): Unit = {
     val statePath: String =
@@ -123,21 +117,16 @@ class RiddlToolWindowContent(
 
     val confFile = File(statePath)
 
-    if fromReload & confFile.exists() && confFile.isFile then
-      parseASTFromConfFile(statePath)
-
-    if getRiddlIdeaState.getState.riddlOutput.nonEmpty then {
+    if getRiddlIdeaState.getState.riddlOutput.nonEmpty then
       outputLabel.setText(
-        s"<html>${formatParsedResults(getRiddlIdeaState.getState.riddlOutput)}</html>"
+        s"<html>$formatParsedResults</html>"
       )
-    } else if confFile.exists() && confFile.isFile then {
+    else if fromReload || (confFile.exists() && confFile.isFile) then
       parseASTFromConfFile(statePath)
-    } else {
+    else
       outputLabel.setText(
         s"<html>File: " + statePath +
           "<br>riddlc: project's .conf file not found, please configure in setting</html>"
       )
-    }
-
   }
 }

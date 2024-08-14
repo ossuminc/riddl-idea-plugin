@@ -19,7 +19,7 @@ lazy val riddlIdeaPlugin: Project = Root(
     With.coverage(90),
     With.aliases
   )
-  .enablePlugins(KotlinPlugin)
+  .enablePlugins(KotlinPlugin, JavaAppPackaging)
   .settings(
     kotlinVersion := "2.0.0",
     kotlincJvmTarget := "22",

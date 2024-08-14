@@ -8,12 +8,12 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel, JBTextField}
-import com.intellij.util.ui.{FormBuilder, JBDimension}
+import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
+import com.intellij.util.ui.FormBuilder
 import com.ossuminc.riddl.plugins.idea.RiddlIdeaPluginBundle
 import com.ossuminc.riddl.plugins.utils.{getProject, getRiddlIdeaState}
 
-import java.awt.ComponentOrientation
+import java.awt.event.{ItemEvent, ItemListener}
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 
@@ -26,6 +26,14 @@ class ConfCondition extends Condition[VirtualFile] {
 
 class RiddlIdeaSettingsComponent {
   private val confFileTextField = new TextFieldWithBrowseButton()
+  private val autoCompileRow = new JBPanel()
+  private val autoCompileCheckBox = JBCheckBox()
+  private val autoCompileLabel = new JBLabel()
+
+  autoCompileCheckBox.doClick()
+  autoCompileCheckBox.addItemListener((e: ItemEvent) =>
+    getRiddlIdeaState.getState.toggleAutoCompile()
+  )
 
   confFileTextField.setText(
     if getRiddlIdeaState != null && !getRiddlIdeaState.getState.riddlConfPath.isBlank
@@ -41,22 +49,22 @@ class RiddlIdeaSettingsComponent {
     }
   })
 
-  private def createParamButton(
-      param: String
-  ): JBPanel[?] = {
-    val row = new JBPanel()
-    row.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT)
-    val checkBox = JBCheckBox()
-    row.add(checkBox)
-    val label = new JBLabel()
-    label.setText(param)
-    row.add(label)
-    val textField = new JBTextField()
-    row.add(textField)
-    row
-  }
+  // private def createParamButton(
+  //    param: String
+  // ): JBPanel[?] = {
+  //  val row = new JBPanel()
+  //  row.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT)
+  //  val checkBox = JBCheckBox()
+  //  row.add(checkBox)
+  //  val label = new JBLabel()
+  //  label.setText(param)
+  //  row.add(label)
+  //  val textField = new JBTextField()
+  //  row.add(textField)
+  //  row
+  // }
 
-  val button: JBPanel[?] = createParamButton("show-times")
+  // val button: JBPanel[?] = createParamButton("show-times")
 
   private def riddlMainPanel = FormBuilder.createFormBuilder
     .addLabeledComponent(
@@ -66,11 +74,13 @@ class RiddlIdeaSettingsComponent {
       false
     )
     .addComponentFillVertically(new JPanel(), 0)
-    .addComponent(button)
+    .addLabeledComponent(
+      "Automatically re-compile on save",
+      autoCompileCheckBox
+    )
+    .addComponentFillVertically(new JPanel(), 0)
     .getPanel
-
-  riddlMainPanel.setMinimumSize(JBDimension(750, 500))
-
+  
   private val fileDescriptor: FileChooserDescriptor =
     FileChooserDescriptorFactory
       .createSingleFileDescriptor()

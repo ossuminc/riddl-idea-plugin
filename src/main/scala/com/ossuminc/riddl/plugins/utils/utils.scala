@@ -13,6 +13,7 @@ import com.ossuminc.riddl.plugins.idea.settings.{
 }
 import com.ossuminc.riddl.utils.Logger
 
+import java.awt.GridBagConstraints
 import scala.jdk.CollectionConverters.*
 
 case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
@@ -37,7 +38,7 @@ package object utils {
     updateToolWindow()
   }
 
-  def formatParsedResults(results: Seq[String]): String = results
+  def formatParsedResults: String = getRiddlIdeaState.getState.riddlOutput
     .map { line =>
       val lineArr = line.split("]", 2)
       if lineArr.length > 1 then
@@ -49,7 +50,7 @@ package object utils {
     }
     .groupBy(_._1)
     .map { (kind, lines) =>
-      s"$kind output<br>---------<br>${lines.map(_._2.split("\\(0-9)").).mkString("<br>")}"
+      s"$kind output<br>---------<br>${lines.map(_._2).mkString("<br>")}"
     }
     .mkString("<br><br>")
 
@@ -85,4 +86,20 @@ package object utils {
     application.getService(
       classOf[RiddlIdeaSettings]
     )
+
+  def createGBCs(
+      gridX: Int,
+      gridY: Int,
+      weightX: Int,
+      wightY: Int,
+      fill: Int
+  ): GridBagConstraints = {
+    val newGBCs = new GridBagConstraints()
+    newGBCs.gridx = gridX
+    newGBCs.gridy = gridY
+    newGBCs.weightx = weightX
+    newGBCs.weighty = wightY
+    newGBCs.fill = fill
+    newGBCs
+  }
 }

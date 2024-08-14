@@ -29,7 +29,7 @@
         <action id="riddl_settings_open_window_action" text="Open Tool Window" description="Open Tool Window"
                 class="com.ossuminc.riddl.plugins.idea.actions.RiddlToolWindowSettingsOpenAction"
                 icon="AllIcons.Actions.InlayGear">
-            <add-to-group group-id="ToolbarRunGroup" anchor="after" />
+            <add-to-group group-id="ToolbarRunGroup" anchor="after" relative-to-action="compile_riddl_action"/>
         </action>
     </actions>
 

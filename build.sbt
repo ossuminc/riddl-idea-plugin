@@ -40,5 +40,6 @@ lazy val riddlIdeaPlugin: Project = Root(
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     Test / unmanagedResourceDirectories += baseDirectory.value / "testResources",
     runIDE / javaOptions += "-Didea.http.proxy.port=5432,-DurlSchemes=http://localhost",
-    unmanagedBase := baseDirectory.value / "lib"
+    unmanagedBase := baseDirectory.value / "lib",
+    packageMethod := PackagingMethod.Standalone()
   )

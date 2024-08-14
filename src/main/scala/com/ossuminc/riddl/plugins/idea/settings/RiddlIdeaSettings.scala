@@ -28,6 +28,7 @@ object RiddlIdeaSettings {
   class State {
     var riddlConfPath: String = ""
     var riddlOutput: Seq[String] = Seq()
+    var autoCompileOnSave: Boolean = true
 
     def setConfPath(newPath: String): Unit = {
       riddlConfPath = newPath
@@ -40,6 +41,8 @@ object RiddlIdeaSettings {
     def clearOutput(): Unit = {
       riddlOutput = Seq()
     }
+
+    def toggleAutoCompile() = autoCompileOnSave = !autoCompileOnSave
   }
 
   def getInstance: RiddlIdeaSettings = getRiddlIdeaState

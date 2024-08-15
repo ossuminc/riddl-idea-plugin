@@ -10,7 +10,7 @@ object V {
   val scalatest = "3.2.18"
   val scopt = "4.1.0"
   val slf4j = "2.0.4"
-  val ossumRiddl = "0.47.0"
+  val ossumRiddl = "0.48.0-8-9aefadb2"
 }
 
 object Dep {

@@ -17,12 +17,11 @@ import com.ossuminc.riddl.plugins.idea.actions.{
   RiddlToolWindowCompileAction,
   RiddlToolWindowSettingsOpenAction
 }
-import com.ossuminc.riddl.plugins.utils.{
-  createGBCs,
+import com.ossuminc.riddl.plugins.utils.parsing.{
   formatParsedResults,
-  getRiddlIdeaState,
   parseASTFromConfFile
 }
+import com.ossuminc.riddl.plugins.utils.{createGBCs, getRiddlIdeaState}
 import org.jdesktop.swingx.{HorizontalLayout, VerticalLayout}
 
 import java.awt.{GridBagConstraints, GridBagLayout}

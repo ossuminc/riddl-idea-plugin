@@ -6,12 +6,13 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
-import com.ossuminc.riddl.command.CommandPlugin
+import com.ossuminc.riddl.commands.Commands
+import com.ossuminc.riddl.language.{CommonOptions, Messages}
 import com.ossuminc.riddl.plugins.idea.settings.{
   RiddlIdeaSettings,
   RiddlIdeaSettingsConfigurable
 }
-import com.ossuminc.riddl.utils.Logger
+import com.ossuminc.riddl.utils.{Logger, Logging, StringLogger}
 
 import java.awt.GridBagConstraints
 import scala.jdk.CollectionConverters.*
@@ -20,7 +21,7 @@ case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
     extends Logger {
   import com.ossuminc.riddl.plugins.utils.getRiddlIdeaState
 
-  override def write(level: Logger.Lvl, s: String): Unit = {
+  override def write(level: Logging.Lvl, s: String): Unit = {
     getRiddlIdeaState.getState.appendOutput(
       fansi
         .Str(highlight(level, s))
@@ -30,29 +31,39 @@ case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
 }
 
 package object utils {
-  def parseASTFromConfFile(confFile: String): Unit = {
-    CommandPlugin.runMain(
-      Array("from", confFile, "hugo"),
-      RiddlIdeaPluginLogger()
-    )
-    updateToolWindow()
-  }
+  object parsing {
+    def parseASTFromConfFile(confFile: String): Unit = {
+      val result = Commands.runCommandWithArgs(
+        "from",
+        Array(confFile),
+        StringLogger(),
+        CommonOptions(noANSIMessages = true)
+      )
+      getRiddlIdeaState.getState.clearOutput()
+      getRiddlIdeaState.getState.appendOutput(
+        if result.isRight then
+          "Success!! There were no errors on project compilation"
+        else result.left.getOrElse(Messages.empty).mkString
+      )
+      updateToolWindow()
+    }
 
-  def formatParsedResults: String = getRiddlIdeaState.getState.riddlOutput
-    .map { line =>
-      val lineArr = line.split("]", 2)
-      if lineArr.length > 1 then
-        (
-          lineArr.head.split("\\[")(1).map(char => char.toUpper),
-          lineArr(1)
-        )
-      else ("", line)
-    }
-    .groupBy(_._1)
-    .map { (kind, lines) =>
-      s"$kind output<br>---------<br>${lines.map(_._2).mkString("<br>")}"
-    }
-    .mkString("<br><br>")
+    def formatParsedResults: String = getRiddlIdeaState.getState.riddlOutput
+      .map { line =>
+        val lineArr = line.split("]", 2)
+        if lineArr.length > 1 then
+          (
+            lineArr.head.split("\\[")(1).map(char => char.toUpper),
+            lineArr(1)
+          )
+        else ("", line)
+      }
+      .groupBy(_._1)
+      .map { (kind, lines) =>
+        s"$kind output<br>---------<br>${lines.map(_._2).mkString("<br>")}"
+      }
+      .mkString("<br><br>")
+  }
 
   def displayNotification(text: String): Unit = Notifications.Bus.notify(
     new Notification(

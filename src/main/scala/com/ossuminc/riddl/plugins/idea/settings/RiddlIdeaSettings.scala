@@ -29,6 +29,7 @@ object RiddlIdeaSettings {
     var riddlConfPath: String = ""
     var riddlOutput: Seq[String] = Seq()
     var autoCompileOnSave: Boolean = true
+    var numToolWindows: Int = 1
 
     def setConfPath(newPath: String): Unit = {
       riddlConfPath = newPath
@@ -42,7 +43,9 @@ object RiddlIdeaSettings {
       riddlOutput = Seq()
     }
 
-    def toggleAutoCompile() = autoCompileOnSave = !autoCompileOnSave
+    def toggleAutoCompile(): Unit = autoCompileOnSave = !autoCompileOnSave
+
+    def newToolWindow(): Unit = numToolWindows += 1
   }
 
   def getInstance: RiddlIdeaSettings = getRiddlIdeaState

@@ -4,14 +4,15 @@ import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.{Project, ProjectManager}
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.content.Content
+import com.intellij.openapi.wm.{ToolWindow, ToolWindowManager}
+import com.intellij.ui.content.{Content, ContentManager}
 import com.ossuminc.riddl.command.CommandPlugin
+import com.ossuminc.riddl.language.{CommonOptions, Messages}
 import com.ossuminc.riddl.plugins.idea.settings.{
   RiddlIdeaSettings,
   RiddlIdeaSettingsConfigurable
 }
-import com.ossuminc.riddl.utils.Logger
+import com.ossuminc.riddl.utils.{Logger, StringLogger}
 
 import java.awt.GridBagConstraints
 import scala.jdk.CollectionConverters.*
@@ -30,12 +31,12 @@ case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
 }
 
 package object utils {
-  def parseASTFromConfFile(confFile: String): Unit = {
+  def parseASTFromConfFile(numWindow: Int, confFile: String): Unit = {
     CommandPlugin.runMain(
       Array("from", confFile, "hugo"),
       RiddlIdeaPluginLogger()
     )
-    updateToolWindow()
+    updateToolWindow(numWindow)
   }
 
   def formatParsedResults: String = getRiddlIdeaState.getState.riddlOutput
@@ -64,18 +65,28 @@ package object utils {
 
   val application: Application = ApplicationManager.getApplication
 
-  def getToolWindow: Content = ToolWindowManager
+  def getToolWindow: ToolWindow = ToolWindowManager
     .getInstance(
       getProject
     )
     .getToolWindow("riddl")
-    .getContentManager
+
+  def getToolWindowManager: ContentManager = getToolWindow.getContentManager
+
+  def getToolWindowContent: Content = getToolWindowManager
     .getContent(0)
 
-  def updateToolWindow(fromReload: Boolean = false): Unit =
-    getToolWindow.getComponent
-      .getClientProperty("updateLabel")
+  def updateToolWindow(numWindow: Int, fromReload: Boolean = false): Unit = {
+    println("finding" + numWindow)
+    getToolWindowContent.getComponent
+      .getClientProperty(s"updateLabel_$numWindow")
       .asInstanceOf[(fromReload: Boolean) => Unit](fromReload)
+  }
+
+  def createNewToolWindow(): Unit =
+    getToolWindowContent.getComponent
+      .getClientProperty("createToolWindow")
+      .asInstanceOf[() => Unit]()
 
   def openToolWindowSettings(): Unit = ShowSettingsUtil.getInstance
     .editConfigurable(getProject, new RiddlIdeaSettingsConfigurable)

@@ -14,13 +14,17 @@ import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.{JBLabel, JBPanel}
 import com.intellij.ui.content.ContentFactory
 import com.ossuminc.riddl.plugins.idea.actions.{
+  RiddlNewToolWindowAction,
   RiddlToolWindowCompileAction,
   RiddlToolWindowSettingsOpenAction
 }
 import com.ossuminc.riddl.plugins.utils.{
   createGBCs,
   formatParsedResults,
+  getProject,
   getRiddlIdeaState,
+  getToolWindow,
+  getToolWindowManager,
   parseASTFromConfFile
 }
 import org.jdesktop.swingx.{HorizontalLayout, VerticalLayout}
@@ -48,6 +52,8 @@ class RiddlToolWindowContent(
     toolWindow: ToolWindow,
     project: Project
 ) {
+  private val numWindow = getRiddlIdeaState.getState.numToolWindows
+
   private val notConfiguredMessage: String =
     "riddlc: project's .conf file not configured in settings"
 
@@ -69,6 +75,7 @@ class RiddlToolWindowContent(
     new SimpleToolWindowPanel(true, false)
   topBar.setLayout(HorizontalLayout())
   private val actionGroup = new DefaultActionGroup("ToolbarRunGroup", false)
+  actionGroup.add(new RiddlNewToolWindowAction)
   actionGroup.add(new RiddlToolWindowCompileAction)
   actionGroup.add(new RiddlToolWindowSettingsOpenAction)
 
@@ -78,9 +85,15 @@ class RiddlToolWindowContent(
   actionToolbar.setTargetComponent(topBar)
   topBar.setToolbar(actionToolbar.getComponent)
 
+  println("putting" + numWindow)
   contentPanel.putClientProperty(
-    "updateLabel",
+    s"updateLabel_$numWindow",
     (fromReload: Boolean) => updateLabel(fromReload)
+  )
+
+  contentPanel.putClientProperty(
+    "createToolWindow",
+    () => createToolWindow()
   )
 
   contentPanel.add(
@@ -122,11 +135,24 @@ class RiddlToolWindowContent(
         s"<html>$formatParsedResults</html>"
       )
     else if fromReload || (confFile.exists() && confFile.isFile) then
-      parseASTFromConfFile(statePath)
+      parseASTFromConfFile(numWindow, statePath)
     else
       outputLabel.setText(
         s"<html>File: " + statePath +
           "<br>riddlc: project's .conf file not found, please configure in setting</html>"
       )
+  }
+
+  def createToolWindow(): Unit = {
+    getRiddlIdeaState.getState.newToolWindow()
+    getToolWindowManager.addContent(
+      ContentFactory
+        .getInstance()
+        .createContent(
+          new RiddlToolWindowContent(getToolWindow, getProject).getContentPanel,
+          s"riddlc (${getRiddlIdeaState.getState.numToolWindows})",
+          false
+        )
+    )
   }
 }

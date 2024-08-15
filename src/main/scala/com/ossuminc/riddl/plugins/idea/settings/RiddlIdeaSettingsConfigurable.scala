@@ -6,6 +6,8 @@ import com.ossuminc.riddl.plugins.utils.{getRiddlIdeaState, updateToolWindow}
 import javax.swing.JComponent
 
 class RiddlIdeaSettingsConfigurable extends Configurable {
+  private val numWindow = getRiddlIdeaState.getState.numToolWindows
+
   val component: RiddlIdeaSettingsComponent = new RiddlIdeaSettingsComponent()
 
   override def getDisplayName: String = "RIDDL Project Settings"
@@ -24,7 +26,7 @@ class RiddlIdeaSettingsConfigurable extends Configurable {
       getRiddlIdeaState.getState.setConfPath(component.getConfFieldText)
       getRiddlIdeaState.getState.clearOutput()
 
-      updateToolWindow()
+      updateToolWindow(numWindow)
     }
   }
 }

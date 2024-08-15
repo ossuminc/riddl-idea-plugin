@@ -17,7 +17,8 @@ lazy val riddlIdeaPlugin: Project = Root(
     With.typical,
     With.build_info,
     With.coverage(90),
-    With.aliases
+    With.aliases,
+    With.riddl(forJS = false, "0.48.0")
   )
   .enablePlugins(KotlinPlugin, JavaAppPackaging)
   .settings(
@@ -27,7 +28,7 @@ lazy val riddlIdeaPlugin: Project = Root(
     buildInfoPackage := "com.ossuminc.riddl.plugins.idea",
     buildInfoObject := "RiddlIDEAPluginBuildInfo",
     description := "The plugin for supporting RIDDL in IntelliJ",
-    libraryDependencies ++= Dep.testing ++ Dep.basic ++ Dep.riddl :+ Dep.fansi,
+    libraryDependencies ++= Dep.testing ++ Dep.basic :+ Dep.fansi,
     Test / parallelExecution := false,
     scalaVersion := "3.4.2",
     ThisBuild / intellijPluginName := "RIDDL4IDEA",

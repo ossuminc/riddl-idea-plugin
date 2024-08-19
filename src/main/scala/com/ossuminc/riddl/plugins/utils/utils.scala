@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
 import com.ossuminc.riddl.commands.Commands
 import com.ossuminc.riddl.language.{CommonOptions, Messages}
+import com.ossuminc.riddl.passes.PassesResult
 import com.ossuminc.riddl.plugins.idea.settings.{
   RiddlIdeaSettings,
   RiddlIdeaSettingsConfigurable
@@ -15,6 +16,8 @@ import com.ossuminc.riddl.plugins.idea.settings.{
 import com.ossuminc.riddl.utils.{Logger, Logging, StringLogger}
 
 import java.awt.GridBagConstraints
+import java.io.File
+import java.nio.file.{Path, Paths}
 import scala.jdk.CollectionConverters.*
 
 case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
@@ -22,47 +25,50 @@ case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
   import com.ossuminc.riddl.plugins.utils.getRiddlIdeaState
 
   override def write(level: Logging.Lvl, s: String): Unit = {
-    getRiddlIdeaState.getState.appendOutput(
-      fansi
-        .Str(highlight(level, s))
-        .plainText
-    )
+    getRiddlIdeaState.getState.appendOutput(s)
   }
 }
 
 package object utils {
   object parsing {
     def parseASTFromConfFile(confFile: String): Unit = {
-      val result = Commands.runCommandWithArgs(
-        "from",
-        Array(confFile),
-        StringLogger(),
-        CommonOptions(noANSIMessages = true)
-      )
+      val result: Either[List[Messages.Message], PassesResult] =
+        Commands.runCommandWithArgs(
+          "from",
+          Array(
+            "from",
+            navigateFromCanonicalPath(
+              confFile
+            ),
+            "validate"
+          ),
+          StringLogger(),
+          CommonOptions(noANSIMessages = true, groupMessagesByKind = true)
+        )
+
       getRiddlIdeaState.getState.clearOutput()
-      getRiddlIdeaState.getState.appendOutput(
-        if result.isRight then
-          "Success!! There were no errors on project compilation"
-        else result.left.getOrElse(Messages.empty).mkString
-      )
+
+      result match {
+        case Right(result) =>
+          getRiddlIdeaState.getState.appendOutput(
+            s"Success!! There were no errors on project compilation<br>${result.messages.distinct.format
+                .replace("\n", "<br>")}"
+          )
+        case Left(messages) =>
+          println(s"""
+               |asdasda
+               |${messages.format}
+               |asdasda
+               |""".stripMargin)
+          getRiddlIdeaState.getState.appendOutput(
+            messages.distinct.format
+              .replace("\n", "<br>")
+              .replace(" ", "&nbsp;")
+          )
+      }
+
       updateToolWindow()
     }
-
-    def formatParsedResults: String = getRiddlIdeaState.getState.riddlOutput
-      .map { line =>
-        val lineArr = line.split("]", 2)
-        if lineArr.length > 1 then
-          (
-            lineArr.head.split("\\[")(1).map(char => char.toUpper),
-            lineArr(1)
-          )
-        else ("", line)
-      }
-      .groupBy(_._1)
-      .map { (kind, lines) =>
-        s"$kind output<br>---------<br>${lines.map(_._2).mkString("<br>")}"
-      }
-      .mkString("<br><br>")
   }
 
   def displayNotification(text: String): Unit = Notifications.Bus.notify(
@@ -112,5 +118,29 @@ package object utils {
     newGBCs.weighty = wightY
     newGBCs.fill = fill
     newGBCs
+  }
+
+  private def relativizeAbsolutePath(
+      filePath: String,
+      projectPath: String
+  ): String =
+    new File(projectPath).toURI
+      .relativize(new File(filePath).toURI)
+      .getPath
+
+  private def navigateFromCanonicalPath(
+      filePathStr: String
+  ) = {
+    val systemPath: Path =
+      Paths.get(System.getProperty("user.dir"))
+    val filePath: Path = Paths.get(filePathStr)
+
+    val maxLength =
+      math.min(systemPath.getNameCount, filePath.getNameCount)
+    val divergence: Int = (0 until maxLength)
+      .find(i => systemPath.getName(i) != filePath.getName(i))
+      .getOrElse(maxLength)
+
+    systemPath.relativize(filePath).toString
   }
 }

@@ -17,10 +17,7 @@ import com.ossuminc.riddl.plugins.idea.actions.{
   RiddlToolWindowCompileAction,
   RiddlToolWindowSettingsOpenAction
 }
-import com.ossuminc.riddl.plugins.utils.parsing.{
-  formatParsedResults,
-  parseASTFromConfFile
-}
+import com.ossuminc.riddl.plugins.utils.parsing.parseASTFromConfFile
 import com.ossuminc.riddl.plugins.utils.{createGBCs, getRiddlIdeaState}
 import org.jdesktop.swingx.{HorizontalLayout, VerticalLayout}
 
@@ -116,9 +113,10 @@ class RiddlToolWindowContent(
 
     val confFile = File(statePath)
 
-    if getRiddlIdeaState.getState.riddlOutput.nonEmpty then
+    val output = getRiddlIdeaState.getState.riddlOutput
+    if output.nonEmpty then
       outputLabel.setText(
-        s"<html>$formatParsedResults</html>"
+        s"<html>${output.mkString("<br>")}</html>"
       )
     else if fromReload || (confFile.exists() && confFile.isFile) then
       parseASTFromConfFile(statePath)

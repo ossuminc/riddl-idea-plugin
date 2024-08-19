@@ -18,7 +18,7 @@ lazy val riddlIdeaPlugin: Project = Root(
     With.build_info,
     With.coverage(90),
     With.aliases,
-    With.riddl(forJS = false, "0.48.0")
+    With.riddl(forJS = false, "0.48.1-2-be4bc2f0")
   )
   .enablePlugins(KotlinPlugin, JavaAppPackaging)
   .settings(

@@ -130,9 +130,10 @@ class RiddlToolWindowContent(
 
     val confFile = File(statePath)
 
-    if getRiddlIdeaState.getState.riddlOutput.nonEmpty then
+    val output = getRiddlIdeaState.getState.riddlOutput
+    if output.nonEmpty then
       outputLabel.setText(
-        s"<html>$formatParsedResults</html>"
+        s"<html>${output.mkString("<br>")}</html>"
       )
     else if fromReload || (confFile.exists() && confFile.isFile) then
       parseASTFromConfFile(numWindow, statePath)

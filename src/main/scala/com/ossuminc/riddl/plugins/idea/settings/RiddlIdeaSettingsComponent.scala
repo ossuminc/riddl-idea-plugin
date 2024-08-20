@@ -80,7 +80,7 @@ class RiddlIdeaSettingsComponent {
     )
     .addComponentFillVertically(new JPanel(), 0)
     .getPanel
-  
+
   private val fileDescriptor: FileChooserDescriptor =
     FileChooserDescriptorFactory
       .createSingleFileDescriptor()

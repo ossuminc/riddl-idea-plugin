@@ -21,7 +21,9 @@ class RiddlIdeaSettingsConfigurable extends Configurable {
 
   override def apply(): Unit = {
     if getRiddlIdeaState != null then {
-      getRiddlIdeaState.getState.setConfPath(component.getConfFieldText)
+      getRiddlIdeaState.getState.setConfPath(
+        component.getConfFieldText
+      )
       getRiddlIdeaState.getState.clearOutput()
 
       updateToolWindow()

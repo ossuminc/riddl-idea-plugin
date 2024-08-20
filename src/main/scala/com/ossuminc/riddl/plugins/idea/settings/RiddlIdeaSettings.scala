@@ -42,7 +42,7 @@ object RiddlIdeaSettings {
       riddlOutput = Seq()
     }
 
-    def toggleAutoCompile() = autoCompileOnSave = !autoCompileOnSave
+    def toggleAutoCompile(): Unit = autoCompileOnSave = !autoCompileOnSave
   }
 
   def getInstance: RiddlIdeaSettings = getRiddlIdeaState

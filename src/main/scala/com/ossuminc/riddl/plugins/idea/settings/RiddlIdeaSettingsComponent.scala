@@ -24,20 +24,22 @@ class ConfCondition extends Condition[VirtualFile] {
   }
 }
 
-class RiddlIdeaSettingsComponent {
+class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val confFileTextField = new TextFieldWithBrowseButton()
   private val autoCompileRow = new JBPanel()
   private val autoCompileCheckBox = JBCheckBox()
   private val autoCompileLabel = new JBLabel()
 
+  private val state = getRiddlIdeaState(numToolWindow)
+
   autoCompileCheckBox.doClick()
   autoCompileCheckBox.addItemListener((e: ItemEvent) =>
-    getRiddlIdeaState.getState.toggleAutoCompile()
+    state.toggleAutoCompile()
   )
 
   confFileTextField.setText(
-    if getRiddlIdeaState != null && !getRiddlIdeaState.getState.riddlConfPath.isBlank
-    then getRiddlIdeaState.getState.riddlConfPath
+    if state != null && !state.riddlConfPath.isBlank
+    then state.riddlConfPath
     else getProject.getBasePath
   )
 

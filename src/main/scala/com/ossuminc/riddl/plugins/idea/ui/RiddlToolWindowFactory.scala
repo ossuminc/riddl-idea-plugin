@@ -18,14 +18,13 @@ import com.ossuminc.riddl.plugins.idea.actions.{
   RiddlToolWindowCompileAction,
   RiddlToolWindowSettingsOpenAction
 }
+import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.plugins.utils.parsing.parseASTFromConfFile
 import com.ossuminc.riddl.plugins.utils.{
   createGBCs,
-  formatParsedResults,
+  getContentManager,
   getProject,
-  getRiddlIdeaState,
-  getToolWindow,
-  getToolWindowManager,
-  parseASTFromConfFile
+  getRiddlIdeaStates
 }
 import org.jdesktop.swingx.{HorizontalLayout, VerticalLayout}
 
@@ -34,25 +33,33 @@ import java.io.File
 import javax.swing.{JScrollPane, ScrollPaneConstants, ScrollPaneLayout}
 
 class RiddlToolWindowFactory extends ToolWindowFactory {
+  private val settings = new RiddlIdeaSettings()
+
   override def createToolWindowContent(
       project: Project,
       toolWindow: ToolWindow
-  ): Unit = toolWindow.getContentManager.addContent(
-    ContentFactory
-      .getInstance()
-      .createContent(
-        new RiddlToolWindowContent(toolWindow, project).getContentPanel,
-        "riddlc",
-        false
-      )
-  )
+  ): Unit = {
+    getRiddlIdeaStates.newState()
+    toolWindow.getContentManager.addContent(
+      ContentFactory
+        .getInstance()
+        .createContent(
+          new RiddlToolWindowContent(toolWindow, project).getContentPanel,
+          "riddlc",
+          false
+        )
+    )
+  }
 }
 
 class RiddlToolWindowContent(
     toolWindow: ToolWindow,
     project: Project
 ) {
-  private val numWindow = getRiddlIdeaState.getState.numToolWindows
+  private val numWindow: Int = getRiddlIdeaStates.length
+
+  private val state: RiddlIdeaSettings.State =
+    getRiddlIdeaStates.getState(numWindow)
 
   private val notConfiguredMessage: String =
     "riddlc: project's .conf file not configured in settings"
@@ -85,7 +92,6 @@ class RiddlToolWindowContent(
   actionToolbar.setTargetComponent(topBar)
   topBar.setToolbar(actionToolbar.getComponent)
 
-  println("putting" + numWindow)
   contentPanel.putClientProperty(
     s"updateLabel_$numWindow",
     (fromReload: Boolean) => updateLabel(fromReload)
@@ -108,8 +114,8 @@ class RiddlToolWindowContent(
       VirtualFileManager.VFS_CHANGES,
       new BulkFileListener {
         override def after(events: java.util.List[? <: VFileEvent]): Unit = {
-          if getRiddlIdeaState.getState.autoCompileOnSave then {
-            getRiddlIdeaState.getState.clearOutput()
+          if state.autoCompileOnSave then {
+            state.clearOutput()
             updateLabel()
           }
         }
@@ -120,7 +126,7 @@ class RiddlToolWindowContent(
 
   def updateLabel(fromReload: Boolean = false): Unit = {
     val statePath: String =
-      if getRiddlIdeaState != null then getRiddlIdeaState.getState.riddlConfPath
+      if state != null then state.riddlConfPath
       else ""
 
     if statePath == null || statePath.isBlank then {
@@ -130,7 +136,7 @@ class RiddlToolWindowContent(
 
     val confFile = File(statePath)
 
-    val output = getRiddlIdeaState.getState.riddlOutput
+    val output = state.riddlOutput
     if output.nonEmpty then
       outputLabel.setText(
         s"<html>${output.mkString("<br>")}</html>"
@@ -145,13 +151,16 @@ class RiddlToolWindowContent(
   }
 
   def createToolWindow(): Unit = {
-    getRiddlIdeaState.getState.newToolWindow()
-    getToolWindowManager.addContent(
+    getRiddlIdeaStates.newState()
+    getContentManager.addContent(
       ContentFactory
         .getInstance()
         .createContent(
-          new RiddlToolWindowContent(getToolWindow, getProject).getContentPanel,
-          s"riddlc (${getRiddlIdeaState.getState.numToolWindows})",
+          new RiddlToolWindowContent(
+            toolWindow,
+            getProject
+          ).getContentPanel,
+          s"riddlc (${getRiddlIdeaStates.length})",
           false
         )
     )

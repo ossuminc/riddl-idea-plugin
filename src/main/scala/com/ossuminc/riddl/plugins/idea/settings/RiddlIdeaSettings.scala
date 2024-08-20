@@ -1,35 +1,46 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.components.{PersistentStateComponent, RoamingType, State, Storage, StoragePathMacros}
-import com.ossuminc.riddl.plugins.utils.getRiddlIdeaState
+import com.intellij.openapi.components.{PersistentStateComponent, RoamingType, State, Storage}
 
 @State(
   name = "RiddlIdeaSettings",
   storages = Array(
     new Storage(
-      value = StoragePathMacros.MODULE_FILE,
-      roamingType = RoamingType.DISABLED
+      "RiddlIdeaSettings.xml"
     )
   )
 )
 
 class RiddlIdeaSettings
-    extends PersistentStateComponent[RiddlIdeaSettings.State] {
-  private var state = new RiddlIdeaSettings.State()
+    extends PersistentStateComponent[RiddlIdeaSettings.States] {
+  private val states = new RiddlIdeaSettings.States()
 
-  override def getState: RiddlIdeaSettings.State = state
+  override def getState: RiddlIdeaSettings.States = states
 
-  override def loadState(newState: RiddlIdeaSettings.State): Unit = {
-    state = newState
+  override def loadState(newStates: RiddlIdeaSettings.States): Unit = {
+    states.load(newStates)
   }
 }
 
 object RiddlIdeaSettings {
-  class State {
+  class States {
+    private var states: Seq[State] = Seq()
+
+    def load(newStates: States): Unit = states = newStates.states
+
+    def getState(numToolWindow: Int): State = if states.isEmpty then State(0)
+      else states(numToolWindow - 1)
+
+    def newState(): Unit = states :+= State(states.length + 1)
+
+    def length: Int = states.length
+  }
+
+  class State(numToolWindow: Int) {
     var riddlConfPath: String = ""
     var riddlOutput: Seq[String] = Seq()
     var autoCompileOnSave: Boolean = true
-    var numToolWindows: Int = 1
+
 
     def setConfPath(newPath: String): Unit = {
       riddlConfPath = newPath
@@ -44,9 +55,5 @@ object RiddlIdeaSettings {
     }
 
     def toggleAutoCompile(): Unit = autoCompileOnSave = !autoCompileOnSave
-
-    def newToolWindow(): Unit = numToolWindows += 1
   }
-
-  def getInstance: RiddlIdeaSettings = getRiddlIdeaState
 }

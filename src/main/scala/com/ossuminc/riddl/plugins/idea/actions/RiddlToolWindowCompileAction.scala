@@ -7,18 +7,17 @@ import com.intellij.openapi.actionSystem.{
   AnActionEvent
 }
 import com.intellij.openapi.project.DumbAware
-import com.ossuminc.riddl.plugins.utils.{
+import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.updateToolWindow
+import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.{
   getRiddlIdeaState,
-  getRiddlIdeaStates,
-  updateToolWindow
+  getRiddlIdeaStates
 }
 import org.jetbrains.annotations.NotNull
 
 class RiddlToolWindowCompileAction extends AnAction with DumbAware {
   private val numWindow = getRiddlIdeaStates.length
 
-  @Override
-  def actionPerformed(@NotNull anActionEvent: AnActionEvent): Unit = {
+  override def actionPerformed(@NotNull anActionEvent: AnActionEvent): Unit = {
     getRiddlIdeaState(numWindow).clearOutput()
     updateToolWindow(numWindow, true)
   }

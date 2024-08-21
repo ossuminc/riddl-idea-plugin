@@ -17,7 +17,7 @@
                                  displayName="riddl Project Settings"/>
         <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
         <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory"
-                    id="riddl" anchor="right" icon="images/RIDDL-Logo.jpg"/>
+                    id="riddl" anchor="right" icon="images/RIDDL-Logo.jpg" canCloseContents="true"/>
     </extensions>
 
     <actions>

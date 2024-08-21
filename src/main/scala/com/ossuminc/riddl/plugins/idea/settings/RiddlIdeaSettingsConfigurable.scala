@@ -1,20 +1,18 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.options.Configurable
-import com.ossuminc.riddl.plugins.utils.{
-  getRiddlIdeaState,
-  getRiddlIdeaStates,
-  updateToolWindow
-}
+import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
+import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.*
 
 import javax.swing.JComponent
 
 class RiddlIdeaSettingsConfigurable extends Configurable {
   private val numWindow = getRiddlIdeaStates.length
 
-  val component: RiddlIdeaSettingsComponent = new RiddlIdeaSettingsComponent(
-    numWindow
-  )
+  private val component: RiddlIdeaSettingsComponent =
+    new RiddlIdeaSettingsComponent(
+      numWindow
+    )
 
   override def getDisplayName: String = "RIDDL Project Settings"
 

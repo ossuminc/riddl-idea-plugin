@@ -19,13 +19,11 @@ import com.ossuminc.riddl.plugins.idea.actions.{
   RiddlToolWindowSettingsOpenAction
 }
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.plugins.utils.parsing.parseASTFromConfFile
-import com.ossuminc.riddl.plugins.utils.{
-  createGBCs,
-  getContentManager,
-  getProject,
-  getRiddlIdeaStates
-}
+import com.ossuminc.riddl.plugins.utils.ParsingUtils.parseASTFromConfFile
+import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.ToolWindowExt
+import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.*
+import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
+import com.ossuminc.riddl.plugins.utils.CreationUtils.*
 import org.jdesktop.swingx.{HorizontalLayout, VerticalLayout}
 
 import java.awt.{GridBagConstraints, GridBagLayout}
@@ -40,15 +38,7 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
       toolWindow: ToolWindow
   ): Unit = {
     getRiddlIdeaStates.newState()
-    toolWindow.getContentManager.addContent(
-      ContentFactory
-        .getInstance()
-        .createContent(
-          new RiddlToolWindowContent(toolWindow, project).getContentPanel,
-          "riddlc",
-          false
-        )
-    )
+    toolWindow.createAndAddContentToTW(project)
   }
 }
 
@@ -124,7 +114,7 @@ class RiddlToolWindowContent(
 
   def getContentPanel: JBPanel[?] = contentPanel
 
-  def updateLabel(fromReload: Boolean = false): Unit = {
+  private def updateLabel(fromReload: Boolean = false): Unit = {
     val statePath: String =
       if state != null then state.riddlConfPath
       else ""
@@ -152,17 +142,18 @@ class RiddlToolWindowContent(
 
   def createToolWindow(): Unit = {
     getRiddlIdeaStates.newState()
-    getContentManager.addContent(
-      ContentFactory
-        .getInstance()
-        .createContent(
-          new RiddlToolWindowContent(
-            toolWindow,
-            getProject
-          ).getContentPanel,
-          s"riddlc (${getRiddlIdeaStates.length})",
-          false
-        )
-    )
+
+    val content = ContentFactory
+      .getInstance()
+      .createContent(
+        new RiddlToolWindowContent(
+          toolWindow,
+          getProject
+        ).getContentPanel,
+        s"riddlc (${getRiddlIdeaStates.length})",
+        false
+      )
+    content.setCloseable(true)
+    getContentManager.addContent(content)
   }
 }

@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.{JBLabel, JBPanel}
-import com.intellij.ui.content.ContentFactory
 import com.ossuminc.riddl.plugins.idea.actions.{
   RiddlNewToolWindowAction,
   RiddlToolWindowCompileAction,
@@ -20,7 +19,6 @@ import com.ossuminc.riddl.plugins.idea.actions.{
 }
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.utils.ParsingUtils.parseASTFromConfFile
-import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.ToolWindowExt
 import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.*
 import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.utils.CreationUtils.*
@@ -38,15 +36,15 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
       toolWindow: ToolWindow
   ): Unit = {
     getRiddlIdeaStates.newState()
-    toolWindow.createAndAddContentToTW(project)
+    toolWindow.createAndAddContentToTW(project, 0, true)
   }
 }
 
 class RiddlToolWindowContent(
     toolWindow: ToolWindow,
-    project: Project
+    project: Project,
+    numWindow: Int
 ) {
-  private val numWindow: Int = getRiddlIdeaStates.length
 
   private val state: RiddlIdeaSettings.State =
     getRiddlIdeaStates.getState(numWindow)
@@ -74,7 +72,10 @@ class RiddlToolWindowContent(
   private val actionGroup = new DefaultActionGroup("ToolbarRunGroup", false)
   actionGroup.add(new RiddlNewToolWindowAction)
   actionGroup.add(new RiddlToolWindowCompileAction)
-  actionGroup.add(new RiddlToolWindowSettingsOpenAction)
+  private val openAction: RiddlToolWindowSettingsOpenAction =
+    new RiddlToolWindowSettingsOpenAction
+  openAction.setWindowNum(numWindow)
+  actionGroup.add(openAction)
 
   private val actionToolbar = ActionManager
     .getInstance()
@@ -141,19 +142,9 @@ class RiddlToolWindowContent(
   }
 
   def createToolWindow(): Unit = {
-    getRiddlIdeaStates.newState()
-
-    val content = ContentFactory
-      .getInstance()
-      .createContent(
-        new RiddlToolWindowContent(
-          toolWindow,
-          getProject
-        ).getContentPanel,
-        s"riddlc (${getRiddlIdeaStates.length})",
-        false
-      )
-    content.setCloseable(true)
-    getContentManager.addContent(content)
+    toolWindow.createAndAddContentToTW(
+      project,
+      getRiddlIdeaStates.newState()
+    )
   }
 }

@@ -35,7 +35,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   autoCompileCheckBox.addItemListener((e: ItemEvent) =>
     state.toggleAutoCompile()
   )
-  println(state.riddlConfPath)
+
   confFileTextField.setText(
     if state != null && !state.riddlConfPath.isBlank then state.riddlConfPath
     else getProject.getBasePath

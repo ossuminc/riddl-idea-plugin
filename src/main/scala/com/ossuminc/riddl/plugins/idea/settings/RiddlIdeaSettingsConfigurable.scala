@@ -6,9 +6,7 @@ import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.*
 
 import javax.swing.JComponent
 
-class RiddlIdeaSettingsConfigurable extends Configurable {
-  private val numWindow = getRiddlIdeaStates.length
-
+class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
   private val component: RiddlIdeaSettingsComponent =
     new RiddlIdeaSettingsComponent(
       numWindow

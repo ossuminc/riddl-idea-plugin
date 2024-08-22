@@ -1,6 +1,8 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.components.{PersistentStateComponent, RoamingType, State, Storage}
+import com.intellij.openapi.components.{PersistentStateComponent, State, Storage}
+
+import scala.collection.SortedMap
 
 @State(
   name = "RiddlIdeaSettings",
@@ -24,23 +26,38 @@ class RiddlIdeaSettings
 
 object RiddlIdeaSettings {
   class States {
-    private var states: Seq[State] = Seq()
+    private var states: SortedMap[Int, State] = SortedMap()
 
     def load(newStates: States): Unit = states = newStates.states
 
-    def getState(numToolWindow: Int): State = if states.isEmpty then State(0)
-      else states(numToolWindow - 1)
+    def getStates: SortedMap[Int, State] = states
+    def getState(numToolWindow: Int): State = states(numToolWindow)
 
-    def newState(): Unit = states :+= State(states.length + 1)
+    def length: Int = states.size
 
-    def length: Int = states.length
+    def newState(): Int = {
+      val newWindowNum: Int = if length == 0 then 0
+        else if length == 1 then 2
+        else (2 to length).find(num => !states.keys.iterator.contains(num)).getOrElse(length + 1)
+
+      states = states.concat(Map(newWindowNum -> State(newWindowNum)))
+      newWindowNum
+    }
+
+    def removeState(numWindow: Int): Unit =
+      states = SortedMap[Int, State]() ++ states.view.filterKeys(_ != numWindow).toMap
+
+    def nextNonConfiguredWindow: Int = states
+      .map(state => state._1 -> state._2.areSettingsConfigured)
+      .filter(state => state._2).keys.toSeq.headOption.getOrElse(-1)
+
   }
 
   class State(numToolWindow: Int) {
     var riddlConfPath: String = ""
     var riddlOutput: Seq[String] = Seq()
     var autoCompileOnSave: Boolean = true
-
+    var areSettingsConfigured: Boolean = false
 
     def setConfPath(newPath: String): Unit = {
       riddlConfPath = newPath

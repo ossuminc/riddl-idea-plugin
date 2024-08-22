@@ -15,11 +15,12 @@ import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.{
 import org.jetbrains.annotations.NotNull
 
 class RiddlToolWindowCompileAction extends AnAction with DumbAware {
-  override def actionPerformed(@NotNull anActionEvent: AnActionEvent): Unit = {
-    val numWindow = getRiddlIdeaStates.length
+  private var windowNum: Int = -1
+  def setWindowNum(num: Int): Unit = windowNum = num
 
-    getRiddlIdeaState(numWindow).clearOutput()
-    updateToolWindow(numWindow, true)
+  override def actionPerformed(@NotNull anActionEvent: AnActionEvent): Unit = {
+    getRiddlIdeaState(windowNum).clearOutput()
+    updateToolWindow(windowNum, true)
   }
 
   override def update(e: AnActionEvent): Unit = {

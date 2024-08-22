@@ -1,13 +1,12 @@
 package com.ossuminc.riddl.plugins.utils
 
-import com.intellij.openapi.ide.CopyPasteManager.ContentChangedListener
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowManager}
 import com.intellij.ui.content.{
   Content,
   ContentFactory,
+  ContentManager,
   ContentManagerEvent,
   ContentManagerListener
 }
@@ -40,35 +39,57 @@ object ToolWindowUtils {
         )
       content.setCloseable(!isLockable)
 
-      ToolWindowManager
-        .getInstance(project)
-        .getToolWindow("riddl")
-        .getContentManager
-        .addContentManagerListener(
-          new ContentManagerListener() {
-            private val windowDisplayName = windowName
-            private val windowNum = windowNumber
-
-            override def contentRemoved(event: ContentManagerEvent): Unit = {
-              if event.getContent.getDisplayName == windowDisplayName then {
-                getRiddlIdeaStates.removeState(windowNumber)
-                ToolWindowManager
-                  .getInstance(project)
-                  .getToolWindow("riddl")
-                  .getContentManager
-                  .removeContentManagerListener(this)
-                println(getRiddlIdeaStates.getStates.keys)
-              }
-            }
-          }
-        )
+      listenForContentRemoval(project, windowName, windowNumber)
 
       getContentManager.addContent(content)
     }
+
+    private def listenForContentRemoval(
+        project: Project,
+        windowDisplayName: String,
+        windowNum: Int
+    ): Unit = ToolWindowManager
+      .getInstance(project)
+      .getToolWindow("riddl")
+      .getContentManager
+      .addContentManagerListener(
+        new ContentManagerListener() {
+          private val windowName: String = windowDisplayName
+          private val windowNumber: Int = windowNum
+
+          override def contentRemoved(event: ContentManagerEvent): Unit = {
+            val content = event.getContent
+            if event.getContent.getDisplayName == windowName then {
+              content.getComponent.putClientProperty(
+                s"updateLabel_$windowNumber",
+                null
+              )
+              ToolWindowManager
+                .getInstance(project)
+                .getToolWindow("riddl")
+                .getContentManager
+                .removeContentManagerListener(this)
+              getRiddlIdeaStates.removeState(windowNumber)
+            }
+          }
+        }
+      )
   }
 
+  def getContentManager: ContentManager = ToolWindowManager
+    .getInstance(
+      getProject
+    )
+    .getToolWindow("riddl")
+    .getContentManager
+
   private def getToolWindowContent(numWindow: Int): Content =
-    getContentManager.getContent(numWindow - 1)
+    getContentManager.getContent(
+      getRiddlIdeaStates.getStates.keys.zipWithIndex
+        .find((num, index) => num == numWindow)
+        .map(_._2)
+        .getOrElse(-1)
+    )
 
   def updateToolWindow(numWindow: Int, fromReload: Boolean = false): Unit = {
     getToolWindowContent(numWindow).getComponent
@@ -77,7 +98,7 @@ object ToolWindowUtils {
   }
 
   def createNewToolWindow(): Unit =
-    getToolWindowContent(1).getComponent
+    getToolWindowContent(0).getComponent
       .getClientProperty("createToolWindow")
       .asInstanceOf[() => Unit]()
 

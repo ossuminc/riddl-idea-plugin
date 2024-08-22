@@ -26,11 +26,11 @@ class RiddlIdeaSettings
 
 object RiddlIdeaSettings {
   class States {
-    private var states: SortedMap[Int, State] = SortedMap()
+    private var states: Map[Int, State] = Map()
 
     def load(newStates: States): Unit = states = newStates.states
 
-    def getStates: SortedMap[Int, State] = states
+    def getStates: Map[Int, State] = states
     def getState(numToolWindow: Int): State = states(numToolWindow)
 
     def length: Int = states.size
@@ -38,26 +38,25 @@ object RiddlIdeaSettings {
     def newState(): Int = {
       val newWindowNum: Int = if length == 0 then 0
         else if length == 1 then 2
-        else (2 to length).find(num => !states.keys.iterator.contains(num)).getOrElse(length + 1)
+        else {
+          val windowNumIterators = {
+            states.keys.iterator.toSeq.sortBy((num: Int) => num)
+          }
+          (2 to length).find(num => !windowNumIterators.contains(num)).getOrElse(length + 1)
+        }
 
       states = states.concat(Map(newWindowNum -> State(newWindowNum)))
       newWindowNum
     }
 
     def removeState(numWindow: Int): Unit =
-      states = SortedMap[Int, State]() ++ states.view.filterKeys(_ != numWindow).toMap
-
-    def nextNonConfiguredWindow: Int = states
-      .map(state => state._1 -> state._2.areSettingsConfigured)
-      .filter(state => state._2).keys.toSeq.headOption.getOrElse(-1)
-
+      states = Map[Int, State]() ++ states.view.filterKeys(_ != numWindow).toMap
   }
 
   class State(numToolWindow: Int) {
     var riddlConfPath: String = ""
     var riddlOutput: Seq[String] = Seq()
     var autoCompileOnSave: Boolean = true
-    var areSettingsConfigured: Boolean = false
 
     def setConfPath(newPath: String): Unit = {
       riddlConfPath = newPath

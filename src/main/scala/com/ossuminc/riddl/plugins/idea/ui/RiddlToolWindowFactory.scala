@@ -69,9 +69,12 @@ class RiddlToolWindowContent(
   private val topBar: SimpleToolWindowPanel =
     new SimpleToolWindowPanel(true, false)
   topBar.setLayout(HorizontalLayout())
+
   private val actionGroup = new DefaultActionGroup("ToolbarRunGroup", false)
   actionGroup.add(new RiddlNewToolWindowAction)
-  actionGroup.add(new RiddlToolWindowCompileAction)
+  private val compileAction = new RiddlToolWindowCompileAction()
+  compileAction.setWindowNum(numWindow)
+  actionGroup.add(compileAction)
   private val openAction: RiddlToolWindowSettingsOpenAction =
     new RiddlToolWindowSettingsOpenAction
   openAction.setWindowNum(numWindow)

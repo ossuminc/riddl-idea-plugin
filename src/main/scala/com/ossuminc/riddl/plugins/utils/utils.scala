@@ -24,12 +24,6 @@ package object utils {
 
     def getProject: Project = ProjectManager.getInstance().getOpenProjects.head
 
-    def getContentManager: ContentManager = ToolWindowManager
-      .getInstance(
-        getProject
-      )
-      .getToolWindow("riddl")
-      .getContentManager
 
     def getRiddlIdeaStates: RiddlIdeaSettings.States =
       application

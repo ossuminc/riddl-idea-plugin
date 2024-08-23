@@ -22,9 +22,7 @@ object ToolWindowUtils {
         windowNumber: Int,
         isLockable: Boolean = false
     ): Unit = {
-      val windowName: String =
-        if windowNumber == 0 then "riddlc"
-        else s"riddlc ($windowNumber)"
+      val windowName: String = genWindowName(windowNumber)
 
       val content = ContentFactory
         .getInstance()
@@ -38,7 +36,6 @@ object ToolWindowUtils {
           isLockable
         )
       content.setCloseable(!isLockable)
-
       listenForContentRemoval(project, windowName, windowNumber)
 
       getContentManager.addContent(content)
@@ -48,35 +45,35 @@ object ToolWindowUtils {
         project: Project,
         windowDisplayName: String,
         windowNum: Int
-    ): Unit = ToolWindowManager
-      .getInstance(project)
-      .getToolWindow("riddl")
-      .getContentManager
-      .addContentManagerListener(
+    ): Unit = {
+      val riddlContentManager = ToolWindowManager
+        .getInstance(project)
+        .getToolWindow("riddl")
+        .getContentManager
+
+      riddlContentManager.addContentManagerListener(
         new ContentManagerListener() {
           private val windowName: String = windowDisplayName
           private val windowNumber: Int = windowNum
 
           override def contentRemoved(event: ContentManagerEvent): Unit = {
             val content = event.getContent
+
             if event.getContent.getDisplayName == windowName then {
               content.getComponent.putClientProperty(
                 s"updateLabel_$windowNumber",
                 null
               )
-              ToolWindowManager
-                .getInstance(project)
-                .getToolWindow("riddl")
-                .getContentManager
-                .removeContentManagerListener(this)
+              riddlContentManager.removeContentManagerListener(this)
               getRiddlIdeaStates.removeState(windowNumber)
             }
           }
         }
       )
+    }
   }
 
-  def getContentManager: ContentManager = ToolWindowManager
+  private def getContentManager: ContentManager = ToolWindowManager
     .getInstance(
       getProject
     )
@@ -84,18 +81,12 @@ object ToolWindowUtils {
     .getContentManager
 
   private def getToolWindowContent(numWindow: Int): Content =
-    getContentManager.getContent(
-      getRiddlIdeaStates.getStates.keys.zipWithIndex
-        .find((num, index) => num == numWindow)
-        .map(_._2)
-        .getOrElse(-1)
-    )
+    getContentManager.findContent(genWindowName(numWindow))
 
-  def updateToolWindow(numWindow: Int, fromReload: Boolean = false): Unit = {
+  def updateToolWindow(numWindow: Int, fromReload: Boolean = false): Unit =
     getToolWindowContent(numWindow).getComponent
       .getClientProperty(s"updateLabel_$numWindow")
       .asInstanceOf[(fromReload: Boolean) => Unit](fromReload)
-  }
 
   def createNewToolWindow(): Unit =
     getToolWindowContent(0).getComponent

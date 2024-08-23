@@ -10,7 +10,6 @@ import com.intellij.openapi.project.DumbAware
 import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.updateToolWindow
 import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.{
   getRiddlIdeaState,
-  getRiddlIdeaStates
 }
 import org.jetbrains.annotations.NotNull
 
@@ -30,4 +29,5 @@ class RiddlToolWindowCompileAction extends AnAction with DumbAware {
 
   override def getActionUpdateThread: ActionUpdateThread =
     ActionUpdateThread.BGT
+
 }

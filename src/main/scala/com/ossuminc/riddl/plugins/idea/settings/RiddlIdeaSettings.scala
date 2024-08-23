@@ -2,8 +2,6 @@ package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.components.{PersistentStateComponent, State, Storage}
 
-import scala.collection.SortedMap
-
 @State(
   name = "RiddlIdeaSettings",
   storages = Array(
@@ -38,19 +36,17 @@ object RiddlIdeaSettings {
     def newState(): Int = {
       val newWindowNum: Int = if length == 0 then 0
         else if length == 1 then 2
-        else {
-          val windowNumIterators = {
-            states.keys.iterator.toSeq.sortBy((num: Int) => num)
-          }
-          (2 to length).find(num => !windowNumIterators.contains(num)).getOrElse(length + 1)
-        }
+        else (2 to length)
+          .find(num => !states.keys.iterator.toSeq.contains(num))
+          .getOrElse(length + 1)
 
       states = states.concat(Map(newWindowNum -> State(newWindowNum)))
+      println(states)
       newWindowNum
     }
 
     def removeState(numWindow: Int): Unit =
-      states = Map[Int, State]() ++ states.view.filterKeys(_ != numWindow).toMap
+      states = states.view.filterKeys(_ != numWindow).toMap
   }
 
   class State(numToolWindow: Int) {

@@ -3,8 +3,6 @@ package com.ossuminc.riddl.plugins
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.project.{Project, ProjectManager}
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.content.ContentManager
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 
 import java.awt.GridBagConstraints
@@ -23,7 +21,6 @@ package object utils {
     val application: Application = ApplicationManager.getApplication
 
     def getProject: Project = ProjectManager.getInstance().getOpenProjects.head
-
 
     def getRiddlIdeaStates: RiddlIdeaSettings.States =
       application
@@ -63,4 +60,8 @@ package object utils {
       NotificationType.INFORMATION
     )
   )
+
+  def genWindowName(windowNumber: Int): String =
+    if windowNumber == 0 then "riddlc"
+    else s"riddlc ($windowNumber)"
 }

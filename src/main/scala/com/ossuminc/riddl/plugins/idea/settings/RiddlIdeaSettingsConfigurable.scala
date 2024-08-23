@@ -24,12 +24,13 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
     } else false
 
   override def apply(): Unit = {
-    val window = getRiddlIdeaState(numWindow)
-    window.setConfPath(
+    val windowState = getRiddlIdeaState(numWindow)
+    windowState.setConfPath(
       component.getConfFieldText
     )
-    window.clearOutput()
-
+    windowState.clearOutput()
+    
+    println(numWindow)
     updateToolWindow(numWindow)
   }
 }

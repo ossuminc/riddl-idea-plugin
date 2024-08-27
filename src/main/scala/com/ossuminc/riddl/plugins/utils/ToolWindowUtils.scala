@@ -13,6 +13,9 @@ import com.intellij.ui.content.{
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable
 import com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowContent
 
+import java.awt.event.{MouseAdapter, MouseEvent}
+import javax.swing.{JMenuItem, JOptionPane, JPopupMenu}
+
 object ToolWindowUtils {
   import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
 
@@ -73,7 +76,7 @@ object ToolWindowUtils {
     }
   }
 
-  private def getContentManager: ContentManager = ToolWindowManager
+  def getContentManager: ContentManager = ToolWindowManager
     .getInstance(
       getProject
     )

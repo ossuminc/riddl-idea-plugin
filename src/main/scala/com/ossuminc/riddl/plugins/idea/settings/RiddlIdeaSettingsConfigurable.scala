@@ -29,8 +29,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
       component.getConfFieldText
     )
     windowState.clearOutput()
-    
-    println(numWindow)
+
     updateToolWindow(numWindow)
   }
 }

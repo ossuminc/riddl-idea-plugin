@@ -1,12 +1,16 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.options.Configurable
-import com.ossuminc.riddl.plugins.utils.{getRiddlIdeaState, updateToolWindow}
+import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
+import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.*
 
 import javax.swing.JComponent
 
-class RiddlIdeaSettingsConfigurable extends Configurable {
-  val component: RiddlIdeaSettingsComponent = new RiddlIdeaSettingsComponent()
+class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
+  private val component: RiddlIdeaSettingsComponent =
+    new RiddlIdeaSettingsComponent(
+      numWindow
+    )
 
   override def getDisplayName: String = "RIDDL Project Settings"
 
@@ -20,13 +24,13 @@ class RiddlIdeaSettingsConfigurable extends Configurable {
     } else false
 
   override def apply(): Unit = {
-    if getRiddlIdeaState != null then {
-      getRiddlIdeaState.getState.setConfPath(
-        component.getConfFieldText
-      )
-      getRiddlIdeaState.getState.clearOutput()
-
-      updateToolWindow()
-    }
+    val windowState = getRiddlIdeaState(numWindow)
+    windowState.setConfPath(
+      component.getConfFieldText
+    )
+    windowState.clearOutput()
+    
+    println(numWindow)
+    updateToolWindow(numWindow)
   }
 }

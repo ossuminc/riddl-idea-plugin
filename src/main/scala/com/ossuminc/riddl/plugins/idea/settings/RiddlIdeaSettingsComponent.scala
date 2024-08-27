@@ -10,8 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
 import com.intellij.util.ui.FormBuilder
-import com.ossuminc.riddl.plugins.idea.RiddlIdeaPluginBundle
-import com.ossuminc.riddl.plugins.utils.{getProject, getRiddlIdeaState}
+import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
 
 import java.awt.event.{ItemEvent, ItemListener}
 import javax.swing.JPanel
@@ -24,20 +23,21 @@ class ConfCondition extends Condition[VirtualFile] {
   }
 }
 
-class RiddlIdeaSettingsComponent {
+class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val confFileTextField = new TextFieldWithBrowseButton()
   private val autoCompileRow = new JBPanel()
   private val autoCompileCheckBox = JBCheckBox()
   private val autoCompileLabel = new JBLabel()
 
+  private val state = getRiddlIdeaState(numToolWindow)
+
   autoCompileCheckBox.doClick()
   autoCompileCheckBox.addItemListener((e: ItemEvent) =>
-    getRiddlIdeaState.getState.toggleAutoCompile()
+    state.toggleAutoCompile()
   )
 
   confFileTextField.setText(
-    if getRiddlIdeaState != null && !getRiddlIdeaState.getState.riddlConfPath.isBlank
-    then getRiddlIdeaState.getState.riddlConfPath
+    if state != null && !state.riddlConfPath.isBlank then state.riddlConfPath
     else getProject.getBasePath
   )
 
@@ -87,9 +87,7 @@ class RiddlIdeaSettingsComponent {
       .withFileFilter(ConfCondition())
 
   confFileTextField.addBrowseFolderListener(
-    RiddlIdeaPluginBundle.message(
-      "riddl.plugins.idea.choose.conf.path"
-    ),
+    "Browse for Path",
     null,
     getProject,
     fileDescriptor

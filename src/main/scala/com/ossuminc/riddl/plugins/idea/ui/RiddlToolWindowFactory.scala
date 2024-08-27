@@ -12,13 +12,16 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.{JBLabel, JBPanel}
-import com.intellij.ui.content.ContentFactory
 import com.ossuminc.riddl.plugins.idea.actions.{
+  RiddlNewToolWindowAction,
   RiddlToolWindowCompileAction,
   RiddlToolWindowSettingsOpenAction
 }
-import com.ossuminc.riddl.plugins.utils.parsing.parseASTFromConfFile
-import com.ossuminc.riddl.plugins.utils.{createGBCs, getRiddlIdeaState}
+import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.plugins.utils.ParsingUtils.parseASTFromConfFile
+import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.*
+import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
+import com.ossuminc.riddl.plugins.utils.CreationUtils.*
 import org.jdesktop.swingx.{HorizontalLayout, VerticalLayout}
 
 import java.awt.{GridBagConstraints, GridBagLayout}
@@ -26,24 +29,26 @@ import java.io.File
 import javax.swing.{JScrollPane, ScrollPaneConstants, ScrollPaneLayout}
 
 class RiddlToolWindowFactory extends ToolWindowFactory {
+  private val settings = new RiddlIdeaSettings()
+
   override def createToolWindowContent(
       project: Project,
       toolWindow: ToolWindow
-  ): Unit = toolWindow.getContentManager.addContent(
-    ContentFactory
-      .getInstance()
-      .createContent(
-        new RiddlToolWindowContent(toolWindow, project).getContentPanel,
-        "riddlc",
-        false
-      )
-  )
+  ): Unit = {
+    getRiddlIdeaStates.newState()
+    toolWindow.createAndAddContentToTW(project, 0, true)
+  }
 }
 
 class RiddlToolWindowContent(
     toolWindow: ToolWindow,
-    project: Project
+    project: Project,
+    numWindow: Int
 ) {
+
+  private val state: RiddlIdeaSettings.State =
+    getRiddlIdeaStates.getState(numWindow)
+
   private val notConfiguredMessage: String =
     "riddlc: project's .conf file not configured in settings"
 
@@ -64,9 +69,16 @@ class RiddlToolWindowContent(
   private val topBar: SimpleToolWindowPanel =
     new SimpleToolWindowPanel(true, false)
   topBar.setLayout(HorizontalLayout())
+
   private val actionGroup = new DefaultActionGroup("ToolbarRunGroup", false)
-  actionGroup.add(new RiddlToolWindowCompileAction)
-  actionGroup.add(new RiddlToolWindowSettingsOpenAction)
+  actionGroup.add(new RiddlNewToolWindowAction)
+  private val compileAction = new RiddlToolWindowCompileAction()
+  compileAction.setWindowNum(numWindow)
+  actionGroup.add(compileAction)
+  private val openAction: RiddlToolWindowSettingsOpenAction =
+    new RiddlToolWindowSettingsOpenAction
+  openAction.setWindowNum(numWindow)
+  actionGroup.add(openAction)
 
   private val actionToolbar = ActionManager
     .getInstance()
@@ -75,8 +87,13 @@ class RiddlToolWindowContent(
   topBar.setToolbar(actionToolbar.getComponent)
 
   contentPanel.putClientProperty(
-    "updateLabel",
+    s"updateLabel_$numWindow",
     (fromReload: Boolean) => updateLabel(fromReload)
+  )
+
+  contentPanel.putClientProperty(
+    "createToolWindow",
+    () => createToolWindow()
   )
 
   contentPanel.add(
@@ -91,8 +108,8 @@ class RiddlToolWindowContent(
       VirtualFileManager.VFS_CHANGES,
       new BulkFileListener {
         override def after(events: java.util.List[? <: VFileEvent]): Unit = {
-          if getRiddlIdeaState.getState.autoCompileOnSave then {
-            getRiddlIdeaState.getState.clearOutput()
+          if state.autoCompileOnSave then {
+            state.clearOutput()
             updateLabel()
           }
         }
@@ -101,9 +118,9 @@ class RiddlToolWindowContent(
 
   def getContentPanel: JBPanel[?] = contentPanel
 
-  def updateLabel(fromReload: Boolean = false): Unit = {
+  private def updateLabel(fromReload: Boolean = false): Unit = {
     val statePath: String =
-      if getRiddlIdeaState != null then getRiddlIdeaState.getState.riddlConfPath
+      if state != null then state.riddlConfPath
       else ""
 
     if statePath == null || statePath.isBlank then {
@@ -113,17 +130,24 @@ class RiddlToolWindowContent(
 
     val confFile = File(statePath)
 
-    val output = getRiddlIdeaState.getState.riddlOutput
+    val output = state.riddlOutput
     if output.nonEmpty then
       outputLabel.setText(
         s"<html>${output.mkString("<br>")}</html>"
       )
     else if fromReload || (confFile.exists() && confFile.isFile) then
-      parseASTFromConfFile(statePath)
+      parseASTFromConfFile(numWindow, statePath)
     else
       outputLabel.setText(
         s"<html>File: " + statePath +
           "<br>riddlc: project's .conf file not found, please configure in setting</html>"
       )
+  }
+
+  def createToolWindow(): Unit = {
+    toolWindow.createAndAddContentToTW(
+      project,
+      getRiddlIdeaStates.newState()
+    )
   }
 }

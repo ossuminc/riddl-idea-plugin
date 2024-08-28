@@ -41,7 +41,6 @@ object RiddlIdeaSettings {
           .getOrElse(length + 1)
 
       states = states.concat(Map(newWindowNum -> State(newWindowNum)))
-      println(states)
       newWindowNum
     }
 

@@ -3,6 +3,7 @@ package com.ossuminc.riddl.plugins.idea.ui
 import com.intellij.openapi.actionSystem.{
   ActionManager,
   ActionPlaces,
+  ActionToolbar,
   DefaultActionGroup
 }
 import com.intellij.openapi.project.Project
@@ -22,11 +23,18 @@ import com.ossuminc.riddl.plugins.utils.ParsingUtils.parseASTFromConfFile
 import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.*
 import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.utils.CreationUtils.*
-import org.jdesktop.swingx.{HorizontalLayout, VerticalLayout}
+import org.jdesktop.swingx.VerticalLayout
 
 import java.awt.{GridBagConstraints, GridBagLayout}
 import java.io.File
-import javax.swing.{JScrollPane, ScrollPaneConstants, ScrollPaneLayout}
+import javax.swing.border.EmptyBorder
+import javax.swing.plaf.metal.MetalBorders.ScrollPaneBorder
+import javax.swing.{
+  JScrollPane,
+  ScrollPaneConstants,
+  ScrollPaneLayout,
+  SwingConstants
+}
 
 class RiddlToolWindowFactory extends ToolWindowFactory {
   private val settings = new RiddlIdeaSettings()
@@ -50,14 +58,15 @@ class RiddlToolWindowContent(
     getRiddlIdeaStates.getState(numWindow)
 
   private val notConfiguredMessage: String =
-    "riddlc: project's .conf file not configured in settings"
+    "project's .conf file not configured in settings"
 
   private val contentPanel: JBPanel[?] = new JBPanel()
-  contentPanel.setLayout(VerticalLayout())
   contentPanel.setLayout(GridBagLayout())
 
   private val outputLabel: JBLabel = new JBLabel()
   outputLabel.setText(notConfiguredMessage)
+  outputLabel.setVerticalAlignment(SwingConstants.TOP)
+  outputLabel.setBorder(new EmptyBorder(10, 10, 10, 10))
 
   private val scrollPane = new JScrollPane(
     outputLabel,
@@ -66,13 +75,15 @@ class RiddlToolWindowContent(
   )
   scrollPane.setLayout(ScrollPaneLayout())
 
-  private val topBar: SimpleToolWindowPanel =
-    new SimpleToolWindowPanel(true, false)
-  topBar.setLayout(HorizontalLayout())
+  private val sideBar: SimpleToolWindowPanel =
+    new SimpleToolWindowPanel(false, false)
+  sideBar.setLayout(VerticalLayout())
 
-  private val actionGroup = new DefaultActionGroup("ToolbarRunGroup", false)
+  private val actionGroup: DefaultActionGroup =
+    new DefaultActionGroup("ToolWindowToolbarRunGroup", false)
   actionGroup.add(new RiddlNewToolWindowAction)
-  private val compileAction = new RiddlToolWindowCompileAction()
+  private val compileAction: RiddlToolWindowCompileAction =
+    new RiddlToolWindowCompileAction()
   compileAction.setWindowNum(numWindow)
   actionGroup.add(compileAction)
   private val openAction: RiddlToolWindowSettingsOpenAction =
@@ -80,11 +91,11 @@ class RiddlToolWindowContent(
   openAction.setWindowNum(numWindow)
   actionGroup.add(openAction)
 
-  private val actionToolbar = ActionManager
+  private val actionToolbar: ActionToolbar = ActionManager
     .getInstance()
-    .createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, true)
-  actionToolbar.setTargetComponent(topBar)
-  topBar.setToolbar(actionToolbar.getComponent)
+    .createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, false)
+  actionToolbar.setTargetComponent(sideBar)
+  sideBar.setToolbar(actionToolbar.getComponent)
 
   contentPanel.putClientProperty(
     s"updateLabel_$numWindow",
@@ -97,10 +108,10 @@ class RiddlToolWindowContent(
   )
 
   contentPanel.add(
-    topBar,
-    createGBCs(0, 0, 1, 0, GridBagConstraints.HORIZONTAL)
+    sideBar,
+    createGBCs(0, 0, 0, 0, GridBagConstraints.VERTICAL)
   )
-  contentPanel.add(scrollPane, createGBCs(0, 1, 0, 1, GridBagConstraints.BOTH))
+  contentPanel.add(scrollPane, createGBCs(1, 0, 1, 1, GridBagConstraints.BOTH))
 
   project.getMessageBus
     .connect()
@@ -139,8 +150,8 @@ class RiddlToolWindowContent(
       parseASTFromConfFile(numWindow, statePath)
     else
       outputLabel.setText(
-        s"<html>File: " + statePath +
-          "<br>riddlc: project's .conf file not found, please configure in setting</html>"
+        s"<html>This window's .conf file:<br>&emsp;" + statePath +
+          "<br>was not found, please configure in setting</html>"
       )
   }
 

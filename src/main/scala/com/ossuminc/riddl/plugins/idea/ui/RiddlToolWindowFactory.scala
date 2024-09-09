@@ -28,6 +28,7 @@ import org.jdesktop.swingx.VerticalLayout
 import java.awt.{GridBagConstraints, GridBagLayout}
 import java.io.File
 import javax.swing.border.EmptyBorder
+import javax.swing.plaf.metal.MetalBorders.ScrollPaneBorder
 import javax.swing.{
   JScrollPane,
   ScrollPaneConstants,
@@ -36,6 +37,8 @@ import javax.swing.{
 }
 
 class RiddlToolWindowFactory extends ToolWindowFactory {
+  private val settings = new RiddlIdeaSettings()
+
   override def createToolWindowContent(
       project: Project,
       toolWindow: ToolWindow
@@ -56,12 +59,28 @@ class RiddlToolWindowContent(
 
   private val notConfiguredMessage: String =
     "project's .conf file not configured in settings"
+
+  private val contentPanel: JBPanel[?] = new JBPanel()
+  contentPanel.setLayout(GridBagLayout())
+
+  private val outputLabel: JBLabel = new JBLabel()
+  outputLabel.setText(notConfiguredMessage)
+  outputLabel.setVerticalAlignment(SwingConstants.TOP)
+  outputLabel.setBorder(new EmptyBorder(10, 10, 10, 10))
+
+  private val scrollPane = new JScrollPane(
+    outputLabel,
+    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+  )
+  scrollPane.setLayout(ScrollPaneLayout())
+
   private val sideBar: SimpleToolWindowPanel =
     new SimpleToolWindowPanel(false, false)
   sideBar.setLayout(VerticalLayout())
 
   private val actionGroup: DefaultActionGroup =
-    new DefaultActionGroup("com.ossuminc.riddl.plugins.idea.actions.RiddlActionsGroup", false)
+    new DefaultActionGroup("ToolWindowToolbarRunGroup", false)
   actionGroup.add(new RiddlNewToolWindowAction)
   private val compileAction: RiddlToolWindowCompileAction =
     new RiddlToolWindowCompileAction()
@@ -78,26 +97,6 @@ class RiddlToolWindowContent(
   actionToolbar.setTargetComponent(sideBar)
   sideBar.setToolbar(actionToolbar.getComponent)
 
-  private val contentPanel: JBPanel[?] = new JBPanel()
-  contentPanel.setLayout(GridBagLayout())
-
-  contentPanel.add(
-    sideBar,
-    createGBCs(0, 0, 0, 0, GridBagConstraints.VERTICAL)
-  )
-
-  private val outputLabel: JBLabel = new JBLabel()
-  outputLabel.setText(notConfiguredMessage)
-  outputLabel.setVerticalAlignment(SwingConstants.TOP)
-  outputLabel.setBorder(new EmptyBorder(10, 10, 10, 10))
-
-  private val scrollPane = new JScrollPane(
-    outputLabel,
-    ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
-  )
-  scrollPane.setLayout(ScrollPaneLayout())
-
   contentPanel.putClientProperty(
     s"updateLabel_$numWindow",
     (fromReload: Boolean) => updateLabel(fromReload)
@@ -106,6 +105,11 @@ class RiddlToolWindowContent(
   contentPanel.putClientProperty(
     "createToolWindow",
     () => createToolWindow()
+  )
+
+  contentPanel.add(
+    sideBar,
+    createGBCs(0, 0, 0, 0, GridBagConstraints.VERTICAL)
   )
   contentPanel.add(scrollPane, createGBCs(1, 0, 1, 1, GridBagConstraints.BOTH))
 

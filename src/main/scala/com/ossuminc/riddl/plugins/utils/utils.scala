@@ -3,9 +3,11 @@ package com.ossuminc.riddl.plugins
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.project.{Project, ProjectManager}
+import com.intellij.openapi.util.IconLoader
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 
 import java.awt.GridBagConstraints
+import javax.swing.Icon
 
 //case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
 //    extends Logger {
@@ -17,6 +19,8 @@ import java.awt.GridBagConstraints
 //}
 
 package object utils {
+  def RiddlIcon[T <: Class[?]](classType: T): Icon = IconLoader.getIcon("images/RIDDL-icon.jpg", classType)
+
   object ManagerBasedGetterUtils {
     val application: Application = ApplicationManager.getApplication
 

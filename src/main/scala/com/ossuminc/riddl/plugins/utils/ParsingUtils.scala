@@ -12,7 +12,6 @@ object ParsingUtils {
   def parseASTFromConfFile(numWindow: Int, confFile: String): Unit = {
     val result: Either[List[Messages.Message], PassesResult] =
       Commands.runCommandWithArgs(
-        "from",
         Array(
           "from",
           confFile,

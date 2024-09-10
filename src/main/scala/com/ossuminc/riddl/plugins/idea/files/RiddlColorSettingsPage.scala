@@ -16,9 +16,9 @@ class RiddlColorSettingsPage extends ColorSettingsPage {
   override def getHighlighter: SyntaxHighlighter = new PlainSyntaxHighlighter()
 
   override def getAttributeDescriptors: Array[AttributesDescriptor] = Array(
-    new AttributesDescriptor("Keywords", RiddlTokenizer.CUSTOM_KEYWORD3),
-    new AttributesDescriptor("Punctuation", RiddlTokenizer.CUSTOM_KEYWORD3),
-    new AttributesDescriptor("Readability", RiddlTokenizer.CUSTOM_KEYWORD4),
+    new AttributesDescriptor("Keywords", RiddlTokenizer.CUSTOM_KEYWORD_KEYWORD),
+    new AttributesDescriptor("Punctuation", RiddlTokenizer.CUSTOM_KEYWORD_PUNCTUATION),
+    new AttributesDescriptor("Readability", RiddlTokenizer.CUSTOM_KEYWORD_READABILITY),
   )
 
   override def getDemoText: String = "RIDDL"

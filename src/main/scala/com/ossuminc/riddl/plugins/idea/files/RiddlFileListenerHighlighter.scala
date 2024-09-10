@@ -38,11 +38,11 @@ class RiddlFileListenerHighlighter extends FileEditorManagerListener {
     RiddlTokenizer.tokenize(text).foreach { (token, index, length) =>
       if index > -1 && length > 0 then {
         (if keywords.contains(token) then
-          Some(CUSTOM_KEYWORD2)
+          Some(CUSTOM_KEYWORD_KEYWORD)
         else if punctuation.contains(token) then
-          Some(CUSTOM_KEYWORD3)
+          Some(CUSTOM_KEYWORD_PUNCTUATION)
         else if readability.contains(token) then
-          Some(CUSTOM_KEYWORD4)
+          Some(CUSTOM_KEYWORD_READABILITY)
         else None) match {
           case Some(colorKey: TextAttributesKey) =>
             editor.getMarkupModel.addRangeHighlighter(

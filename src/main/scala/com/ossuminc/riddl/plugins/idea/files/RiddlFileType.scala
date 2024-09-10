@@ -19,7 +19,3 @@ class RiddlFileType extends LanguageFileType(RiddlLanguage){
 
   override def getIcon: Icon = RiddlIcon(getClass)
 }
-
-object RiddlFileType {
-  val INSTANCE: RiddlFileType = new RiddlFileType()
-}

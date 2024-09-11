@@ -6,34 +6,50 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.CustomHighlighterTokenType
 
 object RiddlTokenizer {
-  def tokenize(text: String): Seq[(String, Int, Int)] = {
+  // Outputs:
+  // String - word
+  // Int - index
+  // Int - length,
+  // Boolean - isComment
+  def tokenize(text: String): Seq[(String, Int, Seq[Boolean])] = {
     var currentIndex = 0
-    tokenizeWithQuotesBoolean(text).map { case (word, inQuotes) =>
-      if !inQuotes then {
-        val tuple = (word, currentIndex, word.length)
-        currentIndex += word.length
-        tuple
-      }
-      else {
-        currentIndex += word.length
-        (word, -1, 0)
-      }
+    tokenizeWithQuotesBoolean(text).map { case (word, Seq(isQuoted, isComment)) =>
+      val tuple = (word, currentIndex, Seq(isQuoted, isComment))
+      currentIndex += word.length
+      tuple
     }
   }
 
-  private def tokenizeWithQuotesBoolean(text: String): Seq[(String, Boolean)] = {
+  private def tokenizeWithQuotesBoolean(text: String): Seq[(String, Seq[Boolean])] = {
     var inQuotes: Boolean = false
-    text.split("((?<=\\s+)|(?=\\s+))").toSeq.foldLeft(List[(String, Boolean)]()) {
-      case (acc: List[(String, Boolean)], word: String) =>
-        if word.endsWith("\"") && word.startsWith("\"") then
-          inQuotes = false
-          acc :+ (word, false)
-        else if word.contains("\"") then {
-          val tokBool = acc :+ (word, !inQuotes)
-          inQuotes = !inQuotes
-          tokBool
-        }
-        else acc :+ (word, inQuotes)
+    var inComment: Boolean = false
+
+    def checkForComment(word: String): Unit =
+      if word.startsWith("//") && !inComment then
+        inComment = true
+      else if word == "\n" && inComment then
+        inComment = false
+
+    def checkForQuotes(word: String): Boolean =
+      if word.count(c => c == '\"') == 2 then
+        println("two")
+        true
+      else if word.startsWith("\"") then
+        println("start")
+        inQuotes = true
+        inQuotes
+      else if word.endsWith("\"") then
+        println("end")
+        inQuotes = false
+        true
+      else
+        println("none")
+        inQuotes
+
+    text.split("((?<=\\s+)|(?=\\s+))").toSeq.foldLeft(List[(String, Seq[Boolean])]()) {
+      case (acc: List[(String, Seq[Boolean])], word: String) =>
+        checkForComment(word)
+        acc :+ (word, Seq(checkForQuotes(word), inComment))
     }
   }
 
@@ -43,18 +59,17 @@ object RiddlTokenizer {
     "direct", "presents", "do", "domain", "else", "email", "end", "entity", "epic", "error", "event", "example",
     "execute", "explained", "field", "fields", "file", "flow", "focus", "foreach", "form",
     "function", "graph", "group", "handler", "if", "import", "include", "index", "init", "inlet", "inlets",
-    "input", "invariant", "items", "many", "mapping", "merge", "message", "morph", "name", "one", "organization",
+    "input", "invariant", "items", "many", "mapping", "merge", "message", "morph", "name", "on", "one", "organization",
     "option", "optional", "options", "other", "outlet", "outlets", "output", "parallel", "pipe", "plant", "projector",
     "query", "range", "reference", "remove", "replica", "reply", "repository", "requires", "required", "record",
     "result", "results", "return", "returns", "reverted", "router", "saga", "schema", "selects", "send", "sequence",
     "set", "show", "shown", "sink", "source", "split", "state", "step", "stop", "story", "streamlet", "table", "take",
     "tell", "term", "then", "title", "type", "url", "updates", "user", "value", "void", "when", "where")
 
-  val punctuation: Seq[String] = Seq("asterisk", "comma", "colon", "curlyOpen", "curlyClose", "dot", "equalsSign",
-    "ellipsis", "ellipsisQuestion", "exclamation", "plus", "question", "quote", "roundOpen", "roundClose",
-    "squareOpen", "squareClose", "undefinedMark", "verticalBar", "{", "}", "(", ")")
+  val punctuation: Seq[String] = Seq("@", "*", ":", ".", "=", "...", "!", "+", "?", "[",
+    "]", "???", "|", "{", "}", "(", ")")
 
-  val readability: Seq[String] = Seq("and", "are", "as", "at", "by", "for", "from", "in", "is", "of", "on",
+  val readability: Seq[String] = Seq("and", "are", "as", "at", "by", "for", "from", "in", "is", "of",
     "so", "that", "to", "wants", "with")
 
   val CUSTOM_KEYWORD_KEYWORD: TextAttributesKey = CustomHighlighterColors.CUSTOM_KEYWORD2_ATTRIBUTES

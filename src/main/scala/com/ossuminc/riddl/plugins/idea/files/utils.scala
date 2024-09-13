@@ -79,6 +79,8 @@ object utils {
     val (trueIndex: Int, trueLength: Int) =
       if punctIndex < 0 then (index, length) else (punctIndex + index, punct.length)
 
+    editor.getMarkupModel.getAllHighlighters.find(_.getStartOffset == index)
+      .foreach(highlighter => editor.getMarkupModel.removeHighlighter(highlighter))
     editor.getMarkupModel.addRangeHighlighter(
       colorKey,
       trueIndex,

@@ -50,7 +50,6 @@ class RiddlToolWindowContent(
     project: Project,
     numWindow: Int
 ) {
-
   private val state: RiddlIdeaSettings.State =
     getRiddlIdeaStates.getState(numWindow)
 

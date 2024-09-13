@@ -21,6 +21,7 @@
         <fileType name="RiddlFileType" language="RIDDL"
                   implementationClass="com.ossuminc.riddl.plugins.idea.files.RiddlFileType" extensions="riddl"/>
         <colorSettingsPage implementation="com.ossuminc.riddl.plugins.idea.files.RiddlColorSettingsPage" />
+        <postStartupActivity implementation="com.ossuminc.riddl.plugins.idea.project.RiddlProject"/>
     </extensions>
 
     <actions>

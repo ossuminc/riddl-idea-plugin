@@ -1,52 +1,48 @@
 package com.ossuminc.riddl.plugins.idea.files
 
 import com.intellij.ide.highlighter.custom.CustomHighlighterColors
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.openapi.editor.{DefaultLanguageHighlighterColors, Document}
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.CustomHighlighterTokenType
+import com.ossuminc.riddl.plugins.idea.files.utils.splitByBlanks
 
 object RiddlTokenizer {
   // Outputs:
   // String - word
   // Int - index
-  // Int - length,
-  // Boolean - isComment
+  // Boolean - isQuoted, isComment
   def tokenize(text: String): Seq[(String, Int, Seq[Boolean])] = {
     var currentIndex = 0
-    tokenizeWithQuotesBoolean(text).map { case (word, Seq(isQuoted, isComment)) =>
+    tokenizeWithFlags(text).map { case (word, Seq(isQuoted, isComment)) =>
       val tuple = (word, currentIndex, Seq(isQuoted, isComment))
       currentIndex += word.length
       tuple
     }
   }
 
-  private def tokenizeWithQuotesBoolean(text: String): Seq[(String, Seq[Boolean])] = {
+  private def tokenizeWithFlags(text: String): Seq[(String, Seq[Boolean])] = {
     var inQuotes: Boolean = false
     var inComment: Boolean = false
 
     def checkForComment(word: String): Unit =
       if word.startsWith("//") && !inComment then
         inComment = true
-      else if word == "\n" && inComment then
+      else if word.contains('\n') && inComment then
         inComment = false
 
     def checkForQuotes(word: String): Boolean =
       if word.count(c => c == '\"') == 2 then
-        println("two")
         true
       else if word.startsWith("\"") then
-        println("start")
         inQuotes = true
         inQuotes
       else if word.endsWith("\"") then
-        println("end")
         inQuotes = false
         true
       else
-        println("none")
         inQuotes
 
-    text.split("((?<=\\s+)|(?=\\s+))").toSeq.foldLeft(List[(String, Seq[Boolean])]()) {
+    splitByBlanks(text).toSeq.foldLeft(List[(String, Seq[Boolean])]()) {
       case (acc: List[(String, Seq[Boolean])], word: String) =>
         checkForComment(word)
         acc :+ (word, Seq(checkForQuotes(word), inComment))

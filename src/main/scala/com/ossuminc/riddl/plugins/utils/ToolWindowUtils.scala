@@ -89,7 +89,7 @@ object ToolWindowUtils {
   def updateToolWindow(numWindow: Int, fromReload: Boolean = false): Unit =
     getToolWindowContent(numWindow).getComponent
       .getClientProperty(s"updateLabel_$numWindow")
-      .asInstanceOf[(fromReload: Boolean) => Unit](fromReload)
+      .asInstanceOf[(fr: Boolean) => Unit](fromReload)
 
   def createNewToolWindow(): Unit =
     getToolWindowContent(0).getComponent

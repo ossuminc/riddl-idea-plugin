@@ -114,7 +114,7 @@ class RiddlToolWindowContent(
       VirtualFileManager.VFS_CHANGES,
       new BulkFileListener {
         override def after(events: java.util.List[? <: VFileEvent]): Unit = {
-          if state.autoCompileOnSave then {
+          if state.getAutoCompile then {
             state.clearOutput()
             updateLabel()
           }
@@ -126,7 +126,7 @@ class RiddlToolWindowContent(
 
   private def updateLabel(fromReload: Boolean = false): Unit = {
     val statePath: String =
-      if state != null then state.riddlConfPath
+      if state != null then state.getConfPath
       else ""
 
     if statePath == null || statePath.isBlank then {
@@ -136,7 +136,7 @@ class RiddlToolWindowContent(
 
     val confFile = File(statePath)
 
-    val output = state.riddlOutput
+    val output = state.getOutput
     if output.nonEmpty then
       outputLabel.setText(
         s"<html>${output.mkString("<br>")}</html>"

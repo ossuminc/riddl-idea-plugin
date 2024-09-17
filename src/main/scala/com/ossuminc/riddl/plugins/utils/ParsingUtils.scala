@@ -18,7 +18,7 @@ object ParsingUtils {
           "validate"
         ),
         StringLogger(),
-        CommonOptions(noANSIMessages = true, groupMessagesByKind = true)
+        getRiddlIdeaState(numWindow).getCommonOptions
       )
 
     val windowState = getRiddlIdeaState(numWindow)
@@ -30,14 +30,15 @@ object ParsingUtils {
           s"Success!! There were no errors on project compilation<br>${result.messages.distinct.format
               .replace("\n", "<br>")}"
         )
+        updateToolWindow(numWindow)
       case Left(messages) =>
         windowState.appendOutput(
           messages.distinct.format
             .replace("\n", "<br>")
             .replace(" ", "&nbsp;")
         )
+        updateToolWindow(numWindow)
     }
 
-    updateToolWindow(numWindow)
   }
 }

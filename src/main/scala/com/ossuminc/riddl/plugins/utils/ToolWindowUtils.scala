@@ -40,7 +40,6 @@ object ToolWindowUtils {
         )
       content.setCloseable(!isLockable)
       listenForContentRemoval(project, windowName, windowNumber)
-
       getContentManager.addContent(content)
     }
 
@@ -83,13 +82,19 @@ object ToolWindowUtils {
     .getToolWindow("riddl")
     .getContentManager
 
-  private def getToolWindowContent(numWindow: Int): Content =
-    getContentManager.findContent(genWindowName(numWindow))
+  def getToolWindowContent(numWindow: Int): Content = {
+    getContentManager.getContents.find(_.getTabName.contains(numWindow.toString))
+      .getOrElse(
+        getContentManager.getContents.find(_.getTabName.count(_.isDigit) == 0)
+          .getOrElse(getContentManager.getContents.head)
+      )
+  }
 
-  def updateToolWindow(numWindow: Int, fromReload: Boolean = false): Unit =
+  def updateToolWindow(numWindow: Int, fromReload: Boolean = false): Unit = {
     getToolWindowContent(numWindow).getComponent
       .getClientProperty(s"updateLabel_$numWindow")
       .asInstanceOf[(fromReload: Boolean) => Unit](fromReload)
+  }
 
   def createNewToolWindow(): Unit =
     getToolWindowContent(0).getComponent
@@ -102,4 +107,9 @@ object ToolWindowUtils {
         getProject,
         new RiddlIdeaSettingsConfigurable(numWindow)
       )
+
+  def genWindowName(windowNumber: Int): String = {
+    val windowNumInName = if windowNumber > 1 then s" - (Window #$windowNumber)" else ""
+    s"RIDDL ${getRiddlIdeaState(windowNumber).getCommand}$windowNumInName"
+  }
 }

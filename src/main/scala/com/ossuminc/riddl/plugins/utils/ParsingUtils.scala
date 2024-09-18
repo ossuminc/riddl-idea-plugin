@@ -3,25 +3,27 @@ package com.ossuminc.riddl.plugins.utils
 import com.ossuminc.riddl.commands.Commands
 import com.ossuminc.riddl.language.{CommonOptions, Messages}
 import com.ossuminc.riddl.passes.PassesResult
+import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.utils.StringLogger
 
 object ParsingUtils {
   import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
   import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.*
 
-  def parseASTFromConfFile(numWindow: Int, confFile: String): Unit = {
+  def runCommandForWindow(numWindow: Int, confFile: Option[String] = None): Unit = {
+    val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
+
     val result: Either[List[Messages.Message], PassesResult] =
       Commands.runCommandWithArgs(
         Array(
-          "from",
-          confFile,
-          "validate"
-        ),
+          windowState.getCommand,
+          if confFile.isDefined then confFile.get else "",
+          if confFile.isDefined then "validate" else ""
+        ).filter(_.nonEmpty),
         StringLogger(),
-        CommonOptions(noANSIMessages = true, groupMessagesByKind = true)
+        CommonOptions(noANSIMessages = true, groupMessagesByKind = true, showTimes = true)
       )
 
-    val windowState = getRiddlIdeaState(numWindow)
     windowState.clearOutput()
 
     result match {

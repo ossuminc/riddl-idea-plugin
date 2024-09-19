@@ -125,8 +125,6 @@ class RiddlToolWindowContent(
     val confFile = File(statePath)
 
     val tabContent: Content = getToolWindowContent(numWindow)
-    println(numWindow)
-    println(tabContent.getTabName)
     val expectedName = genWindowName(numWindow)
 
     if tabContent.getTabName != expectedName then

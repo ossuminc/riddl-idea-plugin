@@ -67,6 +67,6 @@ object RiddlIdeaSettings {
     def getCommand: String = command
   }
 
-  private val commands = Seq("from", "about")
+  private val commands = Seq("from", "about", "info")
   def allCommands: Seq[String] = commands
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.getRiddlIdeaState
 
 import java.awt.GridBagConstraints
 import javax.swing.Icon
@@ -33,10 +34,7 @@ package object utils {
         )
         .getState
 
-    def getRiddlIdeaState(numToolWindow: Int): RiddlIdeaSettings.State =
-      getRiddlIdeaStates.getState(
-        numToolWindow
-      )
+    def getRiddlIdeaState(numToolWindow: Int): RiddlIdeaSettings.State = getRiddlIdeaStates.getState(numToolWindow)
   }
 
   object CreationUtils {
@@ -64,8 +62,4 @@ package object utils {
       NotificationType.INFORMATION
     )
   )
-
-  def genWindowName(windowNumber: Int): String =
-    if windowNumber == 0 then "riddlc"
-    else s"riddlc ($windowNumber)"
 }

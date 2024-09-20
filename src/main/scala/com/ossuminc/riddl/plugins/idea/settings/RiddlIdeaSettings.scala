@@ -1,8 +1,8 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.components.{PersistentStateComponent, State, Storage}
+import com.intellij.openapi.components.{PersistentStateComponent, State => StateAnnotation, Storage}
 
-@State(
+@StateAnnotation(
   name = "RiddlIdeaSettings",
   storages = Array(
     new Storage(
@@ -28,19 +28,17 @@ object RiddlIdeaSettings {
 
     def load(newStates: States): Unit = states = newStates.states
 
-    def getStates: Map[Int, State] = states
     def getState(numToolWindow: Int): State = states(numToolWindow)
 
     def length: Int = states.size
 
     def newState(): Int = {
-      val newWindowNum: Int = if length == 0 then 0
-        else if length == 1 then 2
-        else (2 to length)
+      val newWindowNum: Int = if length == 0 then 1
+        else (1 to length + 1)
           .find(num => !states.keys.iterator.toSeq.contains(num))
           .getOrElse(length + 1)
 
-      states = states.concat(Map(newWindowNum -> State(newWindowNum)))
+      states = states.concat(Map(newWindowNum -> new State))
       newWindowNum
     }
 
@@ -48,23 +46,27 @@ object RiddlIdeaSettings {
       states = states.view.filterKeys(_ != numWindow).toMap
   }
 
-  class State(numToolWindow: Int) {
-    var riddlConfPath: String = ""
-    var riddlOutput: Seq[String] = Seq()
-    var autoCompileOnSave: Boolean = true
+  class State {
+    private var riddlConfPath: String = ""
+    private var riddlOutput: Seq[String] = Seq()
+    private var autoCompileOnSave: Boolean = true
+    private var command: String = commands.head
 
-    def setConfPath(newPath: String): Unit = {
-      riddlConfPath = newPath
-    }
+    def setConfPath(newPath: String): Unit = riddlConfPath = newPath
+    def getConfPath: String = riddlConfPath
 
-    def appendOutput(newOutput: String): Unit = {
-      riddlOutput :+= newOutput
-    }
-
-    def clearOutput(): Unit = {
-      riddlOutput = Seq()
-    }
+    def appendOutput(newOutput: String): Unit = riddlOutput :+= newOutput
+    def clearOutput(): Unit = riddlOutput = Seq()
+    def getOutput: Seq[String] = riddlOutput
 
     def toggleAutoCompile(): Unit = autoCompileOnSave = !autoCompileOnSave
+    def getAutoCompile: Boolean = autoCompileOnSave
+
+    def setCommand(newCommand: String): Unit =
+      if commands.contains(newCommand) then command = newCommand
+    def getCommand: String = command
   }
+
+  private val commands = Seq("from", "about", "info")
+  def allCommands: Seq[String] = commands
 }

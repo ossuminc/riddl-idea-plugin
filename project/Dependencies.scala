@@ -23,7 +23,7 @@ object Dep {
   val minimalJson = {
     "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources ()
   }
-  val kotlin = "org.jetbrains.kotlin" % "kotlin-stdlib" % "2.0.0"
+  val kotlin = "org.jetbrains.kotlin" % "kotlin-stdlib" % "2.0.20"
 
   val basic: Seq[ModuleID] = Seq(minimalJson, scalactic, scalatest, scalacheck)
 

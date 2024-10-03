@@ -1,19 +1,30 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.fileChooser.{FileChooserDescriptor, FileChooserDescriptorFactory}
-import com.intellij.openapi.ui.{JBMenuItem, JBPopupMenu, TextFieldWithBrowseButton}
+import com.intellij.openapi.fileChooser.{
+  FileChooserDescriptor,
+  FileChooserDescriptorFactory
+}
+import com.intellij.openapi.ui.{
+  JBMenuItem,
+  JBPopupMenu,
+  TextFieldWithBrowseButton
+}
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
 import com.intellij.util.ui.FormBuilder
-import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 
-import java.awt.ComponentOrientation
-import java.awt.event.{ItemEvent, ItemListener, ActionEvent, MouseAdapter, MouseEvent}
+import java.awt.event.{
+  ItemEvent,
+  ItemListener,
+  ActionEvent,
+  MouseAdapter,
+  MouseEvent
+}
 import javax.swing.{JPanel, SwingUtilities}
-import javax.swing.event.{ChangeEvent, ChangeListener, DocumentEvent}
-
+import javax.swing.event.DocumentEvent
 
 class ConfCondition extends Condition[VirtualFile] {
   def value(virtualFile: VirtualFile): Boolean = {
@@ -25,8 +36,8 @@ class ConfCondition extends Condition[VirtualFile] {
 class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val state: RiddlIdeaSettings.State = getRiddlIdeaState(numToolWindow)
 
-  private var autoCompileValue: Boolean = state.getAutoCompile
   private val autoCompileCheckBox: JBCheckBox = JBCheckBox()
+  private var autoCompileValue: Boolean = state.getAutoCompile
 
   private var confFieldModified: Boolean = false
   private val confFileTextField: TextFieldWithBrowseButton = {
@@ -65,32 +76,18 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val riddlPanel = new JBPanel()
 
   def createComponent(): Unit = {
-    autoCompileCheckBox.setSelected(autoCompileValue)
-
-    val autoCompileListener = new ItemListener {
-      def itemStateChanged(e: ItemEvent): Unit =  autoCompileValue = !autoCompileValue
-    }
-    def newAutoCompileListener(): Unit = autoCompileCheckBox.addItemListener(autoCompileListener)
-    if !autoCompileCheckBox.getItemListeners.contains(autoCompileListener) then
-      newAutoCompileListener()
-    else {
-      autoCompileCheckBox.removeItemListener(autoCompileListener)
-      newAutoCompileListener()
-    }
-
     val commandPickerListener = new MouseAdapter {
-        override def mouseClicked(e: MouseEvent): Unit =
-          if SwingUtilities.isLeftMouseButton(e) then {
-            commandPickerPopupMenu.show(commandPicker, e.getX, e.getY)
-          }
-      }
-    def newCommandPickerListener(): Unit = commandPicker.addMouseListener(commandPickerListener)
-    if !commandPicker.getMouseListeners.contains(commandPickerListener) then
-      newCommandPickerListener()
-    else {
+      override def mouseClicked(e: MouseEvent): Unit =
+        if SwingUtilities.isLeftMouseButton(e) then
+          commandPickerPopupMenu.show(commandPicker, e.getX, e.getY)
+    }
+    def newCommandPickerListener(): Unit =
+      commandPicker.addMouseListener(commandPickerListener)
+
+    if commandPicker.getMouseListeners.isEmpty then newCommandPickerListener()
+    else
       commandPicker.removeMouseListener(commandPickerListener)
       newCommandPickerListener()
-    }
 
     val riddlFormBuilder: FormBuilder = FormBuilder.createFormBuilder
       .addLabeledComponent(
@@ -98,20 +95,10 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         commandPicker
       )
 
-    if pickedCommand == "from" then riddlFormBuilder.addLabeledComponent(
-      "Current conf file path:",
-      confFileTextField
-    )
-
-    riddlFormBuilder.addComponentFillVertically(new JPanel(), 0)
-      .addLabeledComponent(
-        "Automatically re-compile on save",
-        autoCompileCheckBox
-      )
-      .addComponentFillVertically(new JPanel(), 0)
-
     val formBuilderPanel = riddlFormBuilder.getPanel
-    def setPopupMenuListeners(): Unit = RiddlIdeaSettings.allCommands.foreach { command =>
+
+    def setPopupMenuListeners(): Unit = RiddlIdeaSettings.allCommands.foreach {
+      command =>
         val commandItem = new JBMenuItem(command)
         commandItem.addActionListener((_: ActionEvent) => {
           pickedCommand = command
@@ -123,17 +110,50 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
           riddlPanel.repaint()
         })
         commandPickerPopupMenu.add(commandItem)
-      }
-    if commandPickerPopupMenu.getComponents
-      .count(_.isInstanceOf[JBMenuItem]) < RiddlIdeaSettings.allCommands.length then
-      setPopupMenuListeners()
-    else {
-      commandPickerPopupMenu.getComponents.filter(_.isInstanceOf[JBMenuItem])
-        .foreach(commandPickerPopupMenu.remove)
-      setPopupMenuListeners()
     }
 
+    if commandPickerPopupMenu.getComponents
+        .count(
+          _.isInstanceOf[JBMenuItem]
+        ) != 0
+    then
+      commandPickerPopupMenu.getComponents
+        .filter(_.isInstanceOf[JBMenuItem])
+        .foreach(commandPickerPopupMenu.remove)
+
+    setPopupMenuListeners()
+
     riddlPanel.add(formBuilderPanel)
+
+    if pickedCommand == "from" then
+      riddlFormBuilder.addLabeledComponent(
+        "Current configuration file path:",
+        confFileTextField
+      )
+
+    riddlFormBuilder
+      .addComponentFillVertically(new JPanel(), 0)
+      .addLabeledComponent(
+        "Automatically re-compile on save",
+        autoCompileCheckBox
+      )
+      .addComponentFillVertically(new JPanel(), 0)
+
+    autoCompileCheckBox.setSelected(autoCompileValue)
+
+    val autoCompileListener = new ItemListener {
+      def itemStateChanged(e: ItemEvent): Unit =
+        autoCompileValue = !autoCompileValue
+    }
+
+    def newAutoCompileListener(): Unit =
+      autoCompileCheckBox.addItemListener(autoCompileListener)
+
+    if !autoCompileCheckBox.getItemListeners.isEmpty then
+      autoCompileCheckBox.getItemListeners.foreach(
+        autoCompileCheckBox.removeItemListener
+      )
+    newAutoCompileListener()
   }
 
   createComponent()
@@ -142,7 +162,8 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
 
   def getConfFieldText: String = confFileTextField.getText
 
-  def isModified: Boolean = confFieldModified || pickedCommandModified
+  def isModified: Boolean =
+    confFieldModified || pickedCommandModified || autoCompileValue != state.getAutoCompile
 
   def getPickedCommand: String = pickedCommand
 

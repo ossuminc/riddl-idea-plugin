@@ -18,7 +18,7 @@ lazy val riddlIdeaPlugin: Project = Root(
     With.build_info,
     With.coverage(90),
     With.aliases,
-    With.riddl(forJS = false, "0.52.1")
+    With.riddl(forJS = false, "0.52.2-13-89c9057a")
   )
   .enablePlugins(KotlinPlugin, JavaAppPackaging)
   .settings(
@@ -32,7 +32,7 @@ lazy val riddlIdeaPlugin: Project = Root(
     Test / parallelExecution := false,
     scalaVersion := "3.4.0",
     ThisBuild / intellijPluginName := "RIDDL4IDEA",
-    ThisBuild / intellijBuild := "242.20224.419",
+    ThisBuild / intellijBuild := "242.23339.11",
     ThisBuild / intellijPlatform := IntelliJPlatform.IdeaUltimate,
     ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
     intellijPlugins ++= Seq("com.intellij.properties".toPlugin),
@@ -41,5 +41,5 @@ lazy val riddlIdeaPlugin: Project = Root(
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     Test / unmanagedResourceDirectories += baseDirectory.value / "testResources",
     runIDE / javaOptions += "-Didea.http.proxy.port=5432,-DurlSchemes=http://localhost",
-    unmanagedBase := baseDirectory.value / "lib"
+    unmanagedBase := baseDirectory.value / "lib",
   )

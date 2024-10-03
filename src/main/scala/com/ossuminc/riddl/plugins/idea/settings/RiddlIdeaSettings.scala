@@ -48,18 +48,19 @@ object RiddlIdeaSettings {
 
   class State {
     private var riddlConfPath: String = ""
-    private var riddlOutput: Seq[String] = Seq()
+    private var riddlRunOutput: Seq[String] = Seq()
     private var autoCompileOnSave: Boolean = true
     private var command: String = commands.head
 
     def setConfPath(newPath: String): Unit = riddlConfPath = newPath
     def getConfPath: String = riddlConfPath
 
-    def appendOutput(newOutput: String): Unit = riddlOutput :+= newOutput
-    def clearOutput(): Unit = riddlOutput = Seq()
-    def getOutput: Seq[String] = riddlOutput
+    def prependRunOutput(newOutput: String): Unit = riddlRunOutput = newOutput +: riddlRunOutput
+    def appendRunOutput(newOutput: String): Unit = riddlRunOutput :+= newOutput
+    def clearRunOutput(): Unit = riddlRunOutput = Seq()
+    def getRunOutput: Seq[String] = riddlRunOutput
 
-    def toggleAutoCompile(): Unit = autoCompileOnSave = !autoCompileOnSave
+    def setAutoCompile(value: Boolean): Unit = autoCompileOnSave = value
     def getAutoCompile: Boolean = autoCompileOnSave
 
     def setCommand(newCommand: String): Unit =

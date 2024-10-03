@@ -4,7 +4,7 @@ import com.intellij.ide.highlighter.custom.CustomFileHighlighter
 import com.intellij.openapi.options.colors.{AttributesDescriptor, ColorDescriptor, ColorSettingsPage}
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.{PlainSyntaxHighlighter, SyntaxHighlighter}
-import com.ossuminc.riddl.plugins.utils.RiddlIcon
+import com.ossuminc.riddl.plugins.idea.utils.RiddlIcon
 
 import scala.jdk.CollectionConverters.*
 import java.util

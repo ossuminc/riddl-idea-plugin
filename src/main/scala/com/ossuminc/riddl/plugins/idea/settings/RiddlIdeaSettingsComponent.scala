@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
 import com.intellij.util.ui.FormBuilder
-import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 
 import java.awt.ComponentOrientation
 import java.awt.event.{ItemEvent, ItemListener, ActionEvent, MouseAdapter, MouseEvent}
@@ -80,9 +80,9 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
 
     val commandPickerListener = new MouseAdapter {
         override def mouseClicked(e: MouseEvent): Unit =
-          if SwingUtilities.isLeftMouseButton(e) then {
-            commandPickerPopupMenu.show(commandPicker, e.getX, e.getY)
-          }
+          if SwingUtilities.isLeftMouseButton(e) then
+             commandPickerPopupMenu.show(commandPicker, e.getX, e.getY)
+
       }
     def newCommandPickerListener(): Unit = commandPicker.addMouseListener(commandPickerListener)
     if !commandPicker.getMouseListeners.contains(commandPickerListener) then

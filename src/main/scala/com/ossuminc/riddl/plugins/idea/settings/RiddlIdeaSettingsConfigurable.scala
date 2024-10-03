@@ -1,8 +1,8 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.options.Configurable
-import com.ossuminc.riddl.plugins.utils.ManagerBasedGetterUtils.*
-import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.*
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
+import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.*
 
 import java.io.File
 import javax.swing.JComponent
@@ -15,8 +15,11 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
   override def createComponent(): JComponent = component.getPanel
 
   override def isModified: Boolean = {
-    val isModified = component.isModified
-    isModified
+    val windowState = getRiddlIdeaState(numWindow)
+    if component.getAutoCompileValue != windowState.getAutoCompile then
+      windowState.toggleAutoCompile()
+
+    component.isModified
   }
 
   override def apply(): Unit = {
@@ -31,7 +34,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
     if component.getAutoCompileValue != windowState.getAutoCompile then
       windowState.toggleAutoCompile()
 
-    windowState.clearOutput()
-    updateToolWindow(numWindow, true)
+    windowState.clearRunOutput()    
+    updateToolWindowPanes(numWindow, fromReload = true)
   }
 }

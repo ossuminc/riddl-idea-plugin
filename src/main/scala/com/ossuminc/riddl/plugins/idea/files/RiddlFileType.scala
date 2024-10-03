@@ -3,7 +3,7 @@ package com.ossuminc.riddl.plugins.idea.files
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.{LanguageFileType, PlainTextLanguage}
 import com.intellij.openapi.util.IconLoader
-import com.ossuminc.riddl.plugins.utils.RiddlIcon
+import com.ossuminc.riddl.plugins.idea.utils.RiddlIcon
 
 import javax.swing.Icon
 

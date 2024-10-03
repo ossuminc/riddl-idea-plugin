@@ -1,7 +1,14 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.fileChooser.{FileChooserDescriptor, FileChooserDescriptorFactory}
-import com.intellij.openapi.ui.{JBMenuItem, JBPopupMenu, TextFieldWithBrowseButton}
+import com.intellij.openapi.fileChooser.{
+  FileChooserDescriptor,
+  FileChooserDescriptorFactory
+}
+import com.intellij.openapi.ui.{
+  JBMenuItem,
+  JBPopupMenu,
+  TextFieldWithBrowseButton
+}
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.DocumentAdapter
@@ -9,11 +16,15 @@ import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
 import com.intellij.util.ui.FormBuilder
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 
-import java.awt.ComponentOrientation
-import java.awt.event.{ItemEvent, ItemListener, ActionEvent, MouseAdapter, MouseEvent}
+import java.awt.event.{
+  ItemEvent,
+  ItemListener,
+  ActionEvent,
+  MouseAdapter,
+  MouseEvent
+}
 import javax.swing.{JPanel, SwingUtilities}
-import javax.swing.event.{ChangeEvent, ChangeListener, DocumentEvent}
-
+import javax.swing.event.DocumentEvent
 
 class ConfCondition extends Condition[VirtualFile] {
   def value(virtualFile: VirtualFile): Boolean = {
@@ -68,9 +79,11 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
     autoCompileCheckBox.setSelected(autoCompileValue)
 
     val autoCompileListener = new ItemListener {
-      def itemStateChanged(e: ItemEvent): Unit =  autoCompileValue = !autoCompileValue
+      def itemStateChanged(e: ItemEvent): Unit = autoCompileValue =
+        !autoCompileValue
     }
-    def newAutoCompileListener(): Unit = autoCompileCheckBox.addItemListener(autoCompileListener)
+    def newAutoCompileListener(): Unit =
+      autoCompileCheckBox.addItemListener(autoCompileListener)
     if !autoCompileCheckBox.getItemListeners.contains(autoCompileListener) then
       newAutoCompileListener()
     else {
@@ -79,12 +92,13 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
     }
 
     val commandPickerListener = new MouseAdapter {
-        override def mouseClicked(e: MouseEvent): Unit =
-          if SwingUtilities.isLeftMouseButton(e) then
-             commandPickerPopupMenu.show(commandPicker, e.getX, e.getY)
+      override def mouseClicked(e: MouseEvent): Unit =
+        if SwingUtilities.isLeftMouseButton(e) then
+          commandPickerPopupMenu.show(commandPicker, e.getX, e.getY)
 
-      }
-    def newCommandPickerListener(): Unit = commandPicker.addMouseListener(commandPickerListener)
+    }
+    def newCommandPickerListener(): Unit =
+      commandPicker.addMouseListener(commandPickerListener)
     if !commandPicker.getMouseListeners.contains(commandPickerListener) then
       newCommandPickerListener()
     else {
@@ -98,12 +112,14 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         commandPicker
       )
 
-    if pickedCommand == "from" then riddlFormBuilder.addLabeledComponent(
-      "Current conf file path:",
-      confFileTextField
-    )
+    if pickedCommand == "from" then
+      riddlFormBuilder.addLabeledComponent(
+        "Current conf file path:",
+        confFileTextField
+      )
 
-    riddlFormBuilder.addComponentFillVertically(new JPanel(), 0)
+    riddlFormBuilder
+      .addComponentFillVertically(new JPanel(), 0)
       .addLabeledComponent(
         "Automatically re-compile on save",
         autoCompileCheckBox
@@ -111,7 +127,8 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       .addComponentFillVertically(new JPanel(), 0)
 
     val formBuilderPanel = riddlFormBuilder.getPanel
-    def setPopupMenuListeners(): Unit = RiddlIdeaSettings.allCommands.foreach { command =>
+    def setPopupMenuListeners(): Unit = RiddlIdeaSettings.allCommands.foreach {
+      command =>
         val commandItem = new JBMenuItem(command)
         commandItem.addActionListener((_: ActionEvent) => {
           pickedCommand = command
@@ -123,12 +140,15 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
           riddlPanel.repaint()
         })
         commandPickerPopupMenu.add(commandItem)
-      }
+    }
     if commandPickerPopupMenu.getComponents
-      .count(_.isInstanceOf[JBMenuItem]) < RiddlIdeaSettings.allCommands.length then
-      setPopupMenuListeners()
+        .count(
+          _.isInstanceOf[JBMenuItem]
+        ) < RiddlIdeaSettings.allCommands.length
+    then setPopupMenuListeners()
     else {
-      commandPickerPopupMenu.getComponents.filter(_.isInstanceOf[JBMenuItem])
+      commandPickerPopupMenu.getComponents
+        .filter(_.isInstanceOf[JBMenuItem])
         .foreach(commandPickerPopupMenu.remove)
       setPopupMenuListeners()
     }

@@ -9,11 +9,12 @@ import javax.swing.Icon
 
 object RiddlLanguage extends Language("RIDDL")
 
-class RiddlFileType extends LanguageFileType(RiddlLanguage){
+class RiddlFileType extends LanguageFileType(RiddlLanguage) {
 
   override def getName: String = "RiddlFileType"
 
-  override def getDescription: String = "instantiates .riddl files as types in IDEA"
+  override def getDescription: String =
+    "instantiates .riddl files as types in IDEA"
 
   override def getDefaultExtension: String = "riddl"
 

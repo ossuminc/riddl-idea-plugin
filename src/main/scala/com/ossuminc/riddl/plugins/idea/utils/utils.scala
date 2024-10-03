@@ -11,7 +11,8 @@ import java.awt.GridBagConstraints
 import javax.swing.Icon
 
 package object utils {
-  def RiddlIcon[T <: Class[?]](classType: T): Icon = IconLoader.getIcon("images/RIDDL-icon.jpg", classType)
+  def RiddlIcon[T <: Class[?]](classType: T): Icon =
+    IconLoader.getIcon("images/RIDDL-icon.jpg", classType)
 
   object ManagerBasedGetterUtils {
     val application: Application = ApplicationManager.getApplication
@@ -25,7 +26,8 @@ package object utils {
         )
         .getState
 
-    def getRiddlIdeaState(numToolWindow: Int): RiddlIdeaSettings.State = getRiddlIdeaStates.getState(numToolWindow)
+    def getRiddlIdeaState(numToolWindow: Int): RiddlIdeaSettings.State =
+      getRiddlIdeaStates.getState(numToolWindow)
   }
 
   object CreationUtils {

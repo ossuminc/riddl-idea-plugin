@@ -1,14 +1,20 @@
 package com.ossuminc.riddl.plugins.idea.ui
 
-import com.intellij.openapi.actionSystem.{ActionManager, ActionPlaces, ActionToolbar, DefaultActionGroup}
+import com.intellij.openapi.actionSystem.{
+  ActionManager,
+  ActionPlaces,
+  ActionToolbar,
+  DefaultActionGroup
+}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
-import com.intellij.ui.components.{JBLabel, JBPanel}
-import com.intellij.ui.content.Content
-import com.ossuminc.riddl.plugins.idea.actions.{RiddlNewToolWindowAction, RiddlToolWindowCompileAction, RiddlToolWindowSettingsOpenAction}
-import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForWindow
+import com.intellij.ui.components.JBPanel
+import com.ossuminc.riddl.plugins.idea.actions.{
+  RiddlNewToolWindowAction,
+  RiddlToolWindowCompileAction,
+  RiddlToolWindowSettingsOpenAction
+}
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.*
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
@@ -16,16 +22,17 @@ import com.ossuminc.riddl.plugins.idea.utils.CreationUtils.*
 import org.jdesktop.swingx.VerticalLayout
 
 import java.awt.{GridBagConstraints, GridBagLayout}
-import java.io.File
-import javax.swing.border.EmptyBorder
-import javax.swing.{JScrollPane, ScrollPaneConstants, ScrollPaneLayout, SwingConstants}
 
 class RiddlToolWindowFactory extends ToolWindowFactory {
   override def createToolWindowContent(
       project: Project,
       toolWindow: ToolWindow
-  ): Unit = 
-    toolWindow.createAndAddContentToTW(project, getRiddlIdeaStates.newState(), true)
+  ): Unit =
+    toolWindow.createAndAddContentToTW(
+      project,
+      getRiddlIdeaStates.newState(),
+      true
+    )
 }
 
 class RiddlToolWindowContent(
@@ -38,7 +45,10 @@ class RiddlToolWindowContent(
   sideBar.setLayout(VerticalLayout())
 
   private val actionGroup: DefaultActionGroup =
-    new DefaultActionGroup("com.ossuminc.riddl.plugins.idea.actions.RiddlActionsGroup", false)
+    new DefaultActionGroup(
+      "com.ossuminc.riddl.plugins.idea.actions.RiddlActionsGroup",
+      false
+    )
   actionGroup.add(new RiddlNewToolWindowAction)
   private val compileAction: RiddlToolWindowCompileAction =
     new RiddlToolWindowCompileAction()
@@ -61,6 +71,6 @@ class RiddlToolWindowContent(
   contentPanel.add(sideBar, createGBCs(0, 0, 0, 0, GridBagConstraints.VERTICAL))
 
   createRunConsole(toolWindow, contentPanel, numWindow, project)
-  
+
   def getContentPanel: JBPanel[?] = contentPanel
 }

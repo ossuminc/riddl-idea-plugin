@@ -8,7 +8,8 @@ import java.io.File
 import javax.swing.JComponent
 
 class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
-  private val component: RiddlIdeaSettingsComponent = new RiddlIdeaSettingsComponent(numWindow)
+  private val component: RiddlIdeaSettingsComponent =
+    new RiddlIdeaSettingsComponent(numWindow)
 
   override def getDisplayName: String = "RIDDL Project Settings"
 
@@ -28,13 +29,14 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
     windowState.setCommand(component.getPickedCommand)
 
     val fileForPath = File(component.getConfFieldText)
-    if component.getPickedCommand == "from" && (fileForPath.exists() && fileForPath.isFile) then
-      windowState.setConfPath(component.getConfFieldText)
+    if component.getPickedCommand == "from" && (fileForPath
+        .exists() && fileForPath.isFile)
+    then windowState.setConfPath(component.getConfFieldText)
 
     if component.getAutoCompileValue != windowState.getAutoCompile then
       windowState.toggleAutoCompile()
 
-    windowState.clearRunOutput()    
+    windowState.clearRunOutput()
     updateToolWindowPanes(numWindow, fromReload = true)
   }
 }

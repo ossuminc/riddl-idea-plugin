@@ -3,36 +3,33 @@ package com.ossuminc.riddl.plugins.idea.utils
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowManager}
-import com.intellij.ui.content.{Content, ContentFactory, ContentManager, ContentManagerEvent, ContentManagerListener}
-import com.ossuminc.riddl.plugins.idea.settings.{RiddlIdeaSettings, RiddlIdeaSettingsConfigurable}
+import com.intellij.ui.content.{
+  Content,
+  ContentFactory,
+  ContentManager,
+  ContentManagerEvent,
+  ContentManagerListener
+}
+import com.ossuminc.riddl.plugins.idea.settings.{
+  RiddlIdeaSettings,
+  RiddlIdeaSettingsConfigurable
+}
 import com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowContent
 import ParsingUtils.*
 import CreationUtils.*
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.impl.ConsoleViewImpl
-import com.intellij.execution.process.AnsiEscapeDecoder.ColoredTextAcceptor
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme
-import com.intellij.ui.components.{JBLabel, JBPanel}
+import com.intellij.ui.components.JBPanel
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.execution.process.{AnsiEscapeDecoder, ProcessOutputType}
-import com.intellij.execution.ui.{ConsoleView, ConsoleViewContentType}
-import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.util.{Key, KeyWithDefaultValue}
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.process.OSProcessHandler
+import com.intellij.terminal.TerminalExecutionConsole
 
-import java.awt.Color
 import scala.jdk.CollectionConverters.*
-import java.awt.event.{ComponentAdapter, ComponentEvent, MouseAdapter, MouseEvent}
-import java.awt.Rectangle
-import javax.swing.{JMenuItem, JOptionPane, JPopupMenu, JScrollPane, JTextArea, JTextPane, ScrollPaneConstants, ScrollPaneLayout, SwingConstants}
-import java.awt.{Dimension, GridBagConstraints, GridBagLayout}
+import java.awt.GridBagConstraints
 import java.io.File
 import javax.swing.border.EmptyBorder
-import com.intellij.terminal.{JBTerminalPanel, JBTerminalSchemeColorPalette, JBTerminalSystemSettingsProviderBase, JBTerminalWidget, TerminalColorPalette, TerminalExecutionConsole}
-import com.intellij.ui.content.{Content, ContentFactory}
 
 object ToolWindowUtils {
   import ManagerBasedGetterUtils.*
@@ -94,7 +91,12 @@ object ToolWindowUtils {
     }
   }
 
-  def createRunConsole(toolWindow: ToolWindow, contentPanel: JBPanel[?], numWindow: Int, project: Project): Unit = {
+  def createRunConsole(
+      toolWindow: ToolWindow,
+      contentPanel: JBPanel[?],
+      numWindow: Int,
+      project: Project
+  ): Unit = {
     def setConsoleProps(console: TerminalExecutionConsole): Unit = {
       console.getTerminalWidget.setAutoscrolls(true)
       console.getTerminalWidget.getTerminalPanel.setCursorVisible(false)
@@ -105,19 +107,22 @@ object ToolWindowUtils {
 
     val state: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
 
-    val notConfiguredMessage: String = "project's .conf file not configured in settings"
+    val notConfiguredMessage: String =
+      "project's .conf file not configured in settings"
     val processHandler = new OSProcessHandler(new GeneralCommandLine("echo"))
-    val console: TerminalExecutionConsole = new TerminalExecutionConsole(project, processHandler)
+    val console: TerminalExecutionConsole =
+      new TerminalExecutionConsole(project, processHandler)
     setConsoleProps(console)
 
     def putUpdateRunPaneLabelAsClientProperty(): Unit =
       contentPanel.putClientProperty(
         genUpdateRunPaneLabelName(numWindow),
-        (fromReload: Boolean, fromLogger: Boolean) => updateRunPaneLabel(fromReload, fromLogger)
+        (fromReload: Boolean, fromLogger: Boolean) =>
+          updateRunPaneLabel(fromReload, fromLogger)
       )
 
     if contentPanel.getClientProperty(genUpdateRunPaneLabelName) != null
-      then contentPanel.putClientProperty(genUpdateRunPaneLabelName, null)
+    then contentPanel.putClientProperty(genUpdateRunPaneLabelName, null)
     putUpdateRunPaneLabelAsClientProperty()
 
     if contentPanel.getClientProperty("createToolWindow") == null then
@@ -132,14 +137,19 @@ object ToolWindowUtils {
         getRiddlIdeaStates.newState()
       )
 
-    def updateRunPaneLabel(fromReload: Boolean = false, fromLogger: Boolean = false): Unit = {
+    def updateRunPaneLabel(
+        fromReload: Boolean = false,
+        fromLogger: Boolean = false
+    ): Unit = {
       def writeToConsole(s: String): Unit = {
         console.getTerminalWidget.getTerminal.reset(true)
         setConsoleProps(console)
         console.print(s, ConsoleViewContentType.SYSTEM_OUTPUT)
       }
 
-      def writeStateOutputToConsole(): Unit = writeToConsole(state.getRunOutput.mkString("\n"))
+      def writeStateOutputToConsole(): Unit = writeToConsole(
+        state.getRunOutput.mkString("\n")
+      )
 
       if fromLogger then
         writeStateOutputToConsole()
@@ -157,16 +167,19 @@ object ToolWindowUtils {
       if tabContent.getTabName != expectedName then
         tabContent.setDisplayName(expectedName)
 
-      if state.getCommand == "from" && (statePath == null || statePath.isBlank) then
+      if state.getCommand == "from" && (statePath == null || statePath.isBlank)
+      then
         writeToConsole(notConfiguredMessage)
         return
 
-      if state.getRunOutput.nonEmpty then
-        writeStateOutputToConsole()
+      if state.getRunOutput.nonEmpty then writeStateOutputToConsole()
       else if state.getCommand == "from" then
-        if confFile.exists() && confFile.isFile then runCommandForWindow(numWindow, Some(statePath))
+        if confFile.exists() && confFile.isFile then
+          runCommandForWindow(numWindow, Some(statePath))
         else
-          writeToConsole(s"This window's .conf file:\n  " + statePath + "\nwas not found, please configure it in settings")
+          writeToConsole(
+            s"This window's .conf file:\n  " + statePath + "\nwas not found, please configure it in settings"
+          )
       else if fromReload then runCommandForWindow(numWindow)
     }
 
@@ -177,7 +190,8 @@ object ToolWindowUtils {
         VirtualFileManager.VFS_CHANGES,
         new BulkFileListener {
           override def after(events: java.util.List[? <: VFileEvent]): Unit = {
-            if events.asScala.toSeq.exists(_.isFromSave) && state.getAutoCompile then {
+            if events.asScala.toSeq.exists(_.isFromSave) && state.getAutoCompile
+            then {
               state.clearRunOutput()
               runCommandForWindow(numWindow, Some(state.getConfPath))
             }
@@ -185,7 +199,10 @@ object ToolWindowUtils {
         }
       )
 
-    contentPanel.add(console.getComponent, createGBCs(1, 0, 1, 1, GridBagConstraints.BOTH))
+    contentPanel.add(
+      console.getComponent,
+      createGBCs(1, 0, 1, 1, GridBagConstraints.BOTH)
+    )
   }
 
   private def getContentManager: ContentManager = ToolWindowManager
@@ -196,19 +213,32 @@ object ToolWindowUtils {
     .getContentManager
 
   private def getToolWindowContent(numWindow: Int): Content =
-    getContentManager.getContents.find(_.getTabName.contains(numWindow.toString))
+    getContentManager.getContents
+      .find(_.getTabName.contains(numWindow.toString))
       .getOrElse(
-        getContentManager.getContents.find(_.getTabName.count(_.isDigit) == 0)
+        getContentManager.getContents
+          .find(_.getTabName.count(_.isDigit) == 0)
           .getOrElse(getContentManager.getContents.head)
       )
 
-  def updateToolWindowPanes(numWindow: Int, fromReload: Boolean = false, fromLogger: Boolean = false): Unit =
+  def updateToolWindowPanes(
+      numWindow: Int,
+      fromReload: Boolean = false,
+      fromLogger: Boolean = false
+  ): Unit =
     updateToolWindowRunPane(numWindow, fromReload, fromLogger)
 
-  def updateToolWindowRunPane(numWindow: Int, fromReload: Boolean = false, fromLogger: Boolean = false): Unit =
+  def updateToolWindowRunPane(
+      numWindow: Int,
+      fromReload: Boolean = false,
+      fromLogger: Boolean = false
+  ): Unit =
     getToolWindowContent(numWindow).getComponent
       .getClientProperty(genUpdateRunPaneLabelName(numWindow))
-      .asInstanceOf[(fromReload: Boolean, fromLogger: Boolean) => Unit](fromReload, fromLogger)
+      .asInstanceOf[(fromReload: Boolean, fromLogger: Boolean) => Unit](
+        fromReload,
+        fromLogger
+      )
 
   def createNewToolWindow(): Unit =
     getToolWindowContent(0).getComponent
@@ -223,9 +253,11 @@ object ToolWindowUtils {
       )
 
   private def genWindowName(windowNumber: Int): String = {
-    val windowNumInName = if windowNumber > 1 then s" - (Window #$windowNumber)" else ""
+    val windowNumInName =
+      if windowNumber > 1 then s" - (Window #$windowNumber)" else ""
     s"RIDDL ${getRiddlIdeaState(windowNumber).getCommand}$windowNumInName"
   }
 
-  private def genUpdateRunPaneLabelName(numWindow: Int) = s"updateRunPaneLabel_$numWindow"
+  private def genUpdateRunPaneLabelName(numWindow: Int) =
+    s"updateRunPaneLabel_$numWindow"
 }

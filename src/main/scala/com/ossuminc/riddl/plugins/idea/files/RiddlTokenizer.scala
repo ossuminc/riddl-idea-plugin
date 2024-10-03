@@ -62,8 +62,10 @@ object RiddlTokenizer {
     "set", "show", "shown", "sink", "source", "split", "state", "step", "stop", "story", "streamlet", "table", "take",
     "tell", "term", "then", "title", "type", "url", "updates", "user", "value", "void", "when", "where")
 
-  val punctuation: Seq[String] = Seq("@", "*", ":", ".", "=", "...", "!", "+", "?", "[",
-    "]", "???", "|", "{", "}", "(", ")")
+  val triplePunctuation: Seq[String] = Seq("...", "???")
+
+  val punctuation: Seq[String] = Seq("@", "*", ":", ".", "=", "!", "+", "?", "[",
+    "]", "|", "{", "}", "(", ")")
 
   val readability: Seq[String] = Seq("and", "are", "as", "at", "by", "for", "from", "in", "is", "of",
     "so", "that", "to", "wants", "with")

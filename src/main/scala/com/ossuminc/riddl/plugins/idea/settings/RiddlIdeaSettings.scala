@@ -60,7 +60,7 @@ object RiddlIdeaSettings {
     def clearRunOutput(): Unit = riddlRunOutput = Seq()
     def getRunOutput: Seq[String] = riddlRunOutput
 
-    def toggleAutoCompile(): Unit = autoCompileOnSave = !autoCompileOnSave
+    def setAutoCompile(value: Boolean): Unit = autoCompileOnSave = value
     def getAutoCompile: Boolean = autoCompileOnSave
 
     def setCommand(newCommand: String): Unit =

@@ -127,7 +127,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
 
     if pickedCommand == "from" then
       riddlFormBuilder.addLabeledComponent(
-        "Current conf file path:",
+        "Current configuration file path:",
         confFileTextField
       )
 

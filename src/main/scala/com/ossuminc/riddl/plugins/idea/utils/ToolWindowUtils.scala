@@ -108,7 +108,7 @@ object ToolWindowUtils {
     val state: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
 
     val notConfiguredMessage: String =
-      "project's .conf file not configured in settings"
+      "project's configuration file not configured in settings"
     val processHandler = new OSProcessHandler(new GeneralCommandLine("echo"))
     val console: TerminalExecutionConsole =
       new TerminalExecutionConsole(project, processHandler)
@@ -178,7 +178,7 @@ object ToolWindowUtils {
           runCommandForWindow(numWindow, Some(statePath))
         else
           writeToConsole(
-            s"This window's .conf file:\n  " + statePath + "\nwas not found, please configure it in settings"
+            s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
           )
       else if fromReload then runCommandForWindow(numWindow)
     }

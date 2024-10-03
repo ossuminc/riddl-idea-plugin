@@ -190,7 +190,9 @@ object ToolWindowUtils {
         VirtualFileManager.VFS_CHANGES,
         new BulkFileListener {
           override def after(events: java.util.List[? <: VFileEvent]): Unit = {
-            if events.asScala.toSeq.exists(_.isFromSave) && state.getAutoCompile
+            if events.asScala.toSeq.exists(
+                _.isFromSave
+              ) && state.getAutoCompile && state.getCommand == "from"
             then {
               state.clearRunOutput()
               runCommandForWindow(numWindow, Some(state.getConfPath))

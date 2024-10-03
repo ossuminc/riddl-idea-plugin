@@ -65,9 +65,7 @@ object utils {
   def highlightKeywordsInDoc(
       tokens: Seq[(String, Int, Seq[Boolean])],
       editor: Editor
-  ): Unit = {
-    tokens.foreach(applyColorToToken(editor))
-  }
+  ): Unit = tokens.foreach(applyColorToToken(editor))
 
   private def applyColorToToken(
       editor: Editor

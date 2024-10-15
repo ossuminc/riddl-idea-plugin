@@ -51,6 +51,7 @@ object RiddlIdeaSettings {
     private var riddlRunOutput: Seq[String] = Seq()
     private var autoCompileOnSave: Boolean = true
     private var command: String = commands.head
+    private var commonOptions: CommonOptions = CommonOptions.empty.copy(noANSIMessages = true, groupMessagesByKind = true)
 
     def setConfPath(newPath: String): Unit = riddlConfPath = newPath
     def getConfPath: String = riddlConfPath

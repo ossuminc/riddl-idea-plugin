@@ -16,12 +16,8 @@ object utils {
       doc: String,
       eventText: String,
       start: Int
-  ): Seq[(String, Int)] =
-    val splitText: Seq[String] = splitByBlanks(eventText).toSeq
-    val indices: Seq[Int] = splitText.scanLeft(0)((acc, part) => {
-      acc + part.length
-    })
-    indices.zip(splitText).filter(_._2.trim.nonEmpty).map { (index, text) =>
+  ): Seq[(String, Int)] = {
+    def getSubStringsWithIndices(index: Int, text: String): (String, Int) = {
       val indexedStart = index + start
       val adjustedStart =
         if !doc.charAt(indexedStart).isWhitespace && doc
@@ -55,6 +51,25 @@ object utils {
       )
     }
 
+    if !eventText.isBlank then
+      val splitText: Seq[String] = splitByBlanks(eventText).toSeq
+      val indices: Seq[Int] = splitText.scanLeft(0)((acc, part) => {
+        acc + part.length
+      })
+      indices
+        .zip(splitText)
+        .filter(_._2.trim.nonEmpty)
+        .map(getSubStringsWithIndices)
+    else {
+      Seq(
+        getSubStringsWithIndices(
+          if doc.charAt(start - 1).isWhitespace then 0 else -1,
+          ""
+        )
+      )
+    }
+  }
+
   def highlightKeywords(text: String, editor: Editor): Unit = {
     import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
     RiddlTokenizer.tokenize(text).filter(!_._1.isBlank).foreach {
@@ -73,58 +88,66 @@ object utils {
     def puncIndexInToken(puncList: Seq[String]): Int =
       token.indexOf(puncList.find(token.contains).getOrElse(""))
 
+    def callApplyColourKey(): Unit = if keywords.contains(token) then
+      applyColourKey(editor)(
+        CUSTOM_KEYWORD_KEYWORD,
+        index,
+        token.length,
+        -1
+      )
+    else if triplePunctuation.exists(token.contains) then
+      applyColourKey(editor)(
+        CUSTOM_KEYWORD_PUNCTUATION,
+        index,
+        token.length,
+        puncIndexInToken(triplePunctuation)
+      )
+    else if punctuation.exists(token.contains) then
+      token.zipWithIndex
+        .filter(tokenCharWithIndex =>
+          punctuation.contains(tokenCharWithIndex._1.toString)
+        )
+        .foreach((_, puncIndexInToken) =>
+          applyColourKey(editor)(
+            CUSTOM_KEYWORD_PUNCTUATION,
+            index,
+            1,
+            puncIndexInToken
+          )
+        )
+    else if readability.contains(token) then
+      applyColourKey(editor)(
+        CUSTOM_KEYWORD_READABILITY,
+        index,
+        token.length,
+        -1
+      )
+    else
+      applyColourKey(editor)(
+        DefaultLanguageHighlighterColors.IDENTIFIER,
+        index,
+        token.length,
+        -1
+      )
+
     flags match {
-      case Seq(isQuoted, isComment) if isQuoted || isComment =>
+      case Seq(isQuoted, _) if isQuoted =>
+        callApplyColourKey()
         applyColourKey(editor)(
-          if isComment then DefaultLanguageHighlighterColors.LINE_COMMENT
-          else if isQuoted then DefaultLanguageHighlighterColors.STRING
-          else DefaultLanguageHighlighterColors.IDENTIFIER,
+          DefaultLanguageHighlighterColors.STRING,
+          index,
+          token.length,
+          -1
+        )
+      case Seq(_, isComment) if isComment =>
+        applyColourKey(editor)(
+          DefaultLanguageHighlighterColors.LINE_COMMENT,
           index,
           token.length,
           -1
         )
       case Seq(_, _) if index > -1 && !token.isBlank =>
-        if keywords.contains(token) then
-          applyColourKey(editor)(
-            CUSTOM_KEYWORD_KEYWORD,
-            index,
-            token.length,
-            -1
-          )
-        else if triplePunctuation.exists(token.contains) then
-          applyColourKey(editor)(
-            CUSTOM_KEYWORD_PUNCTUATION,
-            index,
-            token.length,
-            puncIndexInToken(triplePunctuation)
-          )
-        else if punctuation.exists(token.contains) then
-          token.zipWithIndex
-            .filter(tokenCharWithIndex =>
-              punctuation.contains(tokenCharWithIndex._1.toString)
-            )
-            .foreach((_, puncIndexInToken) =>
-              applyColourKey(editor)(
-                CUSTOM_KEYWORD_PUNCTUATION,
-                index,
-                1,
-                puncIndexInToken
-              )
-            )
-        else if readability.contains(token) then
-          applyColourKey(editor)(
-            CUSTOM_KEYWORD_READABILITY,
-            index,
-            token.length,
-            -1
-          )
-        else
-          applyColourKey(editor)(
-            DefaultLanguageHighlighterColors.IDENTIFIER,
-            index,
-            token.length,
-            -1
-          )
+        callApplyColourKey()
     }
   }
 
@@ -134,23 +157,23 @@ object utils {
       length: Int,
       puncIndex: Int
   ): Unit = {
-    val (trueIndex: Int, trueLength: Int) =
-      if puncIndex < 0 then (index, length)
-      else (puncIndex + index, length)
+    val trueIndex: Int =
+      if puncIndex < 0 then index
+      else puncIndex + index
 
     editor.getMarkupModel.getAllHighlighters
-      .find(_.getStartOffset == index)
+      .find(_.getStartOffset == trueIndex)
       .foreach(highlighter =>
         editor.getMarkupModel.removeHighlighter(highlighter)
       )
+
     editor.getMarkupModel.addRangeHighlighter(
       colorKey,
       trueIndex,
-      trueIndex + trueLength,
-      HighlighterLayer.SYNTAX,
+      trueIndex + length,
+      HighlighterLayer.FIRST,
       HighlighterTargetArea.EXACT_RANGE
     )
     editor.getContentComponent.repaint()
-    ()
   }
 }

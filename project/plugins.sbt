@@ -1,4 +1,4 @@
-addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.13.2")
+addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.16.2")
 addSbtPlugin("org.jetbrains" % "sbt-idea-plugin" % "3.26.2")
 addSbtPlugin("org.jetbrains.scala" % "sbt-kotlin-plugin" % "3.0.3")
 

@@ -1,22 +1,19 @@
-package com.ossuminc.riddl.plugins
+package com.ossuminc.riddl.plugins.idea
 
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.project.{Project, ProjectManager}
+import com.intellij.openapi.util.IconLoader
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
 
 import java.awt.GridBagConstraints
-
-//case class RiddlIdeaPluginLogger(override val withHighlighting: Boolean = true)
-//    extends Logger {
-//  import com.ossuminc.riddl.plugins.utils.getRiddlIdeaState
-//
-//  override def write(level: Logging.Lvl, s: String): Unit = {
-//    getRiddlIdeaState.getState.appendOutput(s)
-//  }
-//}
+import javax.swing.Icon
 
 package object utils {
+  def RiddlIcon[T <: Class[?]](classType: T): Icon =
+    IconLoader.getIcon("images/RIDDL-icon.jpg", classType)
+
   object ManagerBasedGetterUtils {
     val application: Application = ApplicationManager.getApplication
 
@@ -30,9 +27,7 @@ package object utils {
         .getState
 
     def getRiddlIdeaState(numToolWindow: Int): RiddlIdeaSettings.State =
-      getRiddlIdeaStates.getState(
-        numToolWindow
-      )
+      getRiddlIdeaStates.getState(numToolWindow)
   }
 
   object CreationUtils {
@@ -60,8 +55,4 @@ package object utils {
       NotificationType.INFORMATION
     )
   )
-
-  def genWindowName(windowNumber: Int): String =
-    if windowNumber == 0 then "riddlc"
-    else s"riddlc ($windowNumber)"
 }

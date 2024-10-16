@@ -7,11 +7,11 @@ import com.intellij.openapi.actionSystem.{
   AnActionEvent
 }
 import com.intellij.openapi.project.DumbAware
-import com.ossuminc.riddl.plugins.utils.ToolWindowUtils.openToolWindowSettings
+import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.openToolWindowSettings
 import org.jetbrains.annotations.NotNull
 
 class RiddlToolWindowSettingsOpenAction extends AnAction with DumbAware {
-  private var windowNum: Int = -1
+  private var windowNum: Int = 1
   def setWindowNum(num: Int): Unit = windowNum = num
 
   override def actionPerformed(@NotNull anActionEvent: AnActionEvent): Unit =

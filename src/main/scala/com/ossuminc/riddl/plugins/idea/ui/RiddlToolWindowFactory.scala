@@ -3,14 +3,14 @@ package com.ossuminc.riddl.plugins.idea.ui
 import com.intellij.openapi.actionSystem.{
   ActionManager,
   ActionPlaces,
-  ActionToolbar,
-  DefaultActionGroup
+  ActionToolbar
 }
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.JBPanel
 import com.ossuminc.riddl.plugins.idea.actions.{
+  RiddlActionsGroup,
   RiddlNewToolWindowAction,
   RiddlToolWindowCompileAction,
   RiddlToolWindowSettingsOpenAction
@@ -44,19 +44,13 @@ class RiddlToolWindowContent(
     new SimpleToolWindowPanel(false, false)
   sideBar.setLayout(VerticalLayout())
 
-  private val actionGroup: DefaultActionGroup =
-    new DefaultActionGroup(
-      "com.ossuminc.riddl.plugins.idea.actions.RiddlActionsGroup",
-      false
-    )
+  private val actionGroup: RiddlActionsGroup = new RiddlActionsGroup()
   actionGroup.add(new RiddlNewToolWindowAction)
   private val compileAction: RiddlToolWindowCompileAction =
-    new RiddlToolWindowCompileAction()
-  compileAction.setWindowNum(numWindow)
+    new RiddlToolWindowCompileAction(numWindow)
   actionGroup.add(compileAction)
   private val openAction: RiddlToolWindowSettingsOpenAction =
-    new RiddlToolWindowSettingsOpenAction
-  openAction.setWindowNum(numWindow)
+    new RiddlToolWindowSettingsOpenAction(numWindow)
   actionGroup.add(openAction)
 
   private val actionToolbar: ActionToolbar = ActionManager

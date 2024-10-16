@@ -3,17 +3,8 @@ package com.ossuminc.riddl.plugins.idea.utils
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowManager}
-import com.intellij.ui.content.{
-  Content,
-  ContentFactory,
-  ContentManager,
-  ContentManagerEvent,
-  ContentManagerListener
-}
-import com.ossuminc.riddl.plugins.idea.settings.{
-  RiddlIdeaSettings,
-  RiddlIdeaSettingsConfigurable
-}
+import com.intellij.ui.content.{Content, ContentFactory, ContentManager, ContentManagerEvent, ContentManagerListener}
+import com.ossuminc.riddl.plugins.idea.settings.{RiddlIdeaSettings, RiddlIdeaSettingsConfigurable}
 import com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowContent
 import ParsingUtils.*
 import CreationUtils.*
@@ -24,11 +15,15 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.process.OSProcessHandler
+import com.intellij.openapi.actionSystem.{ActionManager, ActionPlaces, ActionPopupMenu, DefaultActionGroup}
 import com.intellij.terminal.TerminalExecutionConsole
+import com.ossuminc.riddl.plugins.idea.actions.{EditTabNameAction, RiddlActionsGroup}
 
 import scala.jdk.CollectionConverters.*
 import java.awt.GridBagConstraints
+import java.awt.event.{MouseAdapter, MouseEvent}
 import java.io.File
+import javax.swing.{JComponent, JMenuItem, JPopupMenu}
 import javax.swing.border.EmptyBorder
 
 object ToolWindowUtils {
@@ -98,11 +93,12 @@ object ToolWindowUtils {
       project: Project
   ): Unit = {
     def setConsoleProps(console: TerminalExecutionConsole): Unit = {
-      console.getTerminalWidget.setAutoscrolls(true)
-      console.getTerminalWidget.getTerminalPanel.setCursorVisible(false)
-      console.getTerminalWidget.setFocusable(true)
-      console.getTerminalWidget.setEnabled(false)
-      console.getTerminalWidget.setBorder(new EmptyBorder(10, 10, 10, 10))
+      val terminalWidget = console.getTerminalWidget
+      terminalWidget.setAutoscrolls(true)
+      terminalWidget.getTerminalPanel.setCursorVisible(false)
+      terminalWidget.setFocusable(true)
+      terminalWidget.setEnabled(false)
+      terminalWidget.setBorder(new EmptyBorder(10, 10, 10, 10))
     }
 
     val state: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
@@ -143,7 +139,6 @@ object ToolWindowUtils {
     ): Unit = {
       def writeToConsole(s: String): Unit = {
         console.getTerminalWidget.getTerminal.reset(true)
-        setConsoleProps(console)
         console.print(s, ConsoleViewContentType.SYSTEM_OUTPUT)
       }
 
@@ -162,10 +157,29 @@ object ToolWindowUtils {
       val confFile = File(statePath)
 
       val tabContent: Content = getToolWindowContent(numWindow)
-      val expectedName = genWindowName(numWindow)
+      if tabContent.getTabName.isBlank then
+        tabContent.setDisplayName(genWindowName(numWindow))
+      tabContent.getComponent.addMouseListener(new MouseAdapter {
+        override def mousePressed(e: MouseEvent): Unit = {
+          if e.isPopupTrigger then showPopup(e)
+        }
 
-      if tabContent.getTabName != expectedName then
-        tabContent.setDisplayName(expectedName)
+        override def mouseReleased(e: MouseEvent): Unit = {
+          if e.isPopupTrigger then showPopup(e)
+        }
+
+        private def showPopup(e: MouseEvent): Unit = {
+          val actionGroup = ActionManager.getInstance().getAction()
+          actionGroup.add(EditTabNameAction())
+
+          val actionPopupMenu: ActionPopupMenu = ActionManager
+            .getInstance()
+            .createActionPopupMenu(ActionPlaces.UNKNOWN, actionGroup)
+          val component: JComponent = e.getComponent.asInstanceOf[JComponent]
+          val popupMenu: JPopupMenu = actionPopupMenu.getComponent
+          popupMenu.show(component, e.getX, e.getY)
+        }
+      })
 
       if state.getCommand == "from" && (statePath == null || statePath.isBlank)
       then
@@ -214,9 +228,9 @@ object ToolWindowUtils {
     .getToolWindow("riddl")
     .getContentManager
 
-  private def getToolWindowContent(numWindow: Int): Content =
+  def getToolWindowContent(numWindow: Int): Content =
     getContentManager.getContents
-      .find(_.getTabName.contains(numWindow.toString))
+      .find(_.getTabName == genWindowName(numWindow))
       .getOrElse(
         getContentManager.getContents
           .find(_.getTabName.count(_.isDigit) == 0)
@@ -227,25 +241,22 @@ object ToolWindowUtils {
       numWindow: Int,
       fromReload: Boolean = false,
       fromLogger: Boolean = false
-  ): Unit =
-    updateToolWindowRunPane(numWindow, fromReload, fromLogger)
+  ): Unit = updateToolWindowRunPane(numWindow, fromReload, fromLogger)
 
   def updateToolWindowRunPane(
       numWindow: Int,
       fromReload: Boolean = false,
       fromLogger: Boolean = false
-  ): Unit =
-    getToolWindowContent(numWindow).getComponent
-      .getClientProperty(genUpdateRunPaneLabelName(numWindow))
-      .asInstanceOf[(fromReload: Boolean, fromLogger: Boolean) => Unit](
-        fromReload,
-        fromLogger
-      )
+  ): Unit = getToolWindowContent(numWindow).getComponent
+    .getClientProperty(genUpdateRunPaneLabelName(numWindow))
+    .asInstanceOf[(fromReload: Boolean, fromLogger: Boolean) => Unit](
+      fromReload,
+      fromLogger
+    )
 
-  def createNewToolWindow(): Unit =
-    getToolWindowContent(0).getComponent
-      .getClientProperty("createToolWindow")
-      .asInstanceOf[() => Unit]()
+  def createNewToolWindow(): Unit = getToolWindowContent(1).getComponent
+    .getClientProperty("createToolWindow")
+    .asInstanceOf[() => Unit]()
 
   def openToolWindowSettings(numWindow: Int): Unit =
     ShowSettingsUtil.getInstance
@@ -257,7 +268,11 @@ object ToolWindowUtils {
   private def genWindowName(windowNumber: Int): String = {
     val windowNumInName =
       if windowNumber > 1 then s" - (Window #$windowNumber)" else ""
-    s"RIDDL ${getRiddlIdeaState(windowNumber).getCommand}$windowNumInName"
+
+    val windowState = getRiddlIdeaState(windowNumber)
+    if windowState != null then
+      s"RIDDL ${windowState.getCommand}$windowNumInName"
+    else s"RIDDL ?$windowNumInName"
   }
 
   private def genUpdateRunPaneLabelName(numWindow: Int) =

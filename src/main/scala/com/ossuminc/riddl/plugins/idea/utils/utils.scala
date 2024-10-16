@@ -5,7 +5,6 @@ import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
 
 import java.awt.GridBagConstraints
 import javax.swing.Icon

@@ -11,9 +11,9 @@ import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.updateToolWindowPan
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
 import org.jetbrains.annotations.NotNull
 
-class RiddlToolWindowCompileAction extends AnAction with DumbAware {
-  private var windowNum: Int = -1
-  def setWindowNum(num: Int): Unit = windowNum = num
+class RiddlToolWindowCompileAction(windowNum: Int)
+    extends AnAction
+    with DumbAware {
 
   override def actionPerformed(@NotNull anActionEvent: AnActionEvent): Unit = {
     getRiddlIdeaState(windowNum).clearRunOutput()

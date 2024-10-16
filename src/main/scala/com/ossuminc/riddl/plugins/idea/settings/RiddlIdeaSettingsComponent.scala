@@ -12,14 +12,16 @@ import com.intellij.openapi.ui.{
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel, JBTextField}
+import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
 import com.intellij.util.ui.FormBuilder
+import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.CommonOption
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 
+import java.awt.ComponentOrientation
 import java.awt.event.{
+  ActionEvent,
   ItemEvent,
   ItemListener,
-  ActionEvent,
   MouseAdapter,
   MouseEvent
 }
@@ -29,7 +31,7 @@ import javax.swing.event.DocumentEvent
 class ConfCondition extends Condition[VirtualFile] {
   def value(virtualFile: VirtualFile): Boolean = {
     val fn = virtualFile.getName.toLowerCase
-    fn.endsWith(".conf")
+    fn.endsWith(".conf") || fn.endsWith(".riddl")
   }
 }
 
@@ -53,60 +55,10 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       }
     })
 
-  private def createParamButton(
-    param: String,
-    setCommonOption: CommonOptions => Boolean => CommonOptions,
-    initialOptionState: CommonOptions => Boolean
-  ): JBPanel[?] = {
-    val row = new JBPanel()
-    row.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT)
-
-    val checkBox = JBCheckBox()
-    if initialOptionState(state.getCommonOptions) then checkBox.doClick()
-    checkBox.addItemListener((e: ItemEvent) => {
-      state.setCommonOptions(setCommonOption(state.getCommonOptions)(checkBox.isSelected))
-    })
-    row.add(checkBox)
-
-    val label = new JBLabel()
-    label.setText(param)
-    row.add(label)
-
-    row
-  }
-
-  import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils
-
-  private val commonOptionsPanel: JPanel = new JPanel(new java.awt.GridLayout(0, 2))
-  CommonOptionsUtils.AllCommonOptions.foreach(tup =>
-    commonOptionsPanel.add(createParamButton(tup._1, tup._2, tup._3))
-  )
-
-  private val riddlMainPanel = FormBuilder.createFormBuilder
-    .addLabeledComponent(
-      "Current conf file path:",
-      confFileTextField,
-      1,
-      false
-    )
-    .addComponentFillVertically(new JPanel(), 0)
-    .addLabeledComponent(
-      "Automatically re-compile on save",
-      autoCompileCheckBox
-    )
-    .addComponentFillVertically(new JPanel(), 0)
-    .addLabeledComponent(
-      "Common Options",
-      commonOptionsPanel
-    )
-    .addComponentFillVertically(new JPanel(), 0)
-    .getPanel
-
-  private val fileDescriptor: FileChooserDescriptor =
-    FileChooserDescriptorFactory
-      .createSingleFileDescriptor()
-      .withFileFilter(ConfCondition())
-
+    val fileDescriptor: FileChooserDescriptor =
+      FileChooserDescriptorFactory
+        .createSingleFileDescriptor()
+        .withFileFilter(ConfCondition())
     confFileTextField.addBrowseFolderListener(
       "Browse for Path",
       null,
@@ -115,6 +67,31 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
     )
 
     confFileTextField
+  }
+
+  private def createParamButton(
+      commonOption: CommonOption
+  ): JBPanel[?] = {
+    val row = new JBPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
+    row.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT)
+
+    val checkBox = JBCheckBox()
+    if commonOption.getCommonOptionValue(state.getCommonOptions) then
+      checkBox.doClick()
+    checkBox.addItemListener((_: ItemEvent) => {
+      state.setCommonOptions(
+        commonOption.setCommonOptionValue(state.getCommonOptions)(
+          checkBox.isSelected
+        )
+      )
+    })
+    row.add(checkBox)
+
+    val label = new JBLabel()
+    label.setText(commonOption.name)
+    row.add(label)
+
+    row
   }
 
   private var pickedCommandModified: Boolean = false
@@ -174,11 +151,26 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
 
     riddlPanel.add(formBuilderPanel)
 
-    if pickedCommand == "from" then
-      riddlFormBuilder.addLabeledComponent(
-        "Current configuration file path:",
-        confFileTextField
+    val commonOptionsPanel: JPanel = new JPanel(new java.awt.GridLayout(0, 2))
+    CommonOptionsUtils.AllCommonOptions.foreach(option =>
+      commonOptionsPanel.add(createParamButton(option))
+    )
+
+    riddlFormBuilder
+      .addLabeledComponent(
+        "Common Options",
+        commonOptionsPanel
       )
+      .addComponentFillVertically(new JPanel(), 0)
+      .getPanel
+
+    if pickedCommand == "from" then
+      riddlFormBuilder
+        .addComponentFillVertically(new JPanel(), 0)
+        .addLabeledComponent(
+          "Current configuration file path:",
+          confFileTextField
+        )
 
     riddlFormBuilder
       .addComponentFillVertically(new JPanel(), 0)

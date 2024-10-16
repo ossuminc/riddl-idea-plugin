@@ -20,7 +20,8 @@ object CommonOptionsUtils {
     }
     def getShowWarnings: Boolean = commonOptions.showWarnings
     def setShowMissingWarnings(showMissingWarnings: Boolean): CommonOptions = {
-      commonOptions = commonOptions.copy(showMissingWarnings = showMissingWarnings)
+      commonOptions =
+        commonOptions.copy(showMissingWarnings = showMissingWarnings)
       commonOptions
     }
     def getShowMissingWarnings: Boolean = commonOptions.showMissingWarnings
@@ -41,28 +42,47 @@ object CommonOptionsUtils {
     def getShowInfoMessages: Boolean = commonOptions.showInfoMessages
   }
 
-  val AllCommonOptions: Seq[(String, CommonOptions => Boolean => CommonOptions, CommonOptions => Boolean)] = Seq(
-    ("show-times",
-      (commonOptions: CommonOptions) => commonOptions.setShowTimes,
-      (commonOptions: CommonOptions) => commonOptions.getShowTimes
-    ), ("show-include-times",
-      (commonOptions: CommonOptions) => commonOptions.setShowIncludeTimes,
-      (commonOptions: CommonOptions) => commonOptions.getShowIncludeTimes
-    ), ("show-warnings",
-      (commonOptions: CommonOptions) => commonOptions.setShowWarnings,
-      (commonOptions: CommonOptions) => commonOptions.getShowWarnings
-    ), ("show-missing-warnings",
-      (commonOptions: CommonOptions) => commonOptions.setShowMissingWarnings,
-      (commonOptions: CommonOptions) => commonOptions.getShowMissingWarnings
-    ), ("show-style-warnings",
-      (commonOptions: CommonOptions) => commonOptions.setShowStyleWarnings,
-      (commonOptions: CommonOptions) => commonOptions.getShowStyleWarnings
-    ), ("show-usage-warnings",
-      (commonOptions: CommonOptions) => commonOptions.setShowUsageWarnings,
-      (commonOptions: CommonOptions) => commonOptions.getShowUsageWarnings
-    ), ("show-info-messages",
-      (commonOptions: CommonOptions) => commonOptions.setShowInfoMessages,
-      (commonOptions: CommonOptions) => commonOptions.getShowInfoMessages
-    )
+  case class CommonOption(
+      name: String,
+      getCommonOptionValue: CommonOptions => Boolean,
+      setCommonOptionValue: CommonOptions => Boolean => CommonOptions
   )
+
+  val AllCommonOptions: Seq[CommonOption] = Seq(
+    (
+      "show-times",
+      (commonOptions: CommonOptions) => commonOptions.getShowTimes,
+      (commonOptions: CommonOptions) => commonOptions.setShowTimes
+    ),
+    (
+      "show-include-times",
+      (commonOptions: CommonOptions) => commonOptions.getShowIncludeTimes,
+      (commonOptions: CommonOptions) => commonOptions.setShowIncludeTimes
+    ),
+    (
+      "show-warnings",
+      (commonOptions: CommonOptions) => commonOptions.getShowWarnings,
+      (commonOptions: CommonOptions) => commonOptions.setShowWarnings
+    ),
+    (
+      "show-missing-warnings",
+      (commonOptions: CommonOptions) => commonOptions.getShowMissingWarnings,
+      (commonOptions: CommonOptions) => commonOptions.setShowMissingWarnings
+    ),
+    (
+      "show-style-warnings",
+      (commonOptions: CommonOptions) => commonOptions.getShowStyleWarnings,
+      (commonOptions: CommonOptions) => commonOptions.setShowStyleWarnings
+    ),
+    (
+      "show-usage-warnings",
+      (commonOptions: CommonOptions) => commonOptions.getShowUsageWarnings,
+      (commonOptions: CommonOptions) => commonOptions.setShowUsageWarnings
+    ),
+    (
+      "show-info-messages",
+      (commonOptions: CommonOptions) => commonOptions.getShowInfoMessages,
+      (commonOptions: CommonOptions) => commonOptions.setShowInfoMessages
+    )
+  ).map(tup => CommonOption(tup._1, tup._2, tup._3))
 }

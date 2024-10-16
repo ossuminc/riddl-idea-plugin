@@ -29,6 +29,7 @@ object ParsingUtils {
   ): Unit = {
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
 
+    println(getRiddlIdeaState(numWindow).getCommonOptions)
     Commands.runCommandWithArgs(
       Array(
         windowState.getCommand,
@@ -36,11 +37,7 @@ object ParsingUtils {
         if confFile.isDefined then "validate" else ""
       ).filter(_.nonEmpty),
       RiddlIdeaPluginLogger(numWindow),
-      CommonOptions(
-        noANSIMessages = false,
-        groupMessagesByKind = true,
-        showTimes = true
-      )
+      getRiddlIdeaState(numWindow).getCommonOptions
     ) match {
       case Right(_) if windowState.getCommand == "from" =>
         windowState.prependRunOutput("Success!! There were no errors found\n")

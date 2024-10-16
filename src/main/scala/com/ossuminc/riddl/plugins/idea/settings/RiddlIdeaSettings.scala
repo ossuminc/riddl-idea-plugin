@@ -1,6 +1,7 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.components.{PersistentStateComponent, State => StateAnnotation, Storage}
+import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
+import com.ossuminc.riddl.language.CommonOptions
 
 @StateAnnotation(
   name = "RiddlIdeaSettings",
@@ -51,6 +52,7 @@ object RiddlIdeaSettings {
     private var riddlRunOutput: Seq[String] = Seq()
     private var autoCompileOnSave: Boolean = true
     private var command: String = commands.head
+    private var commonOptions: CommonOptions = CommonOptions.empty.copy(noANSIMessages = true, groupMessagesByKind = true)
 
     def setConfPath(newPath: String): Unit = riddlConfPath = newPath
     def getConfPath: String = riddlConfPath
@@ -66,6 +68,11 @@ object RiddlIdeaSettings {
     def setCommand(newCommand: String): Unit =
       if commands.contains(newCommand) then command = newCommand
     def getCommand: String = command
+
+    def getCommonOptions: CommonOptions = commonOptions
+    def setCommonOptions(newCOs: CommonOptions): Unit = {
+      commonOptions = newCOs
+    }
   }
 
   private val commands = Seq("from", "about", "info")

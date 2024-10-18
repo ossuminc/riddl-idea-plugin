@@ -51,12 +51,10 @@ class RiddlToolWindowContent(
     )
   actionGroup.add(new RiddlNewToolWindowAction)
   private val compileAction: RiddlToolWindowCompileAction =
-    new RiddlToolWindowCompileAction()
-  compileAction.setWindowNum(numWindow)
+    new RiddlToolWindowCompileAction(numWindow)
   actionGroup.add(compileAction)
   private val openAction: RiddlToolWindowSettingsOpenAction =
-    new RiddlToolWindowSettingsOpenAction
-  openAction.setWindowNum(numWindow)
+    new RiddlToolWindowSettingsOpenAction(numWindow)
   actionGroup.add(openAction)
 
   private val actionToolbar: ActionToolbar = ActionManager

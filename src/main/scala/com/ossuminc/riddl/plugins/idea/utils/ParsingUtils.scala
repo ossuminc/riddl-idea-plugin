@@ -1,7 +1,6 @@
 package com.ossuminc.riddl.plugins.idea.utils
 
 import com.ossuminc.riddl.commands.Commands
-import com.ossuminc.riddl.language.CommonOptions
 import com.ossuminc.riddl.passes.PassesResult
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.utils.{Logger, Logging}
@@ -29,7 +28,6 @@ object ParsingUtils {
   ): Unit = {
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
 
-    println(getRiddlIdeaState(numWindow).getCommonOptions)
     Commands.runCommandWithArgs(
       Array(
         windowState.getCommand,

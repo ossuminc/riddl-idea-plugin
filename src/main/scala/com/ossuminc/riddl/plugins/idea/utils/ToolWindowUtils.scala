@@ -14,7 +14,10 @@ import com.ossuminc.riddl.plugins.idea.settings.{
   RiddlIdeaSettings,
   RiddlIdeaSettingsConfigurable
 }
-import com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowContent
+import com.ossuminc.riddl.plugins.idea.ui.{
+  RiddlTerminalConsole,
+  RiddlToolWindowContent
+}
 import ParsingUtils.*
 import CreationUtils.*
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -24,7 +27,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.terminal.TerminalExecutionConsole
 
 import scala.jdk.CollectionConverters.*
 import java.awt.GridBagConstraints
@@ -97,21 +99,19 @@ object ToolWindowUtils {
       numWindow: Int,
       project: Project
   ): Unit = {
-    def setConsoleProps(console: TerminalExecutionConsole): Unit = {
-      console.getTerminalWidget.setAutoscrolls(true)
-      console.getTerminalWidget.getTerminalPanel.setCursorVisible(false)
-      console.getTerminalWidget.setFocusable(true)
-      console.getTerminalWidget.setEnabled(false)
-      console.getTerminalWidget.setBorder(new EmptyBorder(10, 10, 10, 10))
+    def setConsoleProps(console: RiddlTerminalConsole): Unit = {
+      console.setAutoscrolls(true)
+      console.setFocusable(true)
+      console.setEnabled(false)
+      console.setBorder(new EmptyBorder(10, 10, 10, 10))
     }
 
     val state: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
 
     val notConfiguredMessage: String =
       "project's configuration file not configured in settings"
-    val processHandler = new OSProcessHandler(new GeneralCommandLine("echo"))
-    val console: TerminalExecutionConsole =
-      new TerminalExecutionConsole(project, processHandler)
+    val console: RiddlTerminalConsole =
+      new RiddlTerminalConsole(numWindow, project)
     setConsoleProps(console)
 
     def putUpdateRunPaneLabelAsClientProperty(): Unit =
@@ -142,7 +142,7 @@ object ToolWindowUtils {
         fromLogger: Boolean = false
     ): Unit = {
       def writeToConsole(s: String): Unit = {
-        console.getTerminalWidget.getTerminal.reset(true)
+        console.clear()
         setConsoleProps(console)
         console.print(s, ConsoleViewContentType.SYSTEM_OUTPUT)
       }
@@ -162,10 +162,8 @@ object ToolWindowUtils {
       val confFile = File(statePath)
 
       val tabContent: Content = getToolWindowContent(numWindow)
-      val expectedName = genWindowName(numWindow)
-
-      if tabContent.getTabName != expectedName then
-        tabContent.setDisplayName(expectedName)
+      if tabContent.getTabName.isBlank then
+        tabContent.setDisplayName(genWindowName(numWindow))
 
       if state.getCommand == "from" && (statePath == null || statePath.isBlank)
       then
@@ -216,7 +214,7 @@ object ToolWindowUtils {
 
   private def getToolWindowContent(numWindow: Int): Content =
     getContentManager.getContents
-      .find(_.getTabName.contains(numWindow.toString))
+      .find(_.getTabName == genWindowName(numWindow))
       .getOrElse(
         getContentManager.getContents
           .find(_.getTabName.count(_.isDigit) == 0)
@@ -230,7 +228,7 @@ object ToolWindowUtils {
   ): Unit =
     updateToolWindowRunPane(numWindow, fromReload, fromLogger)
 
-  def updateToolWindowRunPane(
+  private def updateToolWindowRunPane(
       numWindow: Int,
       fromReload: Boolean = false,
       fromLogger: Boolean = false

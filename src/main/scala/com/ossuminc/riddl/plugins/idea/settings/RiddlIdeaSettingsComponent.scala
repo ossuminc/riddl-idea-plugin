@@ -154,7 +154,6 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
     CommonOptionsUtils.AllCommonOptions.foreach(option =>
       commonOptionsPanel.add(createParamButton(option))
     )
-    println(state.getCommonOptions.noANSIMessages)
 
     riddlFormBuilder
       .addLabeledComponent(

@@ -1,14 +1,12 @@
 package com.ossuminc.riddl.plugins.idea.ui
 
-import com.intellij.execution.filters.{HyperlinkInfo, HyperlinkInfoBase}
+import com.intellij.execution.filters.HyperlinkInfoBase
 import com.intellij.execution.impl.ConsoleViewImpl
-import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.editor.{Editor, LogicalPosition}
 import com.intellij.openapi.fileEditor.{FileEditorManager, OpenFileDescriptor}
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
-import com.intellij.terminal.TerminalExecutionConsole
 import com.intellij.ui.awt.RelativePoint
 
 import scala.util.matching.Regex

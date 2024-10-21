@@ -68,7 +68,6 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
 
     confFileTextField
   }
-
   private def createParamButton(
       commonOption: CommonOption
   ): JBPanel[?] = {

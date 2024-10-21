@@ -60,14 +60,14 @@ object utils {
         .zip(splitText)
         .filter(_._2.trim.nonEmpty)
         .map(getSubStringsWithIndices)
-    else {
+    else if !doc.isBlank then {
       Seq(
         getSubStringsWithIndices(
-          if doc.charAt(start - 1).isWhitespace then 0 else -1,
+          if doc.charAt(start).isWhitespace then 0 else -1,
           ""
         )
       )
-    }
+    } else Seq()
   }
 
   def highlightKeywords(text: String, editor: Editor): Unit = {

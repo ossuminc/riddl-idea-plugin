@@ -17,7 +17,7 @@ import com.intellij.util.ui.FormBuilder
 import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.CommonOption
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 
-import java.awt.ComponentOrientation
+import java.awt.{ComponentOrientation, FlowLayout}
 import java.awt.event.{
   ActionEvent,
   ItemEvent,
@@ -68,10 +68,11 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
 
     confFileTextField
   }
-  private def createParamButton(
-      commonOption: CommonOption
+
+  private def createBooleanParamButton(
+      commonOption: CommonOption[Boolean]
   ): JBPanel[?] = {
-    val row = new JBPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
+    val row = new JBPanel(new FlowLayout(java.awt.FlowLayout.LEFT))
     row.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT)
 
     val checkBox = JBCheckBox()
@@ -151,8 +152,8 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
     riddlPanel.add(formBuilderPanel)
 
     val commonOptionsPanel: JPanel = new JPanel(new java.awt.GridLayout(0, 2))
-    CommonOptionsUtils.AllCommonOptions.foreach(option =>
-      commonOptionsPanel.add(createParamButton(option))
+    CommonOptionsUtils.BooleanCommonOptions.foreach(option =>
+      commonOptionsPanel.add(createBooleanParamButton(option))
     )
 
     riddlFormBuilder

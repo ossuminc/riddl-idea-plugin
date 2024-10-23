@@ -1,9 +1,7 @@
 package com.ossuminc.riddl.plugins.idea.files
 
 import com.intellij.ide.highlighter.custom.CustomHighlighterColors
-import com.intellij.openapi.editor.{DefaultLanguageHighlighterColors, Document}
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.psi.CustomHighlighterTokenType
 import com.ossuminc.riddl.plugins.idea.files.utils.splitByBlanks
 
 object RiddlTokenizer {

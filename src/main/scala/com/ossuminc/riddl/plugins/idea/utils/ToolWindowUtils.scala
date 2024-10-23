@@ -20,13 +20,12 @@ import com.ossuminc.riddl.plugins.idea.ui.{
 }
 import ParsingUtils.*
 import CreationUtils.*
-import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.ui.components.JBPanel
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.execution.process.OSProcessHandler
+import com.intellij.openapi.fileEditor.FileEditorManager
 
 import scala.jdk.CollectionConverters.*
 import java.awt.GridBagConstraints
@@ -179,6 +178,12 @@ object ToolWindowUtils {
             s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
           )
       else if fromReload then runCommandForWindow(numWindow)
+
+      val fileEditorManager = FileEditorManager
+        .getInstance(project)
+
+      fileEditorManager.getSelectedFiles
+        .foreach(file => highlightErrorForFile(state, file.getName))
     }
 
     // enables auto-compiling

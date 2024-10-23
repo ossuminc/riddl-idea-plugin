@@ -2,13 +2,23 @@ package com.ossuminc.riddl.plugins.idea
 
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.markup.{HighlighterLayer, TextAttributes}
+import com.intellij.openapi.fileEditor.{FileEditorManager, OpenFileDescriptor}
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
+import com.intellij.util.ui.UIUtil
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
+  getProject,
+  getRiddlIdeaState
+}
+import com.ossuminc.riddl.plugins.idea.riddlErrorRegex
 
 import java.awt.GridBagConstraints
 import javax.swing.Icon
+import scala.util.matching.Regex
 
 package object utils {
   def RiddlIcon[T <: Class[?]](classType: T): Icon =
@@ -55,4 +65,80 @@ package object utils {
       NotificationType.INFORMATION
     )
   )
+
+  def editorForError(
+      numWindow: Int,
+      fileName: String,
+      lineNumber: Int,
+      charNumber: Int
+  ): Editor = {
+    val pathToConf = getRiddlIdeaState(numWindow).getConfPath
+      .split("/")
+      .dropRight(1)
+      .mkString("/")
+
+    val file: VirtualFile =
+      LocalFileSystem.getInstance.findFileByPath(
+        s"$pathToConf/$fileName"
+      )
+
+    FileEditorManager
+      .getInstance(getProject)
+      .openTextEditor(
+        new OpenFileDescriptor(
+          getProject,
+          file,
+          lineNumber - 1,
+          charNumber - 1
+        ),
+        true
+      )
+  }
+
+  def highlightErrorForFile(
+      state: RiddlIdeaSettings.State,
+      fileName: String
+  ): Unit = state.getRunOutput
+    .flatMap(
+      _.split("\n\n")
+        .filter(outputBlock => outputBlock.contains(fileName))
+        .map(_.split("\n").toSeq)
+    )
+    .foreach { outputBlock =>
+      riddlErrorRegex.findFirstMatchIn(outputBlock.head) match
+        case Some(resultMatch: Regex.Match) =>
+          val editor = editorForError(
+            state.getWindowNum,
+            resultMatch.group(2),
+            resultMatch.group(3).toInt,
+            resultMatch.group(4).toInt
+          )
+
+          editor.getMarkupModel.removeAllHighlighters()
+          Thread.sleep(500)
+
+          if resultMatch.group(1) == "[ERROR]" then
+            val highlighter = editor.getMarkupModel.addLineHighlighter(
+              resultMatch.group(3).toInt,
+              HighlighterLayer.ERROR,
+              new TextAttributes()
+            )
+            highlighter.setErrorStripeMarkColor(
+              UIUtil.getErrorForeground
+            )
+            highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
+          else if resultMatch.group(1) == "[WARN]" then
+            val highlighter = editor.getMarkupModel.addLineHighlighter(
+              resultMatch.group(3).toInt,
+              HighlighterLayer.WARNING,
+              new TextAttributes()
+            )
+            highlighter.setErrorStripeMarkColor(
+              UIUtil.getToolTipForeground
+            )
+            highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
+        case _ => ()
+    }
 }
+
+def riddlErrorRegex = """(\[\w+\]) ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r

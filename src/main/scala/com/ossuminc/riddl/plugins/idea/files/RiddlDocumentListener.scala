@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.util.TextRange
 import com.ossuminc.riddl.plugins.idea.files.utils.{
   getWholeWordsSubstrings,
-  highlightKeywordsInDoc
+  highlightKeywordsOnChange
 }
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
 
@@ -22,7 +22,7 @@ class RiddlDocumentListener extends DocumentListener {
         newText,
         event.getOffset
       )
-      highlightKeywordsInDoc(
+      highlightKeywordsOnChange(
         wholeWords
           .zip(
             RiddlTokenizer

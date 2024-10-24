@@ -3,11 +3,11 @@ package com.ossuminc.riddl.plugins.idea.ui
 import com.intellij.execution.filters.HyperlinkInfoBase
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.openapi.editor.{Editor, LogicalPosition}
-import com.intellij.openapi.fileEditor.{FileEditorManager, OpenFileDescriptor}
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.ui.awt.RelativePoint
+import com.ossuminc.riddl.plugins.idea.riddlErrorRegex
+import com.ossuminc.riddl.plugins.idea.utils.editorForError
 
 import scala.util.matching.Regex
 
@@ -19,18 +19,18 @@ class RiddlTerminalConsole(
       text: String,
       contentType: ConsoleViewContentType
   ): Unit = {
-    val linePattern = """\[\w+\] ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r
     text
       .split("\n")
       .toList
       .foreach { line =>
-        linePattern.findFirstMatchIn(line) match
+        riddlErrorRegex.findFirstMatchIn(line) match
           case Some(resultMatch: Regex.Match) =>
             linkToEditor(
               line,
-              resultMatch.group(1),
-              resultMatch.group(2).toInt,
-              resultMatch.group(3).toInt
+              resultMatch.group(2),
+              numWindow,
+              resultMatch.group(3).toInt,
+              resultMatch.group(4).toInt
             )
           case None =>
             super.print(line + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
@@ -41,42 +41,26 @@ class RiddlTerminalConsole(
   private def linkToEditor(
       textLine: String,
       fileName: String,
+      numWindow: Int,
       lineNumber: Int,
-      charNumber: Int
+      charPosition: Int
   ): Unit = {
-    import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
-
-    val pathToConf = getRiddlIdeaState(numWindow).getConfPath
-      .split("/")
-      .dropRight(1)
-      .mkString("/")
-
-    val file: VirtualFile =
-      LocalFileSystem.getInstance.findFileByPath(
-        s"$pathToConf/$fileName"
-      )
-
     val hyperlinkInfo = new HyperlinkInfoBase {
       override def navigate(
           project: Project,
           relativePoint: RelativePoint
       ): Unit = {
-        val editor: Editor = FileEditorManager
-          .getInstance(project)
-          .openTextEditor(
-            new OpenFileDescriptor(
-              project,
-              file,
-              lineNumber - 1,
-              charNumber - 1
-            ),
-            true
-          )
+        val editor = editorForError(
+          numWindow,
+          fileName,
+          lineNumber,
+          charPosition
+        )
         if editor != null then {
           val logicalPosition =
             new LogicalPosition(
               lineNumber - 1,
-              charNumber - 1
+              charPosition - 1
             )
           editor.getCaretModel.moveToLogicalPosition(logicalPosition)
         }

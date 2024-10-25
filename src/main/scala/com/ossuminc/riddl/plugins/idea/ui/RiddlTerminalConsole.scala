@@ -6,7 +6,7 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
 import com.intellij.ui.awt.RelativePoint
-import com.ossuminc.riddl.plugins.idea.riddlErrorRegex
+import com.ossuminc.riddl.plugins.idea.utils.riddlErrorRegex
 import com.ossuminc.riddl.plugins.idea.utils.editorForError
 
 import scala.util.matching.Regex

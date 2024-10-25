@@ -14,7 +14,7 @@ import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getProject,
   getRiddlIdeaState
 }
-import com.ossuminc.riddl.plugins.idea.riddlErrorRegex
+import com.intellij.openapi.editor.markup.MarkupModel
 
 import java.awt.GridBagConstraints
 import javax.swing.Icon
@@ -104,41 +104,46 @@ package object utils {
         .filter(outputBlock => outputBlock.contains(fileName))
         .map(_.split("\n").toSeq)
     )
-    .foreach { outputBlock =>
-      riddlErrorRegex.findFirstMatchIn(outputBlock.head) match
-        case Some(resultMatch: Regex.Match) =>
-          val editor = editorForError(
-            state.getWindowNum,
-            resultMatch.group(2),
+    .foreach(block => highlightErrorBlock(state, block))
+
+  def highlightErrorBlock(
+      state: RiddlIdeaSettings.State,
+      outputBlock: Seq[String]
+  ): Unit =
+    riddlErrorRegex.findFirstMatchIn(outputBlock.head) match
+      case Some(resultMatch: Regex.Match) =>
+        val editor = editorForError(
+          state.getWindowNum,
+          resultMatch.group(2),
+          resultMatch.group(3).toInt,
+          resultMatch.group(4).toInt
+        )
+
+        val markupModel: MarkupModel = editor.getMarkupModel
+        Thread.sleep(500)
+
+        if resultMatch.group(1) == "[error]" then
+          val highlighter = markupModel.addLineHighlighter(
             resultMatch.group(3).toInt,
-            resultMatch.group(4).toInt
+            HighlighterLayer.ERROR,
+            new TextAttributes()
           )
+          highlighter.setErrorStripeMarkColor(
+            UIUtil.getErrorForeground
+          )
+          highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
+        else if resultMatch.group(1) == "[warn]" then
+          val highlighter = markupModel.addLineHighlighter(
+            resultMatch.group(3).toInt,
+            HighlighterLayer.WARNING,
+            new TextAttributes()
+          )
+          highlighter.setErrorStripeMarkColor(
+            UIUtil.getToolTipForeground
+          )
+          highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
+      case _ => ()
 
-          editor.getMarkupModel.removeAllHighlighters()
-          Thread.sleep(500)
-
-          if resultMatch.group(1) == "[ERROR]" then
-            val highlighter = editor.getMarkupModel.addLineHighlighter(
-              resultMatch.group(3).toInt,
-              HighlighterLayer.ERROR,
-              new TextAttributes()
-            )
-            highlighter.setErrorStripeMarkColor(
-              UIUtil.getErrorForeground
-            )
-            highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
-          else if resultMatch.group(1) == "[WARN]" then
-            val highlighter = editor.getMarkupModel.addLineHighlighter(
-              resultMatch.group(3).toInt,
-              HighlighterLayer.WARNING,
-              new TextAttributes()
-            )
-            highlighter.setErrorStripeMarkColor(
-              UIUtil.getToolTipForeground
-            )
-            highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
-        case _ => ()
-    }
+  def riddlErrorRegex: Regex =
+    """(\[\w+\]) ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r
 }
-
-def riddlErrorRegex = """(\[\w+\]) ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r

@@ -17,8 +17,8 @@ object utils {
       eventText: String,
       start: Int
   ): Seq[(String, Int)] = {
-    def getSubStringsWithIndices(index: Int, text: String): (String, Int) = {
-      val indexedStart = index + start
+    def getSubStringsWithIndices(offset: Int, text: String): (String, Int) = {
+      val indexedStart = offset + start
       val adjustedStart =
         if !doc.charAt(indexedStart).isWhitespace && doc
             .lastIndexWhere(_.isWhitespace, indexedStart) > -1
@@ -51,10 +51,26 @@ object utils {
       )
     }
 
-    if !eventText.isBlank then
+    if eventText.isBlank && eventText != "\b" then
+      Seq(
+        getSubStringsWithIndices(
+          if start > 0 && doc.charAt(start - 1).isWhitespace then -2
+          else if start > 0 then -1
+          else 0,
+          ""
+        ),
+        getSubStringsWithIndices(
+          if doc.charAt(start).isWhitespace || start == 0 then 0 else -1,
+          ""
+        )
+      )
+    else if !eventText.isBlank then
       val splitText: Seq[String] = splitByBlanks(eventText).toSeq
       val indices: Seq[Int] = splitText.scanLeft(0)((acc, part) => {
-        acc + part.length
+        acc + ("""\b*""".r.findFirstIn(part) match
+          case Some(backspaces) => part.length - backspaces.length
+          case None             => part.length
+        )
       })
       indices
         .zip(splitText)
@@ -63,7 +79,7 @@ object utils {
     else if !doc.isBlank then {
       Seq(
         getSubStringsWithIndices(
-          if doc.charAt(start).isWhitespace then 0 else -1,
+          if doc.charAt(start).isWhitespace || start == 0 then 0 else -1,
           ""
         )
       )

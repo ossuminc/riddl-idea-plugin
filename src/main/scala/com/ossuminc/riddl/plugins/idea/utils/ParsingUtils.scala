@@ -7,11 +7,14 @@ import com.intellij.openapi.fileEditor.{
 }
 import com.intellij.openapi.vfs.VirtualFile
 import com.ossuminc.riddl.commands.Commands
+import com.ossuminc.riddl.language.CommonOptions
 import com.ossuminc.riddl.passes.PassesResult
 import com.ossuminc.riddl.plugins.idea.files.utils.highlightKeywords
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils
 import com.ossuminc.riddl.utils.{Logger, Logging, StringLogger}
+
+import java.nio.file.{Path, Paths}
 
 case class RiddlIdeaPluginLogger(
     numWindow: Int,
@@ -73,31 +76,4 @@ object ParsingUtils {
 
     updateToolWindowPanes(numWindow, fromReload = true)
   }
-
-  def runCommandForEditor(
-      numWindow: Int,
-      confFile: Option[String] = None
-  ): Unit = {
-    val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
-    println("running command")
-    Commands.runCommandWithArgs(
-      Array(
-        windowState.getCommand,
-        confFile.getOrElse(""),
-        if confFile.isDefined then "validate" else ""
-      ).filter(_.nonEmpty),
-      StringLogger(),
-      getRiddlIdeaState(numWindow).getCommonOptions
-    ) match {
-      case Right(_) if windowState.getCommand == "from" =>
-        windowState.prependRunOutput("Success!! There were no errors found\n")
-      case Left(_) =>
-        println("responded")
-        windowState.prependRunOutput("The following errors were found:\n")
-      case _ => ()
-    }
-
-    updateToolWindowPanes(numWindow, fromReload = true)
-  }
-
 }

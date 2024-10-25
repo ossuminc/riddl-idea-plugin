@@ -54,6 +54,7 @@ object RiddlIdeaSettings {
     private var autoCompileOnSave: Boolean = true
     private var command: String = commands.head
     private var commonOptions: CommonOptions = CommonOptions.empty.copy(noANSIMessages = true, groupMessagesByKind = true)
+    //private var messages: Seq[Message] = Seq()
 
     def getWindowNum: Int = windowNum
     
@@ -73,9 +74,8 @@ object RiddlIdeaSettings {
     def getCommand: String = command
 
     def getCommonOptions: CommonOptions = commonOptions
-    def setCommonOptions(newCOs: CommonOptions): Unit = {
+    def setCommonOptions(newCOs: CommonOptions): Unit =
       commonOptions = newCOs
-    }
   }
 
   private val commands = Seq("from", "about", "info")

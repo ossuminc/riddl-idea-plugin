@@ -30,7 +30,8 @@ object RiddlIdeaSettings {
     def load(newStates: States): Unit = states = newStates.states
 
     def getState(numToolWindow: Int): State = states(numToolWindow)
-
+    def allStates: Map[Int, State] = states
+    
     def length: Int = states.size
 
     def newState(): Int = {
@@ -39,7 +40,7 @@ object RiddlIdeaSettings {
           .find(num => !states.keys.iterator.toSeq.contains(num))
           .getOrElse(length + 1)
 
-      states = states.concat(Map(newWindowNum -> new State))
+      states = states.concat(Map(newWindowNum -> new State(newWindowNum)))
       newWindowNum
     }
 
@@ -47,13 +48,15 @@ object RiddlIdeaSettings {
       states = states.view.filterKeys(_ != numWindow).toMap
   }
 
-  class State {
+  class State(windowNum: Int) {
     private var riddlConfPath: String = ""
     private var riddlRunOutput: Seq[String] = Seq()
     private var autoCompileOnSave: Boolean = true
     private var command: String = commands.head
     private var commonOptions: CommonOptions = CommonOptions.empty.copy(noANSIMessages = true, groupMessagesByKind = true)
 
+    def getWindowNum: Int = windowNum
+    
     def setConfPath(newPath: String): Unit = riddlConfPath = newPath
     def getConfPath: String = riddlConfPath
 

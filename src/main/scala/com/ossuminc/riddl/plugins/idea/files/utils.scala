@@ -75,9 +75,11 @@ object utils {
     RiddlTokenizer.tokenize(text).filter(!_._1.isBlank).foreach {
       applyColorToToken(editor)
     }
+
   }
 
-  def highlightKeywordsInDoc(
+  def highlightKeywordsOnChange(
+      // see applyColorToToken for names of elements in tokens
       tokens: Seq[(String, Int, Seq[Boolean])],
       editor: Editor
   ): Unit = tokens.foreach(applyColorToToken(editor))

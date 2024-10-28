@@ -1,20 +1,10 @@
 package com.ossuminc.riddl.plugins.idea.utils
 
-import com.intellij.openapi.fileEditor.{
-  FileDocumentManager,
-  FileEditorManager,
-  TextEditor
-}
-import com.intellij.openapi.vfs.VirtualFile
 import com.ossuminc.riddl.commands.Commands
-import com.ossuminc.riddl.language.CommonOptions
 import com.ossuminc.riddl.passes.PassesResult
-import com.ossuminc.riddl.plugins.idea.files.utils.highlightKeywords
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils
-import com.ossuminc.riddl.utils.{Logger, Logging, StringLogger}
-
-import java.nio.file.{Path, Paths}
+import com.ossuminc.riddl.utils.{Logger, Logging}
 
 case class RiddlIdeaPluginLogger(
     numWindow: Int,
@@ -33,25 +23,6 @@ object ParsingUtils {
   import ManagerBasedGetterUtils.*
   import ToolWindowUtils.*
 
-  def highlightKeywordsForFile(
-      source: FileEditorManager,
-      file: VirtualFile
-  ): Unit = source
-    .getAllEditors(file)
-    .foreach { te =>
-      val doc = FileDocumentManager.getInstance().getDocument(file)
-      if doc != null then {
-        te match {
-          case textEditor: TextEditor =>
-            textEditor.getEditor.getMarkupModel.removeAllHighlighters()
-            highlightKeywords(doc.getText, textEditor.getEditor)
-            // TODO: if Messages exist in state relating to doc path, then highlight
-            getRiddlIdeaStates.allStates
-              .foreach((_, state) => highlightErrorForFile(state, file.getName))
-        }
-      }
-    }
-
   def runCommandForWindow(
       numWindow: Int,
       confFile: Option[String] = None
@@ -69,8 +40,9 @@ object ParsingUtils {
     ) match {
       case Right(_) if windowState.getCommand == "from" =>
         windowState.prependRunOutput("Success!! There were no errors found\n")
-      case Left(_) =>
+      case Left(msgs) =>
         windowState.prependRunOutput("The following errors were found:\n")
+        windowState.setMessages(msgs)
       case _ => ()
     }
 

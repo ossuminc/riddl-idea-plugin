@@ -1,12 +1,21 @@
 package com.ossuminc.riddl.plugins.idea.files
 
+import com.intellij.openapi.fileEditor.{
+  TextEditor,
+  FileDocumentManager,
+  FileEditorManager
+}
 import com.intellij.openapi.editor.{DefaultLanguageHighlighterColors, Editor}
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.editor.markup.{
   HighlighterLayer,
   HighlighterTargetArea
 }
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
+import com.ossuminc.riddl.plugins.idea.utils.highlightErrorForFile
+import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaStates
 
 object utils {
   def splitByBlanks(str: String): Array[String] =
@@ -14,7 +23,7 @@ object utils {
 
   def getWholeWordsSubstrings(
       doc: String,
-      eventText: String,
+      newText: String,
       start: Int
   ): Seq[(String, Int)] = {
     def getSubStringsWithIndices(offset: Int, text: String): (String, Int) = {
@@ -51,7 +60,7 @@ object utils {
       )
     }
 
-    if eventText.isBlank && eventText != "\b" then
+    if newText.isBlank && newText != "\b" then
       Seq(
         getSubStringsWithIndices(
           if start > 0 && doc.charAt(start - 1).isWhitespace then -2
@@ -64,8 +73,8 @@ object utils {
           ""
         )
       )
-    else if !eventText.isBlank then
-      val splitText: Seq[String] = splitByBlanks(eventText).toSeq
+    else if !newText.isBlank then
+      val splitText: Seq[String] = splitByBlanks(newText).toSeq
       val indices: Seq[Int] = splitText.scanLeft(0)((acc, part) => {
         acc + ("""\b*""".r.findFirstIn(part) match
           case Some(backspaces) => part.length - backspaces.length
@@ -194,4 +203,31 @@ object utils {
     )
     editor.getContentComponent.repaint()
   }
+
+  def highlightKeywordsAndErrorsForFile(
+      source: FileEditorManager,
+      file: VirtualFile
+  ): Unit = source
+    .getAllEditors(file)
+    .foreach { te =>
+      val doc = FileDocumentManager.getInstance().getDocument(file)
+      if doc != null then {
+        te match {
+          case textEditor: TextEditor =>
+            textEditor.getEditor.getMarkupModel.removeAllHighlighters()
+            highlightKeywords(doc.getText, textEditor.getEditor)
+            getRiddlIdeaStates.allStates
+              .foldRight(Seq[RiddlIdeaSettings.State]()) { (tup, acc) =>
+                if tup._2.getMessages.exists(
+                    _.loc.source.root.path == file.getPath
+                  )
+                then acc :+ tup._2
+                else acc
+              }
+              .foreach(state =>
+                highlightErrorForFile(state, file.getName)
+              )
+        }
+      }
+    }
 }

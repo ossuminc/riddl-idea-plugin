@@ -2,6 +2,7 @@ package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
 import com.ossuminc.riddl.language.CommonOptions
+import com.ossuminc.riddl.language.Messages.Message
 
 @StateAnnotation(
   name = "RiddlIdeaSettings",
@@ -54,7 +55,7 @@ object RiddlIdeaSettings {
     private var autoCompileOnSave: Boolean = true
     private var command: String = commands.head
     private var commonOptions: CommonOptions = CommonOptions.empty.copy(noANSIMessages = true, groupMessagesByKind = true)
-    //private var messages: Seq[Message] = Seq()
+    private var messages: Seq[Message] = Seq()
 
     def getWindowNum: Int = windowNum
     
@@ -76,6 +77,10 @@ object RiddlIdeaSettings {
     def getCommonOptions: CommonOptions = commonOptions
     def setCommonOptions(newCOs: CommonOptions): Unit =
       commonOptions = newCOs
+
+    def getMessages: Seq[Message] = messages
+    def setMessages(newMsgs: Seq[Message]): Unit =
+      messages = newMsgs
   }
 
   private val commands = Seq("from", "about", "info")

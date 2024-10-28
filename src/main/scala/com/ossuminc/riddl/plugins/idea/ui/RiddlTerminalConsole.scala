@@ -66,6 +66,7 @@ class RiddlTerminalConsole(
         }
       }
     }
+
     this.printHyperlink(textLine + "\n", hyperlinkInfo)
   }
 }

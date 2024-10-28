@@ -2,8 +2,13 @@ package com.ossuminc.riddl.plugins.idea
 
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
+import com.intellij.openapi.editor.markup.{
+  HighlighterLayer,
+  HighlighterTargetArea,
+  MarkupModel,
+  TextAttributes
+}
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.markup.{HighlighterLayer, TextAttributes}
 import com.intellij.openapi.fileEditor.{FileEditorManager, OpenFileDescriptor}
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
@@ -14,7 +19,6 @@ import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getProject,
   getRiddlIdeaState
 }
-import com.intellij.openapi.editor.markup.MarkupModel
 
 import java.awt.GridBagConstraints
 import javax.swing.Icon
@@ -104,9 +108,9 @@ package object utils {
         .filter(outputBlock => outputBlock.contains(fileName))
         .map(_.split("\n").toSeq)
     )
-    .foreach(block => highlightErrorBlock(state, block))
+    .foreach(block => highlightForErrorBlock(state, block))
 
-  def highlightErrorBlock(
+  private def highlightForErrorBlock(
       state: RiddlIdeaSettings.State,
       outputBlock: Seq[String]
   ): Unit =
@@ -118,11 +122,16 @@ package object utils {
           resultMatch.group(3).toInt,
           resultMatch.group(4).toInt
         )
-
         val markupModel: MarkupModel = editor.getMarkupModel
         Thread.sleep(500)
+        editor.getMarkupModel.getAllHighlighters
+          .find(_.getTargetArea == HighlighterTargetArea.LINES_IN_RANGE)
+          .foreach(highlighter =>
+            editor.getMarkupModel.removeHighlighter(highlighter)
+          )
 
-        if resultMatch.group(1) == "[error]" then
+        if resultMatch.group(1) == "[error]"
+        then
           val highlighter = markupModel.addLineHighlighter(
             resultMatch.group(3).toInt,
             HighlighterLayer.ERROR,
@@ -132,7 +141,8 @@ package object utils {
             UIUtil.getErrorForeground
           )
           highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
-        else if resultMatch.group(1) == "[warn]" then
+        else if resultMatch.group(1) == "[warn]"
+        then
           val highlighter = markupModel.addLineHighlighter(
             resultMatch.group(3).toInt,
             HighlighterLayer.WARNING,

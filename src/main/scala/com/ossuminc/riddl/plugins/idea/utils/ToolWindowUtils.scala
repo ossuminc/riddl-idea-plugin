@@ -169,7 +169,13 @@ object ToolWindowUtils {
         writeToConsole(notConfiguredMessage)
         return
 
-      if state.getRunOutput.nonEmpty then writeStateOutputToConsole()
+      if state.getRunOutput.nonEmpty then
+        writeStateOutputToConsole()
+        FileEditorManager
+          .getInstance(project)
+          .getSelectedFiles
+          .toSeq
+          .foreach(file => highlightErrorForFile(state, file.getName))
       else if state.getCommand == "from" then
         if confFile.exists() && confFile.isFile then
           runCommandForWindow(numWindow, Some(statePath))
@@ -178,12 +184,6 @@ object ToolWindowUtils {
             s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
           )
       else if fromReload then runCommandForWindow(numWindow)
-
-      val fileEditorManager = FileEditorManager
-        .getInstance(project)
-
-      fileEditorManager.getSelectedFiles
-        .foreach(file => highlightErrorForFile(state, file.getName))
     }
 
     // enables auto-compiling

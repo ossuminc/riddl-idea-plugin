@@ -7,17 +7,17 @@ import com.intellij.openapi.fileEditor.{
 }
 import com.intellij.openapi.vfs.VirtualFile
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getProject
-import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.highlightKeywordsForFile
+import com.ossuminc.riddl.plugins.idea.files.utils.highlightKeywordsAndErrorsForFile
 
-class RiddlFileListenerHighlighter extends FileEditorManagerListener {
+class RiddlFileEditorListener extends FileEditorManagerListener {
   override def fileOpened(
       source: FileEditorManager,
       file: VirtualFile
-  ): Unit = highlightKeywordsForFile(source, file)
+  ): Unit = highlightKeywordsAndErrorsForFile(source, file)
 
   override def selectionChanged(event: FileEditorManagerEvent): Unit =
     if event.getNewFile != null then
-      highlightKeywordsForFile(
+      highlightKeywordsAndErrorsForFile(
         FileEditorManager
           .getInstance(getProject),
         event.getNewFile

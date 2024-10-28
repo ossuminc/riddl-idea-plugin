@@ -2,16 +2,13 @@ package com.ossuminc.riddl.plugins.idea.files
 
 import com.intellij.openapi.editor.event.{DocumentEvent, DocumentListener}
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
-import com.ossuminc.riddl.commands.Commands
-import com.ossuminc.riddl.language.CommonOptions
 import com.ossuminc.riddl.plugins.idea.files.utils.{
-  getWholeWordsSubstrings,
-  highlightKeywordsOnChange
+  highlightKeywordsOnChange,
+  getWholeWordsSubstrings
 }
+
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
-import com.ossuminc.riddl.utils.StringLogger
 
 class RiddlDocumentListener extends DocumentListener {
   override def documentChanged(event: DocumentEvent): Unit = {
@@ -39,23 +36,10 @@ class RiddlDocumentListener extends DocumentListener {
               .map((wwTup, tokTup) => (wwTup._1, wwTup._2, tokTup._3)),
             editor
           )
+        // TODO: finish implementing once riddlc has RPIs available after parsing
+        // val file = FileDocumentManager.getInstance().getFile(event.getDocument)
+        // highlightErrorForFile(state, file.getName)
 
-          val docFile = FileDocumentManager
-            .getInstance()
-            .getFile(doc)
-
-          if docFile != null then
-            Commands.runCommandWithArgs(
-              Array("parse", docFile.getPath),
-              StringLogger(),
-              CommonOptions.empty
-                .copy(noANSIMessages = false, groupMessagesByKind = true)
-            ) match
-              case Left(msgs) =>
-                println("---msgs--")
-                println(msgs)
-                println("---------")
-              case Right(_) => ()
         case _ => ()
   }
 }

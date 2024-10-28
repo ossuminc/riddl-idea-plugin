@@ -157,7 +157,7 @@ object CommonOptionsUtils {
       (commonOptions: CommonOptions) => commonOptions.setVerbose
     ),
     (
-      "dryRun",
+      "dry-run",
       (commonOptions: CommonOptions) => commonOptions.getDryRun,
       (commonOptions: CommonOptions) => commonOptions.setDryRun
     ),
@@ -172,12 +172,12 @@ object CommonOptionsUtils {
       (commonOptions: CommonOptions) => commonOptions.setDebug
     ),
     (
-      "sortMessagesByLocation",
+      "sort-messages-by-location",
       (commonOptions: CommonOptions) => commonOptions.getSortMessagesByLocation,
       (commonOptions: CommonOptions) => commonOptions.setSortMessagesByLocation
     ),
     (
-      "warningsAreFatal",
+      "warnings-are-fatal",
       (commonOptions: CommonOptions) => commonOptions.getWarningsAreFatal,
       (commonOptions: CommonOptions) => commonOptions.setWarningsAreFatal
     )

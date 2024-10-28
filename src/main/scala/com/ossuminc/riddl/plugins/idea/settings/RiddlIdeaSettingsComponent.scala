@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.{
 }
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
 import com.intellij.util.ui.FormBuilder
 import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.CommonOption
@@ -25,8 +24,7 @@ import java.awt.event.{
   MouseAdapter,
   MouseEvent
 }
-import javax.swing.{JPanel, SwingUtilities}
-import javax.swing.event.DocumentEvent
+import javax.swing.{BorderFactory, JPanel, SwingUtilities}
 
 class ConfCondition extends Condition[VirtualFile] {
   def value(virtualFile: VirtualFile): Boolean = {
@@ -38,36 +36,8 @@ class ConfCondition extends Condition[VirtualFile] {
 class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val state: RiddlIdeaSettings.State = getRiddlIdeaState(numToolWindow)
 
-  private val autoCompileCheckBox: JBCheckBox = JBCheckBox()
   private var autoCompileValue: Boolean = state.getAutoCompile
-
-  private var confFieldModified: Boolean = false
-  private val confFileTextField: TextFieldWithBrowseButton = {
-    val confFileTextField = new TextFieldWithBrowseButton()
-    confFileTextField.setText(
-      if state != null && !state.getConfPath.isBlank then state.getConfPath
-      else getProject.getBasePath
-    )
-
-    confFileTextField.addDocumentListener(new DocumentAdapter {
-      override def textChanged(e: DocumentEvent): Unit = {
-        confFieldModified = true
-      }
-    })
-
-    val fileDescriptor: FileChooserDescriptor =
-      FileChooserDescriptorFactory
-        .createSingleFileDescriptor()
-        .withFileFilter(ConfCondition())
-    confFileTextField.addBrowseFolderListener(
-      "Browse for Path",
-      null,
-      getProject,
-      fileDescriptor
-    )
-
-    confFileTextField
-  }
+  private val confFileTextField = new TextFieldWithBrowseButton()
 
   private def createBooleanParamButton(
       commonOption: CommonOption[Boolean]
@@ -107,6 +77,10 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         if SwingUtilities.isLeftMouseButton(e) then
           commandPickerPopupMenu.show(commandPicker, e.getX, e.getY)
     }
+
+    commandPicker.setBorder(
+      BorderFactory.createTitledBorder("Choose Run Command")
+    )
     def newCommandPickerListener(): Unit =
       commandPicker.addMouseListener(commandPickerListener)
 
@@ -116,8 +90,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       newCommandPickerListener()
 
     val riddlFormBuilder: FormBuilder = FormBuilder.createFormBuilder
-      .addLabeledComponent(
-        "Command to run:",
+      .addComponent(
         commandPicker
       )
 
@@ -148,37 +121,53 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         .foreach(commandPickerPopupMenu.remove)
 
     setPopupMenuListeners()
-
     riddlPanel.add(formBuilderPanel)
 
-    val commonOptionsPanel: JPanel = new JPanel(new java.awt.GridLayout(0, 2))
+    val commonOptionsPanel: JPanel = new JPanel(new java.awt.GridLayout(0, 3))
+    commonOptionsPanel.setBorder(
+      BorderFactory.createTitledBorder("Select Common Options")
+    )
     CommonOptionsUtils.BooleanCommonOptions.foreach(option =>
       commonOptionsPanel.add(createBooleanParamButton(option))
     )
 
+    val fileDescriptor: FileChooserDescriptor =
+      FileChooserDescriptorFactory
+        .createSingleFileDescriptor()
+        .withFileFilter(ConfCondition())
+
+    confFileTextField.addBrowseFolderListener(
+      "Browse for Path",
+      null,
+      getProject,
+      fileDescriptor
+    )
+
+    confFileTextField.setText(
+      if state != null && !state.getConfPath.isBlank then state.getConfPath
+      else getProject.getBasePath
+    )
+    confFileTextField.setBorder(
+      BorderFactory.createTitledBorder("Select .conf or .riddl File")
+    )
+
     riddlFormBuilder
-      .addLabeledComponent(
-        "Common Options",
-        commonOptionsPanel
-      )
+      .addComponent(commonOptionsPanel)
       .addComponentFillVertically(new JPanel(), 0)
       .getPanel
 
     if pickedCommand == "from" then
       riddlFormBuilder
         .addComponentFillVertically(new JPanel(), 0)
-        .addLabeledComponent(
-          "Current configuration file path:",
-          confFileTextField
-        )
+        .addComponent(confFileTextField)
 
+    val autoCompileCheckBox: JBCheckBox = JBCheckBox()
     riddlFormBuilder
       .addComponentFillVertically(new JPanel(), 0)
       .addLabeledComponent(
         "Automatically re-compile on save",
         autoCompileCheckBox
       )
-      .addComponentFillVertically(new JPanel(), 0)
 
     autoCompileCheckBox.setSelected(autoCompileValue)
 
@@ -204,7 +193,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   def getConfFieldText: String = confFileTextField.getText
 
   def isModified: Boolean =
-    confFieldModified || pickedCommandModified || autoCompileValue != state.getAutoCompile
+    pickedCommandModified || autoCompileValue != state.getAutoCompile
 
   def getPickedCommand: String = pickedCommand
 

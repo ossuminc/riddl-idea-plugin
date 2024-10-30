@@ -11,22 +11,26 @@ import com.intellij.openapi.ui.{
 }
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
 import com.intellij.util.ui.FormBuilder
-import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.CommonOption
+import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
+  CommonOption,
+  FiniteDurationCommonOption,
+  IntegerCommonOption
+}
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 
-import java.awt.ComponentOrientation
+import java.awt.{ComponentOrientation, FlowLayout}
 import java.awt.event.{
   ActionEvent,
+  ActionListener,
   ItemEvent,
   ItemListener,
   MouseAdapter,
   MouseEvent
 }
-import javax.swing.{JPanel, SwingUtilities}
-import javax.swing.event.DocumentEvent
+import java.text.NumberFormat
+import javax.swing.{BorderFactory, JFormattedTextField, JPanel, SwingUtilities}
 
 class ConfCondition extends Condition[VirtualFile] {
   def value(virtualFile: VirtualFile): Boolean = {
@@ -37,54 +41,22 @@ class ConfCondition extends Condition[VirtualFile] {
 
 class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val state: RiddlIdeaSettings.State = getRiddlIdeaState(numToolWindow)
+  private var areAnyComponentsModified = false
 
-  private val autoCompileCheckBox: JBCheckBox = JBCheckBox()
-  private var autoCompileValue: Boolean = state.getAutoCompile
-
-  private var confFieldModified: Boolean = false
-  private val confFileTextField: TextFieldWithBrowseButton = {
-    val confFileTextField = new TextFieldWithBrowseButton()
-    confFileTextField.setText(
-      if state != null && !state.getConfPath.isBlank then state.getConfPath
-      else getProject.getBasePath
-    )
-
-    confFileTextField.addDocumentListener(new DocumentAdapter {
-      override def textChanged(e: DocumentEvent): Unit = {
-        confFieldModified = true
-      }
-    })
-
-    val fileDescriptor: FileChooserDescriptor =
-      FileChooserDescriptorFactory
-        .createSingleFileDescriptor()
-        .withFileFilter(ConfCondition())
-    confFileTextField.addBrowseFolderListener(
-      "Browse for Path",
-      null,
-      getProject,
-      fileDescriptor
-    )
-
-    confFileTextField
-  }
-  private def createParamButton(
-      commonOption: CommonOption
+  private var booleanCommonOptions: Seq[(JBCheckBox, CommonOption[Boolean])] =
+    Seq()
+  private def createBooleanParamButton(
+      commonOption: CommonOption[Boolean]
   ): JBPanel[?] = {
-    val row = new JBPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT))
+    val row = new JBPanel(new FlowLayout(java.awt.FlowLayout.LEFT))
     row.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT)
 
     val checkBox = JBCheckBox()
     if commonOption.getCommonOptionValue(state.getCommonOptions) then
       checkBox.doClick()
-    checkBox.addItemListener((_: ItemEvent) => {
-      state.setCommonOptions(
-        commonOption.setCommonOptionValue(state.getCommonOptions)(
-          checkBox.isSelected
-        )
-      )
-    })
     row.add(checkBox)
+    booleanCommonOptions = booleanCommonOptions :+ (checkBox, commonOption)
+    checkBox.addItemListener(_ => areAnyComponentsModified = true)
 
     val label = new JBLabel()
     label.setText(commonOption.name)
@@ -98,14 +70,98 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val commandPicker = JBLabel(pickedCommand)
   private val commandPickerPopupMenu = JBPopupMenu()
 
+  commandPicker.setBorder(
+    BorderFactory.createTitledBorder("Choose Run Command")
+  )
+
+  private val confFileTextField = new TextFieldWithBrowseButton()
+  private val fileDescriptor: FileChooserDescriptor =
+    FileChooserDescriptorFactory
+      .createSingleFileDescriptor()
+      .withFileFilter(ConfCondition())
+
+  confFileTextField.addBrowseFolderListener(
+    "Browse for Path",
+    null,
+    getProject,
+    fileDescriptor
+  )
+  confFileTextField.addPropertyChangeListener(_ =>
+    areAnyComponentsModified = true
+  )
+  confFileTextField.setText(
+    if state != null && !state.getConfPath.isBlank then state.getConfPath
+    else getProject.getBasePath
+  )
+  confFileTextField.setBorder(
+    BorderFactory.createTitledBorder("Select .conf or .riddl File")
+  )
+
+  private val commonOptionsPanel: JPanel = new JPanel(
+    new java.awt.GridLayout(0, 3)
+  )
+  commonOptionsPanel.setBorder(
+    BorderFactory.createTitledBorder("Select Common Options")
+  )
+  CommonOptionsUtils.BooleanCommonOptions.foreach {
+    case Some(option) =>
+      commonOptionsPanel.add(createBooleanParamButton(option))
+    case None =>
+      commonOptionsPanel.add(
+        new JBPanel(new FlowLayout(java.awt.FlowLayout.LEFT))
+      )
+  }
+  private val integerOptionTextField = new JFormattedTextField(
+    NumberFormat.getIntegerInstance()
+  )
+  integerOptionTextField.addPropertyChangeListener(_ =>
+    areAnyComponentsModified = true
+  )
+  integerOptionTextField.setText(
+    state.getCommonOptions.maxParallelParsing.toString
+  )
+  private val integerOptionRow = new JBPanel(
+    new FlowLayout(java.awt.FlowLayout.LEFT)
+  )
+  integerOptionRow.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT)
+  private val integerOptionLabel = new JBLabel()
+  integerOptionLabel.setText(IntegerCommonOption.name)
+  integerOptionRow.add(integerOptionTextField)
+  integerOptionRow.add(integerOptionLabel)
+  commonOptionsPanel.add(integerOptionRow)
+
+  private val finiteDurationTextField = new JFormattedTextField(
+    NumberFormat.getIntegerInstance().setGroupingUsed(false)
+  )
+  finiteDurationTextField.addPropertyChangeListener(_ =>
+    areAnyComponentsModified = true
+  )
+  finiteDurationTextField.setText(
+    state.getCommonOptions.maxIncludeWait.toMillis.toString
+  )
+  private val finiteDurationOptionRow = new JBPanel(
+    new FlowLayout(java.awt.FlowLayout.LEFT)
+  )
+  finiteDurationOptionRow.setComponentOrientation(
+    ComponentOrientation.LEFT_TO_RIGHT
+  )
+  val finiteDurationlabel = new JBLabel()
+  finiteDurationlabel.setText(FiniteDurationCommonOption.name)
+  finiteDurationOptionRow.add(finiteDurationTextField)
+  finiteDurationOptionRow.add(finiteDurationlabel)
+  commonOptionsPanel.add(finiteDurationOptionRow)
+
+  private var autoCompileValue: Boolean = state.getAutoCompile
+
   private val riddlPanel = new JBPanel()
 
-  def createComponent(): Unit = {
+  private def createComponent(): Unit = {
     val commandPickerListener = new MouseAdapter {
       override def mouseClicked(e: MouseEvent): Unit =
         if SwingUtilities.isLeftMouseButton(e) then
           commandPickerPopupMenu.show(commandPicker, e.getX, e.getY)
     }
+
     def newCommandPickerListener(): Unit =
       commandPicker.addMouseListener(commandPickerListener)
 
@@ -115,8 +171,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       newCommandPickerListener()
 
     val riddlFormBuilder: FormBuilder = FormBuilder.createFormBuilder
-      .addLabeledComponent(
-        "Command to run:",
+      .addComponent(
         commandPicker
       )
 
@@ -126,10 +181,10 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       command =>
         val commandItem = new JBMenuItem(command)
         commandItem.addActionListener((_: ActionEvent) => {
+          formBuilderPanel.removeAll()
           pickedCommand = command
           commandPicker.setText(command)
           pickedCommandModified = true
-          riddlPanel.remove(formBuilderPanel)
           createComponent()
           riddlPanel.revalidate()
           riddlPanel.repaint()
@@ -137,47 +192,34 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         commandPickerPopupMenu.add(commandItem)
     }
 
-    if commandPickerPopupMenu.getComponents
-        .count(
-          _.isInstanceOf[JBMenuItem]
-        ) != 0
+    if commandPickerPopupMenu.getComponents.count(
+        _.isInstanceOf[JBMenuItem]
+      ) != 0
     then
       commandPickerPopupMenu.getComponents
         .filter(_.isInstanceOf[JBMenuItem])
         .foreach(commandPickerPopupMenu.remove)
 
     setPopupMenuListeners()
-
     riddlPanel.add(formBuilderPanel)
 
-    val commonOptionsPanel: JPanel = new JPanel(new java.awt.GridLayout(0, 2))
-    CommonOptionsUtils.AllCommonOptions.foreach(option =>
-      commonOptionsPanel.add(createParamButton(option))
-    )
-
     riddlFormBuilder
-      .addLabeledComponent(
-        "Common Options",
-        commonOptionsPanel
-      )
+      .addComponent(commonOptionsPanel)
       .addComponentFillVertically(new JPanel(), 0)
       .getPanel
 
     if pickedCommand == "from" then
       riddlFormBuilder
         .addComponentFillVertically(new JPanel(), 0)
-        .addLabeledComponent(
-          "Current configuration file path:",
-          confFileTextField
-        )
+        .addComponent(confFileTextField)
 
+    val autoCompileCheckBox: JBCheckBox = JBCheckBox()
     riddlFormBuilder
       .addComponentFillVertically(new JPanel(), 0)
       .addLabeledComponent(
         "Automatically re-compile on save",
         autoCompileCheckBox
       )
-      .addComponentFillVertically(new JPanel(), 0)
 
     autoCompileCheckBox.setSelected(autoCompileValue)
 
@@ -203,9 +245,15 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   def getConfFieldText: String = confFileTextField.getText
 
   def isModified: Boolean =
-    confFieldModified || pickedCommandModified || autoCompileValue != state.getAutoCompile
+    areAnyComponentsModified || pickedCommandModified || autoCompileValue != state.getAutoCompile
 
   def getPickedCommand: String = pickedCommand
 
   def getAutoCompileValue: Boolean = autoCompileValue
+
+  def getBooleanCommonOptions: Seq[(JBCheckBox, CommonOption[Boolean])] =
+    booleanCommonOptions
+  def getIntegerOptionTextField: JFormattedTextField = integerOptionTextField
+  def getFiniteDurationOptionTextField: JFormattedTextField =
+    finiteDurationTextField
 }

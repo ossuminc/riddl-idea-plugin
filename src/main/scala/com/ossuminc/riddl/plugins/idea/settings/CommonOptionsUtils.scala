@@ -115,73 +115,78 @@ object CommonOptionsUtils {
       setCommonOptionValue: CommonOptions => ? <: T => CommonOptions
   )
 
-  val BooleanCommonOptions: Seq[CommonOption[Boolean]] = Seq(
-    (
+  val BooleanCommonOptions: Seq[Option[CommonOption[Boolean]]] = Seq(
+    Some(
       "show-times",
       (commonOptions: CommonOptions) => commonOptions.getShowTimes,
       (commonOptions: CommonOptions) => commonOptions.setShowTimes
     ),
-    (
+    Some(
       "show-include-times",
       (commonOptions: CommonOptions) => commonOptions.getShowIncludeTimes,
       (commonOptions: CommonOptions) => commonOptions.setShowIncludeTimes
     ),
-    (
+    Some(
       "show-warnings",
       (commonOptions: CommonOptions) => commonOptions.getShowWarnings,
       (commonOptions: CommonOptions) => commonOptions.setShowWarnings
     ),
-    (
+    Some(
       "show-missing-warnings",
       (commonOptions: CommonOptions) => commonOptions.getShowMissingWarnings,
       (commonOptions: CommonOptions) => commonOptions.setShowMissingWarnings
     ),
-    (
+    Some(
       "show-style-warnings",
       (commonOptions: CommonOptions) => commonOptions.getShowStyleWarnings,
       (commonOptions: CommonOptions) => commonOptions.setShowStyleWarnings
     ),
-    (
+    Some(
       "show-usage-warnings",
       (commonOptions: CommonOptions) => commonOptions.getShowUsageWarnings,
       (commonOptions: CommonOptions) => commonOptions.setShowUsageWarnings
     ),
-    (
+    Some(
       "show-info-messages",
       (commonOptions: CommonOptions) => commonOptions.getShowInfoMessages,
       (commonOptions: CommonOptions) => commonOptions.setShowInfoMessages
     ),
-    (
-      "verbose",
-      (commonOptions: CommonOptions) => commonOptions.getVerbose,
-      (commonOptions: CommonOptions) => commonOptions.setVerbose
-    ),
-    (
-      "dry-run",
-      (commonOptions: CommonOptions) => commonOptions.getDryRun,
-      (commonOptions: CommonOptions) => commonOptions.setDryRun
-    ),
-    (
-      "quiet",
-      (commonOptions: CommonOptions) => commonOptions.getQuiet,
-      (commonOptions: CommonOptions) => commonOptions.setQuiet
-    ),
-    (
+    Some(
       "debug",
       (commonOptions: CommonOptions) => commonOptions.getDebug,
       (commonOptions: CommonOptions) => commonOptions.setDebug
     ),
-    (
+    None,
+    Some(
       "sort-messages-by-location",
       (commonOptions: CommonOptions) => commonOptions.getSortMessagesByLocation,
       (commonOptions: CommonOptions) => commonOptions.setSortMessagesByLocation
     ),
-    (
+    Some(
       "warnings-are-fatal",
       (commonOptions: CommonOptions) => commonOptions.getWarningsAreFatal,
       (commonOptions: CommonOptions) => commonOptions.setWarningsAreFatal
+    ),
+    None,
+    Some(
+      "quiet",
+      (commonOptions: CommonOptions) => commonOptions.getQuiet,
+      (commonOptions: CommonOptions) => commonOptions.setQuiet
+    ),
+    Some(
+      "verbose",
+      (commonOptions: CommonOptions) => commonOptions.getVerbose,
+      (commonOptions: CommonOptions) => commonOptions.setVerbose
+    ),
+    Some(
+      "dry-run",
+      (commonOptions: CommonOptions) => commonOptions.getDryRun,
+      (commonOptions: CommonOptions) => commonOptions.setDryRun
     )
-  ).map(tup => CommonOption(tup._1, tup._2, tup._3))
+  ).map {
+    case Some(tup) => Some(CommonOption(tup._1, tup._2, tup._3))
+    case _         => None
+  }
 
   val IntegerCommonOption: CommonOption[Int] =
     CommonOption(

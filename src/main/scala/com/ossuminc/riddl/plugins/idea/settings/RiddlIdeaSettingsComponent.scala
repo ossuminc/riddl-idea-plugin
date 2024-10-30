@@ -103,9 +103,14 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   commonOptionsPanel.setBorder(
     BorderFactory.createTitledBorder("Select Common Options")
   )
-  CommonOptionsUtils.BooleanCommonOptions.foreach(option =>
-    commonOptionsPanel.add(createBooleanParamButton(option))
-  )
+  CommonOptionsUtils.BooleanCommonOptions.foreach {
+    case Some(option) =>
+      commonOptionsPanel.add(createBooleanParamButton(option))
+    case None =>
+      commonOptionsPanel.add(
+        new JBPanel(new FlowLayout(java.awt.FlowLayout.LEFT))
+      )
+  }
   private val integerOptionTextField = new JFormattedTextField(
     NumberFormat.getIntegerInstance()
   )

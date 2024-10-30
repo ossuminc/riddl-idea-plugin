@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
 import com.intellij.util.ui.FormBuilder
-import com.ossuminc.riddl.language.CommonOptions
 import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
   CommonOption,
   FiniteDurationCommonOption,
@@ -21,7 +20,7 @@ import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
 }
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 
-import java.awt.{Color, ComponentOrientation, FlowLayout}
+import java.awt.{ComponentOrientation, FlowLayout}
 import java.awt.event.{
   ActionEvent,
   ActionListener,
@@ -42,6 +41,7 @@ class ConfCondition extends Condition[VirtualFile] {
 
 class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val state: RiddlIdeaSettings.State = getRiddlIdeaState(numToolWindow)
+  private var areAnyComponentsModified = false
 
   private var booleanCommonOptions: Seq[(JBCheckBox, CommonOption[Boolean])] =
     Seq()
@@ -56,6 +56,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       checkBox.doClick()
     row.add(checkBox)
     booleanCommonOptions = booleanCommonOptions :+ (checkBox, commonOption)
+    checkBox.addItemListener(_ => areAnyComponentsModified = true)
 
     val label = new JBLabel()
     label.setText(commonOption.name)
@@ -69,14 +70,8 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val commandPicker = JBLabel(pickedCommand)
   private val commandPickerPopupMenu = JBPopupMenu()
 
-  private val integerOptionTextField = new JFormattedTextField(
-    NumberFormat.getIntegerInstance()
-  )
-  private val finiteDurationTextField = new JFormattedTextField(
-    NumberFormat.getIntegerInstance()
-  )
-  private val commonOptionsPanel: JPanel = new JPanel(
-    new java.awt.GridLayout(0, 3)
+  commandPicker.setBorder(
+    BorderFactory.createTitledBorder("Choose Run Command")
   )
 
   private val confFileTextField = new TextFieldWithBrowseButton()
@@ -91,21 +86,77 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
     getProject,
     fileDescriptor
   )
+  confFileTextField.addPropertyChangeListener(_ =>
+    areAnyComponentsModified = true
+  )
+  confFileTextField.setText(
+    if state != null && !state.getConfPath.isBlank then state.getConfPath
+    else getProject.getBasePath
+  )
+  confFileTextField.setBorder(
+    BorderFactory.createTitledBorder("Select .conf or .riddl File")
+  )
+
+  private val commonOptionsPanel: JPanel = new JPanel(
+    new java.awt.GridLayout(0, 3)
+  )
+  commonOptionsPanel.setBorder(
+    BorderFactory.createTitledBorder("Select Common Options")
+  )
+  CommonOptionsUtils.BooleanCommonOptions.foreach(option =>
+    commonOptionsPanel.add(createBooleanParamButton(option))
+  )
+  private val integerOptionTextField = new JFormattedTextField(
+    NumberFormat.getIntegerInstance()
+  )
+  integerOptionTextField.addPropertyChangeListener(_ =>
+    areAnyComponentsModified = true
+  )
+  integerOptionTextField.setText(
+    state.getCommonOptions.maxParallelParsing.toString
+  )
+  private val integerOptionRow = new JBPanel(
+    new FlowLayout(java.awt.FlowLayout.LEFT)
+  )
+  integerOptionRow.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT)
+  private val integerOptionLabel = new JBLabel()
+  integerOptionLabel.setText(IntegerCommonOption.name)
+  integerOptionRow.add(integerOptionTextField)
+  integerOptionRow.add(integerOptionLabel)
+  commonOptionsPanel.add(integerOptionRow)
+
+  private val finiteDurationTextField = new JFormattedTextField(
+    NumberFormat.getIntegerInstance().setGroupingUsed(false)
+  )
+  finiteDurationTextField.addPropertyChangeListener(_ =>
+    areAnyComponentsModified = true
+  )
+  finiteDurationTextField.setText(
+    state.getCommonOptions.maxIncludeWait.toMillis.toString
+  )
+  private val finiteDurationOptionRow = new JBPanel(
+    new FlowLayout(java.awt.FlowLayout.LEFT)
+  )
+  finiteDurationOptionRow.setComponentOrientation(
+    ComponentOrientation.LEFT_TO_RIGHT
+  )
+  val finiteDurationlabel = new JBLabel()
+  finiteDurationlabel.setText(FiniteDurationCommonOption.name)
+  finiteDurationOptionRow.add(finiteDurationTextField)
+  finiteDurationOptionRow.add(finiteDurationlabel)
+  commonOptionsPanel.add(finiteDurationOptionRow)
 
   private var autoCompileValue: Boolean = state.getAutoCompile
 
   private val riddlPanel = new JBPanel()
 
-  def createComponent(): Unit = {
+  private def createComponent(): Unit = {
     val commandPickerListener = new MouseAdapter {
       override def mouseClicked(e: MouseEvent): Unit =
         if SwingUtilities.isLeftMouseButton(e) then
           commandPickerPopupMenu.show(commandPicker, e.getX, e.getY)
     }
 
-    commandPicker.setBorder(
-      BorderFactory.createTitledBorder("Choose Run Command")
-    )
     def newCommandPickerListener(): Unit =
       commandPicker.addMouseListener(commandPickerListener)
 
@@ -126,7 +177,6 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         val commandItem = new JBMenuItem(command)
         commandItem.addActionListener((_: ActionEvent) => {
           formBuilderPanel.removeAll()
-          commonOptionsPanel.removeAll()
           pickedCommand = command
           commandPicker.setText(command)
           pickedCommandModified = true
@@ -137,10 +187,9 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         commandPickerPopupMenu.add(commandItem)
     }
 
-    if commandPickerPopupMenu.getComponents
-        .count(
-          _.isInstanceOf[JBMenuItem]
-        ) != 0
+    if commandPickerPopupMenu.getComponents.count(
+        _.isInstanceOf[JBMenuItem]
+      ) != 0
     then
       commandPickerPopupMenu.getComponents
         .filter(_.isInstanceOf[JBMenuItem])
@@ -148,49 +197,6 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
 
     setPopupMenuListeners()
     riddlPanel.add(formBuilderPanel)
-
-    commonOptionsPanel.setBorder(
-      BorderFactory.createTitledBorder("Select Common Options")
-    )
-    CommonOptionsUtils.BooleanCommonOptions.foreach(option =>
-      commonOptionsPanel.add(createBooleanParamButton(option))
-    )
-
-    val integerOptionRow = new JBPanel(new FlowLayout(java.awt.FlowLayout.LEFT))
-    integerOptionRow.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT)
-
-    val integerOptionLabel = new JBLabel()
-    integerOptionTextField.setText(CommonOptions().maxParallelParsing.toString)
-    integerOptionLabel.setText(IntegerCommonOption.name)
-    integerOptionRow.add(integerOptionTextField)
-    integerOptionRow.add(integerOptionLabel)
-    commonOptionsPanel.add(integerOptionRow)
-
-    val finiteDurationOptionRow = new JBPanel(
-      new FlowLayout(java.awt.FlowLayout.LEFT)
-    )
-    finiteDurationOptionRow.setComponentOrientation(
-      ComponentOrientation.LEFT_TO_RIGHT
-    )
-
-    val finiteDurationlabel = new JBLabel()
-    finiteDurationTextField.setText(
-      CommonOptions().maxIncludeWait.toMillis.toString
-    )
-    finiteDurationlabel.setText(FiniteDurationCommonOption.name)
-    finiteDurationOptionRow.add(finiteDurationTextField)
-    finiteDurationOptionRow.add(finiteDurationlabel)
-    commonOptionsPanel.add(finiteDurationOptionRow)
-
-//    PluginsDirOption
-
-    confFileTextField.setText(
-      if state != null && !state.getConfPath.isBlank then state.getConfPath
-      else getProject.getBasePath
-    )
-    confFileTextField.setBorder(
-      BorderFactory.createTitledBorder("Select .conf or .riddl File")
-    )
 
     riddlFormBuilder
       .addComponent(commonOptionsPanel)
@@ -234,7 +240,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   def getConfFieldText: String = confFileTextField.getText
 
   def isModified: Boolean =
-    pickedCommandModified || autoCompileValue != state.getAutoCompile
+    areAnyComponentsModified || pickedCommandModified || autoCompileValue != state.getAutoCompile
 
   def getPickedCommand: String = pickedCommand
 
@@ -242,24 +248,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
 
   def getBooleanCommonOptions: Seq[(JBCheckBox, CommonOption[Boolean])] =
     booleanCommonOptions
-
   def getIntegerOptionTextField: JFormattedTextField = integerOptionTextField
-
   def getFiniteDurationOptionTextField: JFormattedTextField =
     finiteDurationTextField
-
-  def getCommonOptionsPanel: JPanel = commonOptionsPanel
-
-  def activateErrorBorder(): Unit = getCommonOptionsPanel.setBorder(
-    BorderFactory.createTitledBorder(
-      BorderFactory.createLineBorder(Color.RED, 2),
-      "Select Common Options"
-    )
-  )
-
-  def activateRegularBorder(): Unit = getCommonOptionsPanel.setBorder(
-    BorderFactory.createTitledBorder(
-      "Select Common Options"
-    )
-  )
 }

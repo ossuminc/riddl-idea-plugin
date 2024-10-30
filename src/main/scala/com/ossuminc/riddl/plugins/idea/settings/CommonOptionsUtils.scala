@@ -55,17 +55,17 @@ object CommonOptionsUtils {
     }
     def getVerbose: Boolean = commonOptions.verbose
 
-    def setDryRun(dryRun: Boolean): CommonOptions = {
-      commonOptions = commonOptions.copy(dryRun = dryRun)
-      commonOptions
-    }
-    def getDryRun: Boolean = commonOptions.dryRun
-
     def setQuiet(quiet: Boolean): CommonOptions = {
       commonOptions = commonOptions.copy(quiet = quiet)
       commonOptions
     }
     def getQuiet: Boolean = commonOptions.quiet
+
+    def setDryRun(dryRun: Boolean): CommonOptions = {
+      commonOptions = commonOptions.copy(dryRun = dryRun)
+      commonOptions
+    }
+    def getDryRun: Boolean = commonOptions.dryRun
 
     def setDebug(debug: Boolean): CommonOptions = {
       commonOptions = commonOptions.copy(debug = debug)
@@ -196,10 +196,4 @@ object CommonOptionsUtils {
       (commonOptions: CommonOptions) => commonOptions.getMaxIncludeWait,
       (commonOptions: CommonOptions) => commonOptions.setMaxIncludeWait
     )
-
-  val PluginsDirOption: CommonOption[Option[Path]] = CommonOption(
-    "plugins-dir",
-    (commonOptions: CommonOptions) => commonOptions.getPluginsDir,
-    (commonOptions: CommonOptions) => commonOptions.setPluginsDir
-  )
 }

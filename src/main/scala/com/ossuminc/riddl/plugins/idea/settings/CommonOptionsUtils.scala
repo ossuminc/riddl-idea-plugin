@@ -1,6 +1,6 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.ossuminc.riddl.language.CommonOptions
+import com.ossuminc.riddl.utils.CommonOptions
 import java.nio.file.Path
 import scala.concurrent.duration.FiniteDuration
 
@@ -72,12 +72,6 @@ object CommonOptionsUtils {
       commonOptions
     }
     def getDebug: Boolean = commonOptions.debug
-
-    def setPluginsDir(pluginsDir: Option[Path]): CommonOptions = {
-      commonOptions = commonOptions.copy(pluginsDir = pluginsDir)
-      commonOptions
-    }
-    def getPluginsDir: Option[Path] = commonOptions.pluginsDir
 
     def setSortMessagesByLocation(
         sortMessagesByLocation: Boolean

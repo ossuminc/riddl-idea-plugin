@@ -214,19 +214,19 @@ object utils {
       if doc != null then {
         te match {
           case textEditor: TextEditor =>
-            textEditor.getEditor.getMarkupModel.removeAllHighlighters()
             highlightKeywords(doc.getText, textEditor.getEditor)
             getRiddlIdeaStates.allStates
               .foldRight(Seq[RiddlIdeaSettings.State]()) { (tup, acc) =>
+                tup._2.clearErrorHighlighters()
                 if tup._2.getMessages.exists(
                     _.loc.source.root.path == file.getPath
                   )
                 then acc :+ tup._2
                 else acc
               }
-              .foreach(state =>
+              .foreach { state =>
                 highlightErrorForFile(state, file.getName)
-              )
+              }
         }
       }
     }

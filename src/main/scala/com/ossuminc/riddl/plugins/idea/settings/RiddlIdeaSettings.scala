@@ -1,7 +1,8 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
-import com.ossuminc.riddl.language.CommonOptions
+import com.intellij.openapi.editor.markup.{MarkupModel, RangeHighlighter}
+import com.ossuminc.riddl.utils.CommonOptions
 import com.ossuminc.riddl.language.Messages.Message
 
 @StateAnnotation(
@@ -56,6 +57,8 @@ object RiddlIdeaSettings {
     private var command: String = commands.head
     private var commonOptions: CommonOptions = CommonOptions.empty.copy(noANSIMessages = true, groupMessagesByKind = true)
     private var messages: Seq[Message] = Seq()
+    private var errorHighlighters: Seq[RangeHighlighter] = Seq()
+    private var markupModelOpt: Option[MarkupModel] = None
 
     def getWindowNum: Int = windowNum
     
@@ -81,6 +84,16 @@ object RiddlIdeaSettings {
     def getMessages: Seq[Message] = messages
     def setMessages(newMsgs: Seq[Message]): Unit =
       messages = newMsgs
+
+    def appendErrorHighlighter(rangeHighlighter: RangeHighlighter): Seq[RangeHighlighter] =
+      errorHighlighters :+ rangeHighlighter
+    def clearErrorHighlighters(): Unit = {
+      markupModelOpt.foreach(mm =>
+        errorHighlighters.foreach(mm.removeHighlighter))
+      errorHighlighters = Seq()
+    }
+
+    def setMarkupModel(newModel: MarkupModel): Unit = markupModelOpt = Some(newModel)
   }
 
   private val commands = Seq("from", "about", "info")

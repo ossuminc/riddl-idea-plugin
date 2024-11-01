@@ -4,7 +4,6 @@ import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.editor.markup.{
   HighlighterLayer,
-  HighlighterTargetArea,
   MarkupModel,
   TextAttributes
 }
@@ -29,7 +28,7 @@ package object utils {
     IconLoader.getIcon("images/RIDDL-icon.jpg", classType)
 
   object ManagerBasedGetterUtils {
-    val application: Application = ApplicationManager.getApplication
+    private val application: Application = ApplicationManager.getApplication
 
     def getProject: Project = ProjectManager.getInstance().getOpenProjects.head
 
@@ -113,46 +112,42 @@ package object utils {
   private def highlightForErrorBlock(
       state: RiddlIdeaSettings.State,
       outputBlock: Seq[String]
-  ): Unit =
-    riddlErrorRegex.findFirstMatchIn(outputBlock.head) match
-      case Some(resultMatch: Regex.Match) =>
-        val editor = editorForError(
-          state.getWindowNum,
-          resultMatch.group(2),
-          resultMatch.group(3).toInt,
-          resultMatch.group(4).toInt
-        )
-        val markupModel: MarkupModel = editor.getMarkupModel
-        Thread.sleep(500)
-        editor.getMarkupModel.getAllHighlighters
-          .find(_.getTargetArea == HighlighterTargetArea.LINES_IN_RANGE)
-          .foreach(highlighter =>
-            editor.getMarkupModel.removeHighlighter(highlighter)
-          )
+  ): Unit = riddlErrorRegex.findFirstMatchIn(outputBlock.head) match
+    case Some(resultMatch: Regex.Match) =>
+      val editor = editorForError(
+        state.getWindowNum,
+        resultMatch.group(2),
+        resultMatch.group(3).toInt,
+        resultMatch.group(4).toInt
+      )
+      val markupModel: MarkupModel = editor.getMarkupModel
+      state.setMarkupModel(markupModel)
 
-        if resultMatch.group(1) == "[error]"
-        then
-          val highlighter = markupModel.addLineHighlighter(
-            resultMatch.group(3).toInt,
-            HighlighterLayer.ERROR,
-            new TextAttributes()
-          )
-          highlighter.setErrorStripeMarkColor(
-            UIUtil.getErrorForeground
-          )
-          highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
-        else if resultMatch.group(1) == "[warn]"
-        then
-          val highlighter = markupModel.addLineHighlighter(
-            resultMatch.group(3).toInt,
-            HighlighterLayer.WARNING,
-            new TextAttributes()
-          )
-          highlighter.setErrorStripeMarkColor(
-            UIUtil.getToolTipForeground
-          )
-          highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
-      case _ => ()
+      if resultMatch.group(1) == "[error]"
+      then
+        val highlighter = markupModel.addLineHighlighter(
+          resultMatch.group(3).toInt - 1,
+          HighlighterLayer.ERROR,
+          new TextAttributes()
+        )
+        highlighter.setErrorStripeMarkColor(
+          UIUtil.getErrorForeground
+        )
+        highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
+        state.appendErrorHighlighter(highlighter)
+      else if resultMatch.group(1) == "[warn]"
+      then
+        val highlighter = markupModel.addLineHighlighter(
+          resultMatch.group(3).toInt - 1,
+          HighlighterLayer.WARNING,
+          new TextAttributes()
+        )
+        highlighter.setErrorStripeMarkColor(
+          UIUtil.getToolTipForeground
+        )
+        highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
+        state.appendErrorHighlighter(highlighter)
+    case _ => ()
 
   def riddlErrorRegex: Regex =
     """(\[\w+\]) ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r

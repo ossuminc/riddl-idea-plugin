@@ -178,12 +178,12 @@ object ToolWindowUtils {
           .foreach(file => highlightErrorForFile(state, file.getName))
       else if state.getCommand == "from" then
         if confFile.exists() && confFile.isFile then
-          runCommandForWindow(numWindow, Some(statePath))
+          runCommandForWindow(numWindow, statePath)
         else
           writeToConsole(
             s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
           )
-      else if fromReload then runCommandForWindow(numWindow)
+      else if fromReload then runCommandForWindow(numWindow, statePath)
     }
 
     // enables auto-compiling
@@ -198,7 +198,7 @@ object ToolWindowUtils {
               ) && state.getAutoCompile && state.getCommand == "from"
             then {
               state.clearRunOutput()
-              runCommandForWindow(numWindow, Some(state.getConfPath))
+              runCommandForWindow(numWindow, state.getConfPath)
             }
           }
         }

@@ -39,6 +39,13 @@ class ConfCondition extends Condition[VirtualFile] {
   }
 }
 
+class RiddlCondition extends Condition[VirtualFile] {
+  def value(virtualFile: VirtualFile): Boolean = {
+    val fn = virtualFile.getName.toLowerCase
+    fn.endsWith(".riddl")
+  }
+}
+
 class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val state: RiddlIdeaSettings.State = getRiddlIdeaState(numToolWindow)
   private var areAnyComponentsModified = false
@@ -74,17 +81,40 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
     BorderFactory.createTitledBorder("Choose Run Command")
   )
 
+  private val topLevelFileTextField = new TextFieldWithBrowseButton()
   private val confFileTextField = new TextFieldWithBrowseButton()
-  private val fileDescriptor: FileChooserDescriptor =
+  private val riddlFileDescriptor: FileChooserDescriptor =
+    FileChooserDescriptorFactory
+      .createSingleFileDescriptor()
+      .withFileFilter(RiddlCondition())
+  private val confFileDescriptor: FileChooserDescriptor =
     FileChooserDescriptorFactory
       .createSingleFileDescriptor()
       .withFileFilter(ConfCondition())
 
-  confFileTextField.addBrowseFolderListener(
-    "Browse for Path",
+  topLevelFileTextField.addBrowseFolderListener(
+    "Browse for Top Level Path",
     null,
     getProject,
-    fileDescriptor
+    riddlFileDescriptor
+  )
+  topLevelFileTextField.addPropertyChangeListener(_ =>
+    areAnyComponentsModified = true
+  )
+  topLevelFileTextField.setText(
+    if state != null && !state.getTopLevelPath.isBlank then
+      state.getTopLevelPath
+    else getProject.getBasePath
+  )
+  topLevelFileTextField.setBorder(
+    BorderFactory.createTitledBorder("Select .riddl file for editing")
+  )
+
+  confFileTextField.addBrowseFolderListener(
+    "Browse for Configuration Path",
+    null,
+    getProject,
+    confFileDescriptor
   )
   confFileTextField.addPropertyChangeListener(_ =>
     areAnyComponentsModified = true
@@ -94,14 +124,14 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
     else getProject.getBasePath
   )
   confFileTextField.setBorder(
-    BorderFactory.createTitledBorder("Select .conf or .riddl File")
+    BorderFactory.createTitledBorder("Select .conf or .riddl file for console")
   )
 
   private val commonOptionsPanel: JPanel = new JPanel(
     new java.awt.GridLayout(0, 3)
   )
   commonOptionsPanel.setBorder(
-    BorderFactory.createTitledBorder("Select Common Options")
+    BorderFactory.createTitledBorder("Select CommonOptions for console")
   )
   CommonOptionsUtils.BooleanCommonOptions.foreach {
     case Some(option) =>
@@ -171,6 +201,8 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       newCommandPickerListener()
 
     val riddlFormBuilder: FormBuilder = FormBuilder.createFormBuilder
+      .addComponentFillVertically(new JPanel(), 0)
+      .addComponent(topLevelFileTextField)
       .addComponent(
         commandPicker
       )
@@ -242,6 +274,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
 
   def getPanel: JPanel = riddlPanel
 
+  def getTopLevelFieldText: String = topLevelFileTextField.getText
   def getConfFieldText: String = confFileTextField.getText
 
   def isModified: Boolean =

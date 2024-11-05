@@ -7,8 +7,11 @@ import com.ossuminc.riddl.plugins.idea.files.utils.{
   highlightKeywordsOnChange,
   getWholeWordsSubstrings
 }
-
+import com.ossuminc.riddl.plugins.idea.utils.highlightErrorForFile
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
+import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.*
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
+import java.nio.file.Path
 
 class RiddlDocumentListener extends DocumentListener {
   override def documentChanged(event: DocumentEvent): Unit = {
@@ -36,9 +39,28 @@ class RiddlDocumentListener extends DocumentListener {
               .map((wwTup, tokTup) => (wwTup._1, wwTup._2, tokTup._3)),
             editor
           )
-        // TODO: finish implementing once riddlc has RPIs available after parsing
-        // val file = FileDocumentManager.getInstance().getFile(event.getDocument)
-        // highlightErrorForFile(state, file.getName)
+
+          if editor.getVirtualFile != null then
+            val editorFilePath =
+              Path.of(editor.getVirtualFile.getPath).toFile.getPath
+            getRiddlIdeaStates.allStates.values.toSeq
+              .filter(state =>
+                state.getParsedPaths.exists(_.toFile.getPath == editorFilePath)
+              )
+              .foreach(state =>
+                state.getParsedPaths
+                  .map { path =>
+                    println(path.toFile.getPath)
+                    println(editorFilePath)
+                    path
+                  }
+                  .filter(path => path.toFile.getPath == editorFilePath)
+                  .foreach(_ =>
+                    println("editor edited")
+                    runCommandForEditor(state.getWindowNum)
+                    highlightErrorForFile(state, editor.getVirtualFile.getName)
+                  )
+              )
 
         case _ => ()
   }

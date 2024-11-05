@@ -4,6 +4,7 @@ import com.intellij.openapi.components.{PersistentStateComponent, Storage, State
 import com.intellij.openapi.editor.markup.{MarkupModel, RangeHighlighter}
 import com.ossuminc.riddl.utils.CommonOptions
 import com.ossuminc.riddl.language.Messages.Message
+import java.nio.file.Path
 
 @StateAnnotation(
   name = "RiddlIdeaSettings",
@@ -51,16 +52,22 @@ object RiddlIdeaSettings {
   }
 
   class State(windowNum: Int) {
+    private var riddlTopLevelPath: String = ""
     private var riddlConfPath: String = ""
     private var riddlRunOutput: Seq[String] = Seq()
     private var autoCompileOnSave: Boolean = true
     private var command: String = commands.head
     private var commonOptions: CommonOptions = CommonOptions.empty.copy(noANSIMessages = true, groupMessagesByKind = true)
+
+    private var parsedPaths: Seq[Path] = Seq()
     private var messages: Seq[Message] = Seq()
     private var errorHighlighters: Seq[RangeHighlighter] = Seq()
     private var markupModelOpt: Option[MarkupModel] = None
 
     def getWindowNum: Int = windowNum
+    
+    def setTopLevelPath(newPath: String): Unit = riddlTopLevelPath = newPath
+    def getTopLevelPath: String = riddlTopLevelPath
     
     def setConfPath(newPath: String): Unit = riddlConfPath = newPath
     def getConfPath: String = riddlConfPath
@@ -80,6 +87,10 @@ object RiddlIdeaSettings {
     def getCommonOptions: CommonOptions = commonOptions
     def setCommonOptions(newCOs: CommonOptions): Unit =
       commonOptions = newCOs
+
+    def getParsedPaths: Seq[Path] = parsedPaths
+    def setParsedPaths(newPaths: Seq[Path]): Unit =
+      parsedPaths = newPaths
 
     def getMessages: Seq[Message] = messages
     def setMessages(newMsgs: Seq[Message]): Unit =

@@ -7,6 +7,7 @@ import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
 }
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.*
+import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.*
 import org.codehaus.groovy.control.ConfigurationException
 
 import java.io.File
@@ -28,6 +29,8 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
     val windowState = getRiddlIdeaState(numWindow)
 
     windowState.setCommand(component.getPickedCommand)
+
+    windowState.setTopLevelPath(component.getTopLevelFieldText)
 
     val fileForPath = File(component.getConfFieldText)
     if component.getPickedCommand == "from" &&
@@ -78,6 +81,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
 
     windowState.setAutoCompile(component.getAutoCompileValue)
     windowState.clearRunOutput()
+    runCommandForEditor(windowState.getWindowNum)
     updateToolWindowPanes(numWindow, fromReload = true)
   }
 }

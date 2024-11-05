@@ -1,7 +1,7 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
-import com.ossuminc.riddl.language.CommonOptions
+import com.ossuminc.riddl.utils.CommonOptions
 
 @StateAnnotation(
   name = "RiddlIdeaSettings",

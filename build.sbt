@@ -30,7 +30,8 @@ lazy val riddlIdeaPlugin: Project = Root(
     description := "The plugin for supporting RIDDL in IntelliJ",
     libraryDependencies ++= Dep.testing ++ Dep.basic ++ Seq(
       Dep.kotlin,
-      Dep.riddlCommands
+      Dep.riddlCommands,
+      Dep.pureconfig
     ),
     Test / parallelExecution := false,
     scalaVersion := "3.4.3",

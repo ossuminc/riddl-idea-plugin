@@ -28,6 +28,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
     val windowState = getRiddlIdeaState(numWindow)
 
     windowState.setCommand(component.getPickedCommand)
+    windowState.setFromOption(component.getPickedFromOption)
 
     val fileForPath = File(component.getConfFieldText)
     if component.getPickedCommand == "from" &&

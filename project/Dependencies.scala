@@ -5,7 +5,7 @@ import sbt.librarymanagement.ModuleID
 
 object V {
   val lang3 = "3.14.0"
-  val pureconfig = "0.17.6"
+  val pureconfig = "0.17.7"
   val scalacheck = "1.17.0"
   val scalatest = "3.2.18"
   val scopt = "4.1.0"

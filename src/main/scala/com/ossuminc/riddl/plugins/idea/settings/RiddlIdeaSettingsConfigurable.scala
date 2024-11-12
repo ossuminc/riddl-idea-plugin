@@ -28,13 +28,17 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
     val windowState = getRiddlIdeaState(numWindow)
 
     windowState.setCommand(component.getPickedCommand)
-    if windowState.getFromOptionsSeq.contains(component.getPickedFromOption)
-    then windowState.setFromOption(Some(component.getPickedFromOption))
 
     val fileForPath = File(component.getConfFieldText)
     if component.getPickedCommand == "from" &&
       (fileForPath.exists() && fileForPath.isFile)
-    then windowState.setConfPath(Some(component.getConfFieldText))
+    then {
+      windowState.setConfPath(Some(component.getConfFieldText))
+
+      if windowState.getFromOptionsSeq.contains(component.getPickedFromOption)
+      then windowState.setFromOption(component.getPickedFromOption)
+      else windowState.setFromOptionsSeq(Seq())
+    }
 
     component.getBooleanCommonOptions.foreach(option =>
       windowState.setCommonOptions(

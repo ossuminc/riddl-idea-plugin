@@ -74,13 +74,11 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   }
 
   private var pickedCommandModified: Boolean = false
-  private var pickedCommand: String = state.getCommand
-  private val commandPicker = JBLabel(pickedCommand)
+  private val commandPicker = JBLabel(state.getCommand)
   private val commandPickerPopupMenu = JBPopupMenu()
 
   private var pickedFromOptionModified: Boolean = false
-  private var pickedFromOption: String = "A .conf file must be picked first"
-  private val fromOptionPicker = JBLabel(pickedFromOption)
+  private val fromOptionPicker = JBLabel("A .conf file must be picked first")
   private val fromOptionPickerPopupMenu = JBPopupMenu()
 
   commandPicker.setBorder(
@@ -170,10 +168,9 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       RiddlIdeaSettings.allCommands.foreach { command =>
         val commandItem = new JBMenuItem(command)
         commandItem.addActionListener((_: ActionEvent) => {
-          formBuilderPanel.removeAll()
-          pickedCommand = command
           commandPicker.setText(command)
           pickedCommandModified = true
+          formBuilderPanel.removeAll()
           createComponent()
           riddlSettingsPanel.repaint()
         })
@@ -181,6 +178,15 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       }
     }
 
+    state.getFromOptionsSeq
+      .foreach { command =>
+        val commandItem = new JBMenuItem(command)
+        commandItem.addActionListener((_: ActionEvent) => {
+          fromOptionPicker.setText(command)
+          pickedFromOptionModified = true
+        })
+        fromOptionPickerPopupMenu.add(commandItem)
+      }
     val fromOptionPickerListener = new MouseAdapter {
       override def mouseClicked(e: MouseEvent): Unit = {
         riddlSettingsPanel.repaint()
@@ -189,42 +195,47 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       }
     }
 
-    def newFromOptionPickerListener(): Unit =
-      if fromOptionPicker.getMouseListeners.isEmpty then
-        fromOptionPicker.addMouseListener(fromOptionPickerListener)
-      else
-        fromOptionPicker.removeMouseListener(fromOptionPickerListener)
-        fromOptionPicker.addMouseListener(fromOptionPickerListener)
+    def reloadAndResetFromOptions(): Unit = {
+      def newFromOptionPickerListener(): Unit =
+        if fromOptionPicker.getMouseListeners.isEmpty then
+          fromOptionPicker.addMouseListener(fromOptionPickerListener)
+        else
+          fromOptionPicker.removeMouseListener(fromOptionPickerListener)
+          fromOptionPicker.addMouseListener(fromOptionPickerListener)
 
-    def setFromOptionsPopupMenuListeners(): Unit = {
-      state.getFromOptionsSeq
-        .foreach { command =>
-          val commandItem = new JBMenuItem(command)
-          commandItem.addActionListener((_: ActionEvent) => {
-            pickedFromOption = command
-            fromOptionPicker.setText(command)
-            pickedFromOptionModified = true
-          })
-          fromOptionPickerPopupMenu.add(commandItem)
-        }
-    }
+      def setFromOptionsPopupMenuListeners(): Unit =
+        state.getFromOptionsSeq
+          .foreach { command =>
+            val commandItem = new JBMenuItem(command)
+            commandItem.addActionListener((_: ActionEvent) => {
+              fromOptionPicker.setText(command)
+              pickedFromOptionModified = true
+            })
+            fromOptionPickerPopupMenu.add(commandItem)
+          }
 
-    def reloadAndResetFromOptions(): Unit =
       if getConfFieldText.endsWith(".conf") then {
         state.setFromOptionsSeq(
           readFromOptionsFromConf(getConfFieldText)
             .diff(Seq("common"))
         )
-        if fromOptionPickerPopupMenu.getComponents.isEmpty then
-          setFromOptionsPopupMenuListeners()
-        else
-          fromOptionPickerPopupMenu.removeAll()
-          setFromOptionsPopupMenuListeners()
 
+        if fromOptionPickerPopupMenu.getComponents.count(
+            _.isInstanceOf[JBMenuItem]
+          ) != 0
+        then
+          fromOptionPickerPopupMenu.getComponents
+            .filter(_.isInstanceOf[JBMenuItem])
+            .foreach(fromOptionPickerPopupMenu.remove)
+
+        setFromOptionsPopupMenuListeners()
         newFromOptionPickerListener()
         areAnyComponentsModified = true
         riddlSettingsPanel.repaint()
       }
+    }
+
+    if state.getFromOptionsSeq.nonEmpty then reloadAndResetFromOptions()
 
     val fileDescriptor: FileChooserDescriptor =
       FileChooserDescriptorFactory
@@ -264,14 +275,6 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         .filter(_.isInstanceOf[JBMenuItem])
         .foreach(commandPickerPopupMenu.remove)
 
-    if fromOptionPickerPopupMenu.getComponents.count(
-        _.isInstanceOf[JBMenuItem]
-      ) != 0
-    then
-      fromOptionPickerPopupMenu.getComponents
-        .filter(_.isInstanceOf[JBMenuItem])
-        .foreach(fromOptionPickerPopupMenu.remove)
-
     setCommandPopupMenuListeners()
     riddlSettingsPanel.add(formBuilderPanel)
 
@@ -280,7 +283,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       .addComponentFillVertically(new JPanel(), 0)
       .getPanel
 
-    if pickedCommand == "from" then
+    if commandPicker.getText == "from" then
       riddlFormBuilder
         .addComponentFillVertically(new JPanel(), 0)
         .addComponent(confFileTextField)
@@ -323,8 +326,8 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       pickedCommandModified || pickedFromOptionModified ||
       autoCompileValue != state.getAutoCompile
 
-  def getPickedCommand: String = pickedCommand
-  def getPickedFromOption: String = pickedFromOption
+  def getPickedCommand: String = commandPicker.getText
+  def getPickedFromOption: String = fromOptionPicker.getText
 
   def getAutoCompileValue: Boolean = autoCompileValue
 

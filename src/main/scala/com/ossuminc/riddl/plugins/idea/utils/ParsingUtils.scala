@@ -28,9 +28,9 @@ object ParsingUtils {
   ): Unit = {
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
 
-    if windowState.getCommand == "from" & (confFile.isEmpty | windowState.getFromOption.isEmpty)
+    if windowState.getCommand.nonEmpty ||
+      (windowState.getCommand == "from" & (confFile.isDefined | windowState.getFromOption.isDefined))
     then
-
       pc.withLogger(RiddlIdeaPluginLogger(numWindow)) { _ =>
         pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
           Commands.runCommandWithArgs(
@@ -52,8 +52,6 @@ object ParsingUtils {
           updateToolWindowRunPane(numWindow, fromReload = true)
         }
       }
-
-    updateToolWindowRunPane(numWindow, fromReload = true)
   }
 
 }

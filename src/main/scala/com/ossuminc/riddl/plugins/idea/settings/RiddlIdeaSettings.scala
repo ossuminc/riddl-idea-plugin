@@ -93,8 +93,8 @@ object RiddlIdeaSettings {
       commonOptions = newCOs
     }
 
-    def setFromOption(newFromOption: Option[String]): Unit = fromOption =
-      newFromOption
+    def setFromOption(newFromOption: String): Unit = fromOption =
+      Some(newFromOption)
     def getFromOption: Option[String] = fromOption
 
     def setFromOptionsSeq(newSeq: Seq[String]): Unit = fromOptionsSeq = newSeq

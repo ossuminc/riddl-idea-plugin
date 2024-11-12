@@ -157,31 +157,27 @@ object ToolWindowUtils {
       val statePath: String =
         if state != null then state.getConfPath.getOrElse("")
         else ""
-
       val confFile = File(statePath)
 
       val tabContent: Content = getToolWindowContent(numWindow)
       if tabContent.getTabName.isBlank then
         tabContent.setDisplayName(genWindowName(numWindow))
 
-      if state.getCommand == "from" && (statePath == null || statePath.isBlank)
-      then
-        (if state.getFromOption.isEmpty
-         then
-           writeToConsole("From command chosen, but no option has been chosen")
-         else writeToConsole(notConfiguredMessage)
-      )
-      else (if state.getRunOutput.nonEmpty
-            then writeStateOutputToConsole()
-            else if state.getCommand == "from" then
-              (if confFile.exists() && confFile.isFile then
-                 runCommandForWindow(numWindow, Some(statePath))
-               else
-                 writeToConsole(
-                   s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
-                 )
-            )
-            else if fromReload then runCommandForWindow(numWindow))
+      if state.getCommand == "from" then
+        if statePath == null || statePath.isBlank then
+          writeToConsole(notConfiguredMessage)
+        else if state.getFromOption.isEmpty then
+          writeToConsole("From command chosen, but no option has been chosen")
+        else (if state.getRunOutput.nonEmpty
+              then writeStateOutputToConsole()
+              else if state.getCommand == "from" then
+                if confFile.exists() && confFile.isFile then
+                  runCommandForWindow(numWindow, Some(statePath))
+                else
+                  writeToConsole(
+                    s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
+                  )
+              else if fromReload then runCommandForWindow(numWindow))
 
       val fileEditorManager = FileEditorManager
         .getInstance(project)

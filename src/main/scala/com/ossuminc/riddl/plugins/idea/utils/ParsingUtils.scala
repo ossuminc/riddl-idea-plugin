@@ -28,29 +28,32 @@ object ParsingUtils {
   ): Unit = {
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
 
-    pc.withLogger(RiddlIdeaPluginLogger(numWindow)) { _ =>
-      pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
-        Commands.runCommandWithArgs(
-          Array(
-            windowState.getCommand,
-            confFile.getOrElse(""),
-            if confFile.isDefined then "validate" else ""
-          ).filter(_.nonEmpty)
-        ) match {
-          case Right(_) if windowState.getCommand == "from" =>
-            windowState.prependRunOutput(
-              "Success!! There were no errors found\n"
-            )
-          case Left(_) =>
-            windowState.prependRunOutput("The following errors were found:\n")
-          case _ => ()
+    if windowState.getCommand == "from" & (confFile.isEmpty | windowState.getFromOption.isEmpty)
+    then
+
+      pc.withLogger(RiddlIdeaPluginLogger(numWindow)) { _ =>
+        pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
+          Commands.runCommandWithArgs(
+            Array(
+              windowState.getCommand,
+              confFile.getOrElse(""),
+              windowState.getFromOption.getOrElse("")
+            ).filter(_.nonEmpty)
+          ) match {
+            case Right(_) if windowState.getCommand == "from" =>
+              windowState.prependRunOutput(
+                "Success!! There were no errors found\n"
+              )
+            case Left(_) =>
+              windowState.prependRunOutput("The following errors were found:\n")
+            case _ => ()
+          }
+
+          updateToolWindowRunPane(numWindow, fromReload = true)
         }
-
-        updateToolWindowPanes(numWindow, fromReload = true)
       }
-    }
 
-    updateToolWindowPanes(numWindow, fromReload = true)
+    updateToolWindowRunPane(numWindow, fromReload = true)
   }
 
 }

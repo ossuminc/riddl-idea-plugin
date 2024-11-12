@@ -1,7 +1,12 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
+import com.intellij.openapi.components.{
+  PersistentStateComponent,
+  Storage,
+  State as StateAnnotation
+}
 import com.ossuminc.riddl.utils.CommonOptions
+import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
 
 @StateAnnotation(
   name = "RiddlIdeaSettings",
@@ -31,14 +36,16 @@ object RiddlIdeaSettings {
 
     def getState(numToolWindow: Int): State = states(numToolWindow)
     def allStates: Map[Int, State] = states
-    
+
     def length: Int = states.size
 
     def newState(): Int = {
-      val newWindowNum: Int = if length == 0 then 1
-        else (1 to length + 1)
-          .find(num => !states.keys.iterator.toSeq.contains(num))
-          .getOrElse(length + 1)
+      val newWindowNum: Int =
+        if length == 0 then 1
+        else
+          (1 to length + 1)
+            .find(num => !states.keys.iterator.toSeq.contains(num))
+            .getOrElse(length + 1)
 
       states = states.concat(Map(newWindowNum -> new State(newWindowNum)))
       newWindowNum
@@ -49,19 +56,27 @@ object RiddlIdeaSettings {
   }
 
   class State(windowNum: Int) {
-    private var riddlConfPath: String = ""
+    private var riddlConfPath: Option[String] = None
     private var riddlRunOutput: Seq[String] = Seq()
     private var autoCompileOnSave: Boolean = true
     private var command: String = commands.head
-    private var commonOptions: CommonOptions = CommonOptions.empty.copy(noANSIMessages = true, groupMessagesByKind = true)
-    private var fromOption: String = "validate"
+    private var commonOptions: CommonOptions = CommonOptions.empty.copy(
+      noANSIMessages = true,
+      groupMessagesByKind = true
+    )
+    private var fromOption: Option[String] = None
+    private var fromOptionsSeq: Seq[String] =
+      if riddlConfPath.isDefined then
+        riddlConfPath.flatMap(readFromOptionsFromConf).toSeq
+      else Seq()
 
     def getWindowNum: Int = windowNum
-    
-    def setConfPath(newPath: String): Unit = riddlConfPath = newPath
-    def getConfPath: String = riddlConfPath
 
-    def prependRunOutput(newOutput: String): Unit = riddlRunOutput = newOutput +: riddlRunOutput
+    def setConfPath(newPath: Option[String]): Unit = riddlConfPath = newPath
+    def getConfPath: Option[String] = riddlConfPath
+
+    def prependRunOutput(newOutput: String): Unit = riddlRunOutput =
+      newOutput +: riddlRunOutput
     def appendRunOutput(newOutput: String): Unit = riddlRunOutput :+= newOutput
     def clearRunOutput(): Unit = riddlRunOutput = Seq()
     def getRunOutput: Seq[String] = riddlRunOutput
@@ -78,11 +93,14 @@ object RiddlIdeaSettings {
       commonOptions = newCOs
     }
 
-    def setFromOption(newFromOption: String): Unit = fromOption = newFromOption
-    def getFromOption: String = fromOption
+    def setFromOption(newFromOption: Option[String]): Unit = fromOption =
+      newFromOption
+    def getFromOption: Option[String] = fromOption
+
+    def setFromOptionsSeq(newSeq: Seq[String]): Unit = fromOptionsSeq = newSeq
+    def getFromOptionsSeq: Seq[String] = fromOptionsSeq
   }
 
   private val commands = Seq("from", "about", "info")
   def allCommands: Seq[String] = commands
-  def allFromOptions: Seq[String] = Seq("validate", "parse", "hugo")
 }

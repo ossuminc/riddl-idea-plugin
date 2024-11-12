@@ -15,6 +15,9 @@ import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getRiddlIdeaState
 }
 import com.ossuminc.riddl.plugins.idea.riddlErrorRegex
+import com.typesafe.config.ConfigObject
+import pureconfig.ConfigSource
+import scala.jdk.CollectionConverters.*
 
 import java.awt.GridBagConstraints
 import javax.swing.Icon
@@ -73,6 +76,7 @@ package object utils {
       charNumber: Int
   ): Editor = {
     val pathToConf = getRiddlIdeaState(numWindow).getConfPath
+      .getOrElse("")
       .split("/")
       .dropRight(1)
       .mkString("/")
@@ -138,6 +142,14 @@ package object utils {
             )
             highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
         case _ => ()
+    }
+
+  def readFromOptionsFromConf(path: String): Seq[String] =
+    ConfigSource.file(path).load[ConfigObject] match {
+      case Right(configObject) =>
+        configObject.keySet().iterator().asScala.toSeq
+      case Left(err) =>
+        Seq()
     }
 }
 

@@ -7,12 +7,15 @@ import com.intellij.openapi.fileChooser.{
 import com.intellij.openapi.ui.{
   JBMenuItem,
   JBPopupMenu,
+  TextComponentAccessor,
   TextFieldWithBrowseButton
 }
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
 import com.intellij.util.ui.FormBuilder
+import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
   CommonOption,
   FiniteDurationCommonOption,
@@ -29,7 +32,13 @@ import java.awt.event.{
   MouseEvent
 }
 import java.text.NumberFormat
-import javax.swing.{BorderFactory, JFormattedTextField, JPanel, SwingUtilities}
+import javax.swing.{
+  BorderFactory,
+  JFormattedTextField,
+  JPanel,
+  JTextField,
+  SwingUtilities
+}
 
 class ConfCondition extends Condition[VirtualFile] {
   def value(virtualFile: VirtualFile): Boolean = {
@@ -70,7 +79,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val commandPickerPopupMenu = JBPopupMenu()
 
   private var pickedFromOptionModified: Boolean = false
-  private var pickedFromOption: String = state.getFromOption
+  private var pickedFromOption: String = "A .conf file must be picked first"
   private val fromOptionPicker = JBLabel(pickedFromOption)
   private val fromOptionPickerPopupMenu = JBPopupMenu()
 
@@ -82,22 +91,10 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   )
 
   private val confFileTextField = new TextFieldWithBrowseButton()
-  private val fileDescriptor: FileChooserDescriptor =
-    FileChooserDescriptorFactory
-      .createSingleFileDescriptor()
-      .withFileFilter(ConfCondition())
-
-  confFileTextField.addBrowseFolderListener(
-    "Browse for Path",
-    null,
-    getProject,
-    fileDescriptor
-  )
-  confFileTextField.addPropertyChangeListener(_ =>
-    areAnyComponentsModified = true
-  )
+  confFileTextField.setEditable(false)
   confFileTextField.setText(
-    if state != null && !state.getConfPath.isBlank then state.getConfPath
+    if state != null && state.getConfPath.isDefined then
+      state.getConfPath.getOrElse("")
     else getProject.getBasePath
   )
   confFileTextField.setBorder(
@@ -152,39 +149,24 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   finiteDurationOptionRow.setComponentOrientation(
     ComponentOrientation.LEFT_TO_RIGHT
   )
-  val finiteDurationlabel = new JBLabel()
-  finiteDurationlabel.setText(FiniteDurationCommonOption.name)
+  private val finiteDurationLabel = new JBLabel()
+  finiteDurationLabel.setText(FiniteDurationCommonOption.name)
   finiteDurationOptionRow.add(finiteDurationTextField)
-  finiteDurationOptionRow.add(finiteDurationlabel)
+  finiteDurationOptionRow.add(finiteDurationLabel)
   commonOptionsPanel.add(finiteDurationOptionRow)
 
   private var autoCompileValue: Boolean = state.getAutoCompile
 
-  private val riddlPanel = new JBPanel()
+  private val riddlSettingsPanel = new JBPanel()
 
   private def createComponent(): Unit = {
-    val commandPickerListener = new MouseAdapter {
-      override def mouseClicked(e: MouseEvent): Unit =
-        if SwingUtilities.isLeftMouseButton(e) then
-          commandPickerPopupMenu.show(commandPicker, e.getX, e.getY)
-    }
-
-    def newCommandPickerListener(): Unit =
-      commandPicker.addMouseListener(commandPickerListener)
-
-    if commandPicker.getMouseListeners.isEmpty then newCommandPickerListener()
-    else
-      commandPicker.removeMouseListener(commandPickerListener)
-      newCommandPickerListener()
-
     val riddlFormBuilder: FormBuilder = FormBuilder.createFormBuilder
       .addComponent(
         commandPicker
       )
+    val formBuilderPanel: JPanel = riddlFormBuilder.getPanel
 
-    val formBuilderPanel = riddlFormBuilder.getPanel
-
-    def setCommandPopupMenuListeners(): Unit =
+    def setCommandPopupMenuListeners(): Unit = {
       RiddlIdeaSettings.allCommands.foreach { command =>
         val commandItem = new JBMenuItem(command)
         commandItem.addActionListener((_: ActionEvent) => {
@@ -193,26 +175,86 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
           commandPicker.setText(command)
           pickedCommandModified = true
           createComponent()
-          riddlPanel.revalidate()
-          riddlPanel.repaint()
+          riddlSettingsPanel.repaint()
         })
         commandPickerPopupMenu.add(commandItem)
       }
+    }
 
-    def setFromOptionsPopupMenuListeners(): Unit =
-      RiddlIdeaSettings.allFromOptions.foreach { command =>
-        val commandItem = new JBMenuItem(command)
-        commandItem.addActionListener((_: ActionEvent) => {
-          formBuilderPanel.removeAll()
-          pickedFromOption = command
-          fromOptionPicker.setText(command)
-          pickedFromOptionModified = true
-          createComponent()
-          riddlPanel.revalidate()
-          riddlPanel.repaint()
-        })
-        fromOptionPickerPopupMenu.add(commandItem)
+    val fromOptionPickerListener = new MouseAdapter {
+      override def mouseClicked(e: MouseEvent): Unit = {
+        riddlSettingsPanel.repaint()
+        if SwingUtilities.isLeftMouseButton(e) then
+          fromOptionPickerPopupMenu.show(fromOptionPicker, e.getX, e.getY)
       }
+    }
+
+    def newFromOptionPickerListener(): Unit =
+      if fromOptionPicker.getMouseListeners.isEmpty then
+        fromOptionPicker.addMouseListener(fromOptionPickerListener)
+      else
+        fromOptionPicker.removeMouseListener(fromOptionPickerListener)
+        fromOptionPicker.addMouseListener(fromOptionPickerListener)
+
+    def setFromOptionsPopupMenuListeners(): Unit = {
+      state.getFromOptionsSeq
+        .foreach { command =>
+          val commandItem = new JBMenuItem(command)
+          commandItem.addActionListener((_: ActionEvent) => {
+            pickedFromOption = command
+            fromOptionPicker.setText(command)
+            pickedFromOptionModified = true
+          })
+          fromOptionPickerPopupMenu.add(commandItem)
+        }
+    }
+
+    def reloadAndResetFromOptions(): Unit =
+      if getConfFieldText.endsWith(".conf") then {
+        state.setFromOptionsSeq(
+          readFromOptionsFromConf(getConfFieldText)
+            .diff(Seq("common"))
+        )
+        if fromOptionPickerPopupMenu.getComponents.isEmpty then
+          setFromOptionsPopupMenuListeners()
+        else
+          fromOptionPickerPopupMenu.removeAll()
+          setFromOptionsPopupMenuListeners()
+
+        newFromOptionPickerListener()
+        areAnyComponentsModified = true
+        riddlSettingsPanel.repaint()
+      }
+
+    val fileDescriptor: FileChooserDescriptor =
+      FileChooserDescriptorFactory
+        .createSingleFileDescriptor()
+        .withFileFilter(ConfCondition())
+    confFileTextField.addBrowseFolderListener(
+      "Browse for Path",
+      null,
+      getProject,
+      fileDescriptor,
+      new TextComponentAccessor[JTextField]:
+        override def getText(component: JTextField): String = component.getText
+
+        override def setText(component: JTextField, text: String): Unit = {
+          component.setText(text)
+          reloadAndResetFromOptions()
+        }
+    )
+
+    val commandPickerListener = new MouseAdapter {
+      override def mousePressed(e: MouseEvent): Unit =
+        commandPickerPopupMenu.show(commandPicker, e.getX, e.getY)
+    }
+
+    if commandPicker.getMouseListeners.isEmpty then
+      commandPicker.addMouseListener(commandPickerListener)
+    else {
+      commandPicker.addMouseListener(commandPickerListener)
+      commandPicker.removeMouseListener(commandPickerListener)
+    }
 
     if commandPickerPopupMenu.getComponents.count(
         _.isInstanceOf[JBMenuItem]
@@ -231,39 +273,19 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         .foreach(fromOptionPickerPopupMenu.remove)
 
     setCommandPopupMenuListeners()
-    riddlPanel.add(formBuilderPanel)
+    riddlSettingsPanel.add(formBuilderPanel)
 
     riddlFormBuilder
       .addComponent(commonOptionsPanel)
       .addComponentFillVertically(new JPanel(), 0)
       .getPanel
 
-    if pickedCommand == "from" then {
+    if pickedCommand == "from" then
       riddlFormBuilder
         .addComponentFillVertically(new JPanel(), 0)
         .addComponent(confFileTextField)
-
-      val fromOptionPickerListener = new MouseAdapter {
-        override def mouseClicked(e: MouseEvent): Unit =
-          if SwingUtilities.isLeftMouseButton(e) then
-            fromOptionPickerPopupMenu.show(fromOptionPicker, e.getX, e.getY)
-      }
-
-      def newFromOptionPickerListener(): Unit =
-        fromOptionPicker.addMouseListener(fromOptionPickerListener)
-
-      if fromOptionPicker.getMouseListeners.isEmpty then
-        newFromOptionPickerListener()
-      else
-        fromOptionPicker.removeMouseListener(fromOptionPickerListener)
-        newFromOptionPickerListener()
-
-      riddlFormBuilder
         .addComponentFillVertically(new JPanel(), 0)
         .addComponent(fromOptionPicker)
-
-      setFromOptionsPopupMenuListeners()
-    }
 
     val autoCompileCheckBox: JBCheckBox = JBCheckBox()
     riddlFormBuilder
@@ -292,7 +314,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
 
   createComponent()
 
-  def getPanel: JPanel = riddlPanel
+  def getPanel: JPanel = riddlSettingsPanel
 
   def getConfFieldText: String = confFileTextField.getText
 

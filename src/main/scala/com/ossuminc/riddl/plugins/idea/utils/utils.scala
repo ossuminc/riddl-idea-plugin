@@ -18,6 +18,10 @@ import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getProject,
   getRiddlIdeaState
 }
+import com.ossuminc.riddl.plugins.idea.riddlErrorRegex
+import com.typesafe.config.ConfigObject
+import pureconfig.ConfigSource
+import scala.jdk.CollectionConverters.*
 
 import java.awt.GridBagConstraints
 import javax.swing.Icon
@@ -76,6 +80,7 @@ package object utils {
       charNumber: Int
   ): Editor = {
     val pathToConf = getRiddlIdeaState(numWindow).getConfPath
+      .getOrElse("")
       .split("/")
       .dropRight(1)
       .mkString("/")
@@ -123,6 +128,9 @@ package object utils {
       val markupModel: MarkupModel = editor.getMarkupModel
       state.setMarkupModel(markupModel)
 
+      markupModel.removeAllHighlighters()
+      Thread.sleep(500)
+
       if resultMatch.group(1) == "[error]"
       then
         val highlighter = markupModel.addLineHighlighter(
@@ -151,4 +159,12 @@ package object utils {
 
   def riddlErrorRegex: Regex =
     """(\[\w+\]) ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r
+
+  def readFromOptionsFromConf(path: String): Seq[String] =
+    ConfigSource.file(path).load[ConfigObject] match {
+      case Right(configObject) =>
+        configObject.keySet().iterator().asScala.toSeq
+      case Left(err) =>
+        Seq()
+    }
 }

@@ -57,7 +57,7 @@ object ToolWindowUtils {
       content.setCloseable(!isLockable)
       listenForContentRemoval(project, windowName, windowNumber)
       getContentManager.addContent(content)
-      updateToolWindowPanes(windowNumber)
+      updateToolWindowRunPane(windowNumber)
     }
 
     private def listenForContentRemoval(
@@ -80,7 +80,7 @@ object ToolWindowUtils {
 
             if event.getContent.getDisplayName == windowName then {
               content.getComponent.putClientProperty(
-                genUpdateRunPaneLabelName(windowNumber),
+                genUpdateRunPaneName(windowNumber),
                 null
               )
               riddlContentManager.removeContentManagerListener(this)
@@ -113,16 +113,16 @@ object ToolWindowUtils {
       new RiddlTerminalConsole(numWindow, project)
     setConsoleProps(console)
 
-    def putUpdateRunPaneLabelAsClientProperty(): Unit =
+    def putUpdateRunPaneAsClientProperty(): Unit =
       contentPanel.putClientProperty(
-        genUpdateRunPaneLabelName(numWindow),
+        genUpdateRunPaneName(numWindow),
         (fromReload: Boolean, fromLogger: Boolean) =>
-          updateRunPaneLabel(fromReload, fromLogger)
+          updateRunPane(fromReload, fromLogger)
       )
 
-    if contentPanel.getClientProperty(genUpdateRunPaneLabelName) != null
-    then contentPanel.putClientProperty(genUpdateRunPaneLabelName, null)
-    putUpdateRunPaneLabelAsClientProperty()
+    if contentPanel.getClientProperty(genUpdateRunPaneName) != null
+    then contentPanel.putClientProperty(genUpdateRunPaneName, null)
+    putUpdateRunPaneAsClientProperty()
 
     if contentPanel.getClientProperty("createToolWindow") == null then
       contentPanel.putClientProperty(
@@ -136,7 +136,7 @@ object ToolWindowUtils {
         getRiddlIdeaStates.newState()
       )
 
-    def updateRunPaneLabel(
+    def updateRunPane(
         fromReload: Boolean = false,
         fromLogger: Boolean = false
     ): Unit = {
@@ -155,29 +155,29 @@ object ToolWindowUtils {
         return
 
       val statePath: String =
-        if state != null then state.getConfPath
+        if state != null then state.getConfPath.getOrElse("")
         else ""
-
       val confFile = File(statePath)
 
       val tabContent: Content = getToolWindowContent(numWindow)
       if tabContent.getTabName.isBlank then
         tabContent.setDisplayName(genWindowName(numWindow))
 
-      if state.getCommand == "from" && (statePath == null || statePath.isBlank)
-      then
-        writeToConsole(notConfiguredMessage)
-        return
-
-      if state.getRunOutput.nonEmpty then writeStateOutputToConsole()
-      else if state.getCommand == "from" then
-        if confFile.exists() && confFile.isFile then
-          runCommandForWindow(numWindow, Some(statePath))
-        else
-          writeToConsole(
-            s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
-          )
-      else if fromReload then runCommandForWindow(numWindow)
+      if state.getCommand == "from" then
+        if statePath == null || statePath.isBlank then
+          writeToConsole(notConfiguredMessage)
+        else if state.getFromOption.isEmpty then
+          writeToConsole("From command chosen, but no option has been chosen")
+        else (if state.getRunOutput.nonEmpty
+              then writeStateOutputToConsole()
+              else if state.getCommand == "from" then
+                if confFile.exists() && confFile.isFile then
+                  runCommandForWindow(numWindow, Some(statePath))
+                else
+                  writeToConsole(
+                    s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
+                  )
+              else if fromReload then runCommandForWindow(numWindow))
 
       val fileEditorManager = FileEditorManager
         .getInstance(project)
@@ -198,7 +198,7 @@ object ToolWindowUtils {
               ) && state.getAutoCompile && state.getCommand == "from"
             then {
               state.clearRunOutput()
-              runCommandForWindow(numWindow, Some(state.getConfPath))
+              runCommandForWindow(numWindow, state.getConfPath)
             }
           }
         }
@@ -226,20 +226,13 @@ object ToolWindowUtils {
           .getOrElse(getContentManager.getContents.head)
       )
 
-  def updateToolWindowPanes(
-      numWindow: Int,
-      fromReload: Boolean = false,
-      fromLogger: Boolean = false
-  ): Unit =
-    updateToolWindowRunPane(numWindow, fromReload, fromLogger)
-
-  private def updateToolWindowRunPane(
+  def updateToolWindowRunPane(
       numWindow: Int,
       fromReload: Boolean = false,
       fromLogger: Boolean = false
   ): Unit =
     getToolWindowContent(numWindow).getComponent
-      .getClientProperty(genUpdateRunPaneLabelName(numWindow))
+      .getClientProperty(genUpdateRunPaneName(numWindow))
       .asInstanceOf[(fromReload: Boolean, fromLogger: Boolean) => Unit](
         fromReload,
         fromLogger
@@ -263,6 +256,6 @@ object ToolWindowUtils {
     s"RIDDL ${getRiddlIdeaState(windowNumber).getCommand}$windowNumInName"
   }
 
-  private def genUpdateRunPaneLabelName(numWindow: Int) =
-    s"updateRunPaneLabel_$numWindow"
+  private def genUpdateRunPaneName(numWindow: Int) =
+    s"updateRunPane_$numWindow"
 }

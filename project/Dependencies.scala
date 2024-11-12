@@ -5,7 +5,7 @@ import sbt.librarymanagement.ModuleID
 
 object V {
   val lang3 = "3.14.0"
-  val pureconfig = "0.17.6"
+  val pureconfig = "0.17.7"
   val scalacheck = "1.17.0"
   val scalatest = "3.2.18"
   val scopt = "4.1.0"
@@ -24,7 +24,7 @@ object Dep {
     "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources ()
   }
   val kotlin = "org.jetbrains.kotlin" % "kotlin-stdlib" % "2.0.20"
-  val riddlCommands = "com.ossuminc" % "riddl-commands_3" % "0.53.1"
+  val riddlCommands = "com.ossuminc" % "riddl-commands_3" % "0.54.1"
 
   val basic: Seq[ModuleID] = Seq(minimalJson, scalactic, scalatest, scalacheck)
 

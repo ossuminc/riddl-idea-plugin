@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.{
   AnActionEvent
 }
 import com.intellij.openapi.project.DumbAware
-import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.updateToolWindowPanes
+import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.updateToolWindowRunPane
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
 import org.jetbrains.annotations.NotNull
 
@@ -15,7 +15,7 @@ class RiddlToolWindowCompileAction(windowNum: Int) extends AnAction with DumbAwa
 
   override def actionPerformed(@NotNull anActionEvent: AnActionEvent): Unit = {
     getRiddlIdeaState(windowNum).clearRunOutput()
-    updateToolWindowPanes(windowNum, true)
+    updateToolWindowRunPane(windowNum, true)
   }
 
   override def update(e: AnActionEvent): Unit = {

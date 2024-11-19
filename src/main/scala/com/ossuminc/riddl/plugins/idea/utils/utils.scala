@@ -13,17 +13,19 @@ import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.util.ui.UIUtil
+import com.ossuminc.riddl.language.At
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.updateToolWindowRunPane
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getProject,
   getRiddlIdeaState
 }
-import com.ossuminc.riddl.plugins.idea.riddlErrorRegex
 import com.typesafe.config.ConfigObject
 import pureconfig.ConfigSource
-import scala.jdk.CollectionConverters.*
 
+import scala.jdk.CollectionConverters.*
 import java.awt.GridBagConstraints
+import java.nio.file.Path
 import javax.swing.Icon
 import scala.util.matching.Regex
 
@@ -43,8 +45,8 @@ package object utils {
         )
         .getState
 
-    def getRiddlIdeaState(numToolWindow: Int): RiddlIdeaSettings.State =
-      getRiddlIdeaStates.getState(numToolWindow)
+    def getRiddlIdeaState(numWindow: Int): RiddlIdeaSettings.State =
+      getRiddlIdeaStates.getState(numWindow)
   }
 
   object CreationUtils {
@@ -89,7 +91,6 @@ package object utils {
       LocalFileSystem.getInstance.findFileByPath(
         s"$pathToConf/$fileName"
       )
-
     FileEditorManager
       .getInstance(getProject)
       .openTextEditor(
@@ -112,50 +113,111 @@ package object utils {
         .filter(outputBlock => outputBlock.contains(fileName))
         .map(_.split("\n").toSeq)
     )
-    .foreach(block => highlightForErrorBlock(state, block))
+    .foreach(block =>
+      riddlErrorRegex.findFirstMatchIn(block.head) match
+        case Some(resultMatch: Regex.Match) =>
+          highlightForErrorMessage(state, Left(block), Left(resultMatch))
+        case _ => ()
+    )
 
-  private def highlightForErrorBlock(
+  def highlightForErrorMessage(
       state: RiddlIdeaSettings.State,
-      outputBlock: Seq[String]
-  ): Unit = riddlErrorRegex.findFirstMatchIn(outputBlock.head) match
-    case Some(resultMatch: Regex.Match) =>
-      val editor = editorForError(
-        state.getWindowNum,
-        resultMatch.group(2),
-        resultMatch.group(3).toInt,
-        resultMatch.group(4).toInt
+      outputBlockOrMessage: Either[Seq[String], String],
+      matchOrAtLine: Either[Regex.Match, (At, Int)]
+  ): Unit = {
+    val severity = matchOrAtLine match {
+      case Left(m) => m.group(1)
+      case Right((_, s)) =>
+        s match {
+          case s if s < 4 => "[warn]"
+          case _          => "[error]"
+        }
+    }
+    val fileNameOrPath: String = matchOrAtLine match {
+      case Left(m) => m.group(2)
+      case Right((at, _)) =>
+        if state.getTopLevelPath.isEmpty then ""
+        else
+          Path
+            .of(state.getTopLevelPath.get)
+            .getParent
+            .toString + "/" + at.source.origin
+    }
+    if fileNameOrPath == "" then
+      state.appendRunOutput(
+        ".riddl file for editor parsing was not set"
       )
-      val markupModel: MarkupModel = editor.getMarkupModel
-      state.setMarkupModel(markupModel)
+      updateToolWindowRunPane(state.getWindowNum)
+      return
 
-      markupModel.removeAllHighlighters()
-      Thread.sleep(500)
+    val lineNumber = matchOrAtLine match {
+      case Left(m)        => m.group(3).toInt - 1
+      case Right((at, _)) => at.line
+    }
+    val col = matchOrAtLine match {
+      case Left(m)        => m.group(3).toInt - 1
+      case Right((at, _)) => at.col
+    }
+    val editor = matchOrAtLine match {
+      case Left(_) =>
+        editorForError(
+          state.getWindowNum,
+          fileNameOrPath,
+          lineNumber,
+          col
+        )
+      case Right((_, _)) =>
+        val file: VirtualFile =
+          LocalFileSystem.getInstance.findFileByPath(fileNameOrPath)
+        FileEditorManager
+          .getInstance(getProject)
+          .openTextEditor(
+            new OpenFileDescriptor(
+              getProject,
+              file,
+              lineNumber - 1,
+              col - 1
+            ),
+            true
+          )
+    }
+    val markupModel: MarkupModel = editor.getMarkupModel
+    state.setMarkupModel(markupModel)
 
-      if resultMatch.group(1) == "[error]"
-      then
-        val highlighter = markupModel.addLineHighlighter(
-          resultMatch.group(3).toInt - 1,
-          HighlighterLayer.ERROR,
-          new TextAttributes()
-        )
-        highlighter.setErrorStripeMarkColor(
-          UIUtil.getErrorForeground
-        )
-        highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
-        state.appendErrorHighlighter(highlighter)
-      else if resultMatch.group(1) == "[warn]"
-      then
-        val highlighter = markupModel.addLineHighlighter(
-          resultMatch.group(3).toInt - 1,
-          HighlighterLayer.WARNING,
-          new TextAttributes()
-        )
-        highlighter.setErrorStripeMarkColor(
-          UIUtil.getToolTipForeground
-        )
-        highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
-        state.appendErrorHighlighter(highlighter)
-    case _ => ()
+    Thread.sleep(500)
+
+    val msg = outputBlockOrMessage match {
+      case Left(outBlock) => outBlock.tail.mkString("\n")
+      case Right(msg)     => msg
+    }
+    println(msg)
+    if severity == "[error]"
+    then
+      val highlighter = markupModel.addLineHighlighter(
+        lineNumber,
+        HighlighterLayer.ERROR,
+        new TextAttributes()
+      )
+      highlighter.setErrorStripeMarkColor(
+        UIUtil.getErrorForeground
+      )
+      highlighter.setErrorStripeTooltip(msg)
+      state.appendErrorHighlighter(highlighter)
+    else if severity == "[warn]"
+    then
+      val highlighter = markupModel.addLineHighlighter(
+        lineNumber,
+        HighlighterLayer.WARNING,
+        new TextAttributes()
+      )
+      highlighter.setErrorStripeMarkColor(
+        UIUtil.getToolTipForeground
+      )
+      highlighter.setErrorStripeTooltip(msg)
+      state.appendErrorHighlighter(highlighter)
+
+    println("higlighted " + lineNumber)
+  }
 
   def riddlErrorRegex: Regex =
     """(\[\w+\]) ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r

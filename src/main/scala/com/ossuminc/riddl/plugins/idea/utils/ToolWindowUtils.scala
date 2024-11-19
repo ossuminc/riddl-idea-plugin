@@ -177,15 +177,15 @@ object ToolWindowUtils {
                   .toSeq
                   .foreach(file => highlightErrorForFile(state, file.getName))
 
-              }
-              else if state.getCommand == "from" then
+              } else if state.getCommand == "from" then
                 if confFile.exists() && confFile.isFile then
                   runCommandForWindow(numWindow, Some(statePath))
                 else
                   writeToConsole(
                     s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
                   )
-              else if fromReload then runCommandForWindow(numWindow))
+              else if fromReload then
+                runCommandForWindow(numWindow, state.getConfPath))
 
       val fileEditorManager = FileEditorManager
         .getInstance(project)

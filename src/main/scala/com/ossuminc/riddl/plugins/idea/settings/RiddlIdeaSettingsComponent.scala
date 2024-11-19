@@ -115,13 +115,18 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   topLevelFileTextField.addPropertyChangeListener(_ =>
     areAnyComponentsModified = true
   )
-  topLevelFileTextField.setText(
-    if state != null && !state.getTopLevelPath.isBlank then
-      state.getTopLevelPath
-    else getProject.getBasePath
-  )
+  if state != null && state.getTopLevelPath.isDefined then
+    state.getTopLevelPath.foreach(path =>
+      topLevelFileTextField.setText(
+        path
+      )
+    )
+  else topLevelFileTextField.setText(getProject.getBasePath)
+
   topLevelFileTextField.setBorder(
-    BorderFactory.createTitledBorder("Select .riddl file for editing")
+    BorderFactory.createTitledBorder(
+      "Select the project's top-level .riddl file [for editing]"
+    )
   )
 
   confFileTextField.addBrowseFolderListener(

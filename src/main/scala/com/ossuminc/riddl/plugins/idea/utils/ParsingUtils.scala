@@ -9,8 +9,8 @@ import com.ossuminc.riddl.utils.{
   Await,
   Logger,
   Logging,
-  PathUtils,
   PlatformContext,
+  StringLogger,
   URL,
   pc
 }
@@ -38,12 +38,12 @@ object ParsingUtils {
 
   def runCommandForWindow(
       numWindow: Int,
-      confFile: String
+      confFile: Option[String]
   ): Unit = {
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
 
-    if windowState.getCommand.nonEmpty ||
-      (windowState.getCommand == "from" & (confFile.isDefined | windowState.getFromOption.isDefined))
+    if !windowState.getCommand.isBlank ||
+      (windowState.getCommand == "from" && confFile.isDefined && windowState.getFromOption.isDefined)
     then
       pc.withLogger(RiddlIdeaPluginLogger(numWindow)) { _ =>
         pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
@@ -63,40 +63,28 @@ object ParsingUtils {
             case _ => ()
           }
 
-        updateToolWindowPanes(numWindow, fromReload = true)
+          updateToolWindowRunPane(numWindow, fromReload = true)
+        }
       }
-    }
-
   }
 
   def runCommandForEditor(
       numWindow: Int
   ): Unit = {
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
-    val url: URL = PathUtils
-      .urlFromFullPath(
-        Paths
-          .get(windowState.getTopLevelPath)
-      )
-
     val rpi: RiddlParserInput = Await.result(
-      RiddlParserInput.fromURL(url),
+      RiddlParserInput.fromPath(path),
       FiniteDuration(5, TimeUnit.SECONDS)
     )
     val tlp: TopLevelParser = TopLevelParser(rpi, false)
-
-    pc.withLogger(RiddlIdeaPluginLogger(numWindow)) { _ =>
+    pc.withLogger(StringLogger()) { _ =>
       pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
         tlp.parseRootWithURLs match {
           case Right((_, paths)) =>
-            println("Right")
-            println(paths)
             windowState.setParsedPaths(
               paths.map(url => Paths.get(url.path))
             )
           case Left((msgs, paths)) =>
-            println("Left")
-            println(msgs)
             windowState.setMessages(msgs)
             windowState.setParsedPaths(
               paths.map(url => Paths.get(url.path))
@@ -106,6 +94,5 @@ object ParsingUtils {
         updateToolWindowPanes(numWindow, fromReload = true)
       }
     }
-
   }
 }

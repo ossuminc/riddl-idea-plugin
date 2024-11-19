@@ -60,7 +60,7 @@ object RiddlIdeaSettings {
 
   class State(windowNum: Int) {
     private var riddlConfPath: Option[String] = None
-    private var riddlTopLevelPath: String = ""
+    private var riddlTopLevelPath: Option[String] = None
     private var riddlRunOutput: Seq[String] = Seq()
     private var autoCompileOnSave: Boolean = true
     private var command: String = commands.head
@@ -84,8 +84,8 @@ object RiddlIdeaSettings {
     def setConfPath(newPath: Option[String]): Unit = riddlConfPath = newPath
     def getConfPath: Option[String] = riddlConfPath
 
-    def setTopLevelPath(newPath: String): Unit = riddlTopLevelPath = newPath
-    def getTopLevelPath: String = riddlTopLevelPath
+    def setTopLevelPath(newPath: String): Unit = riddlTopLevelPath = Some(newPath)
+    def getTopLevelPath: Option[String] = riddlTopLevelPath
 
     def prependRunOutput(newOutput: String): Unit = riddlRunOutput =
       newOutput +: riddlRunOutput

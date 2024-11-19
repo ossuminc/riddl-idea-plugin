@@ -30,11 +30,20 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
 
     windowState.setCommand(component.getPickedCommand)
 
-    windowState.setTopLevelPath(component.getTopLevelFieldText)
+    if component.getTopLevelFieldText.endsWith(".riddl") then
+      val topLevelFile = File(component.getTopLevelFieldText)
+      if topLevelFile.exists() && topLevelFile.isFile
+      then
+        windowState.setTopLevelPath(component.getTopLevelFieldText)
+        runCommandForEditor(numWindow, component.getTopLevelFieldText)
+      else
+        windowState.appendRunOutput(
+          "The provided top-level file is invalid - cannot run on edit"
+        )
 
-    val fileForPath = File(component.getConfFieldText)
+    val confPath = File(component.getConfFieldText)
     if component.getPickedCommand == "from" &&
-      (fileForPath.exists() && fileForPath.isFile)
+      (confPath.exists() && confPath.isFile)
     then {
       windowState.setConfPath(Some(component.getConfFieldText))
 
@@ -87,7 +96,6 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
 
     windowState.setAutoCompile(component.getAutoCompileValue)
     windowState.clearRunOutput()
-    runCommandForEditor(windowState.getWindowNum)
-    updateToolWindowPanes(numWindow, fromReload = true)
+    updateToolWindowRunPane(numWindow, fromReload = true)
   }
 }

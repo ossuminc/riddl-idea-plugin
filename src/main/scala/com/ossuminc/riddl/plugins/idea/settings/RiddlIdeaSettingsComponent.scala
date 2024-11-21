@@ -216,8 +216,9 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
 
       if getConfFieldText.endsWith(".conf") then {
         state.setFromOptionsSeq(
-          readFromOptionsFromConf(getConfFieldText)
-            .diff(Seq("common"))
+          scala.collection.mutable.Seq.from(
+            readFromOptionsFromConf(getConfFieldText).diff("common")
+          )
         )
 
         if fromOptionPickerPopupMenu.getComponents.count(

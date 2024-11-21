@@ -37,7 +37,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
 
       if windowState.getFromOptionsSeq.contains(component.getPickedFromOption)
       then windowState.setFromOption(component.getPickedFromOption)
-      else windowState.setFromOptionsSeq(Seq())
+      else windowState.setFromOptionsSeq(scala.collection.mutable.Seq())
     }
 
     component.getBooleanCommonOptions.foreach(option =>

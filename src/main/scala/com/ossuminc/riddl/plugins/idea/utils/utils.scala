@@ -2,14 +2,17 @@ package com.ossuminc.riddl.plugins.idea
 
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
-import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.{Editor, EditorFactory}
 import com.intellij.openapi.editor.markup.{HighlighterLayer, TextAttributes}
 import com.intellij.openapi.fileEditor.{FileEditorManager, OpenFileDescriptor}
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.util.ui.UIUtil
-import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.plugins.idea.settings.{
+  RiddlIdeaSettings,
+  HighlighterInfo
+}
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getProject,
   getRiddlIdeaState
@@ -17,7 +20,9 @@ import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
 import com.ossuminc.riddl.plugins.idea.riddlErrorRegex
 import com.typesafe.config.ConfigObject
 import pureconfig.ConfigSource
+
 import scala.jdk.CollectionConverters.*
+import com.intellij.openapi.fileEditor.FileDocumentManager
 
 import java.awt.GridBagConstraints
 import javax.swing.Icon
@@ -71,10 +76,8 @@ package object utils {
 
   def editorForError(
       numWindow: Int,
-      fileName: String,
-      lineNumber: Int,
-      charNumber: Int
-  ): Editor = {
+      fileName: String
+  ): Option[Editor] = {
     val pathToConf = getRiddlIdeaState(numWindow).getConfPath
       .getOrElse("")
       .split("/")
@@ -86,63 +89,122 @@ package object utils {
         s"$pathToConf/$fileName"
       )
 
-    FileEditorManager
+    val fileEditorManager = FileEditorManager
       .getInstance(getProject)
-      .openTextEditor(
-        new OpenFileDescriptor(
-          getProject,
-          file,
-          lineNumber - 1,
-          charNumber - 1
-        ),
-        true
-      )
+    val editor = fileEditorManager.getSelectedTextEditor
+
+    if editor != null && file != null then
+      val virtualFile =
+        FileDocumentManager.getInstance().getFile(editor.getDocument)
+      if virtualFile != null && file.getName == virtualFile.getName then
+        Some(editor)
+      else None
+    else None
+  }
+
+  def selectedEditor: Editor = {
+    val fileEditorManager = FileEditorManager
+      .getInstance(getProject)
+    val editor = fileEditorManager.getSelectedTextEditor
+
+    editor
   }
 
   def highlightErrorForFile(
       state: RiddlIdeaSettings.State,
       fileName: String
-  ): Unit = state.getRunOutput
-    .flatMap(
-      _.split("\n\n")
-        .filter(outputBlock => outputBlock.contains(fileName))
-        .map(_.split("\n").toSeq)
-    )
-    .foreach { outputBlock =>
-      riddlErrorRegex.findFirstMatchIn(outputBlock.head) match
-        case Some(resultMatch: Regex.Match) =>
-          val editor = editorForError(
-            state.getWindowNum,
-            resultMatch.group(2),
-            resultMatch.group(3).toInt,
-            resultMatch.group(4).toInt
-          )
+  ): Unit = state.getRunOutput match {
+    case empty if empty.isEmpty =>
+      state
+        .getHighlightersForFile(fileName)
+        .foreach(hlInfo =>
+          EditorFactory
+            .getInstance()
+            .getAllEditors
+            .head
+            .getMarkupModel
+            .getAllHighlighters
+            .find { highlighter =>
+              highlighter.getStartOffset == hlInfo.startOffset &&
+              highlighter.getEndOffset == hlInfo.endOffset &&
+              highlighter.getLayer == hlInfo.layer
+            }
+            .foreach(hl =>
+              hl.setErrorStripeMarkColor(null)
+              hl.setErrorStripeTooltip(null)
+              selectedEditor.getMarkupModel.removeHighlighter(hl)
+            )
+        )
+      state.clearHighlightersForFile(fileName)
+    case output =>
+      output
+        .flatMap(
+          _.split("\n\n")
+            .filter(outputBlock => outputBlock.contains(fileName))
+            .map(_.split("\n").toSeq)
+        )
+        .filter(_.nonEmpty)
+        .foreach { outputBlock =>
+          riddlErrorRegex.findFirstMatchIn(outputBlock.head) match
+            case Some(resultMatch: Regex.Match) =>
+              val editor = editorForError(
+                state.getWindowNum,
+                resultMatch.group(2)
+              )
 
-          editor.getMarkupModel.removeAllHighlighters()
-          Thread.sleep(500)
-
-          if resultMatch.group(1) == "[ERROR]" then
-            val highlighter = editor.getMarkupModel.addLineHighlighter(
-              resultMatch.group(3).toInt,
-              HighlighterLayer.ERROR,
-              new TextAttributes()
-            )
-            highlighter.setErrorStripeMarkColor(
-              UIUtil.getErrorForeground
-            )
-            highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
-          else if resultMatch.group(1) == "[WARN]" then
-            val highlighter = editor.getMarkupModel.addLineHighlighter(
-              resultMatch.group(3).toInt,
-              HighlighterLayer.WARNING,
-              new TextAttributes()
-            )
-            highlighter.setErrorStripeMarkColor(
-              UIUtil.getToolTipForeground
-            )
-            highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
-        case _ => ()
-    }
+              if editor.isDefined then
+                val markupModel = editor.get.getMarkupModel
+                if resultMatch.group(1) == "[error]" then
+                  val highlighter = markupModel.addLineHighlighter(
+                    resultMatch.group(3).toInt,
+                    HighlighterLayer.ERROR,
+                    new TextAttributes()
+                  )
+                  highlighter.setErrorStripeMarkColor(
+                    UIUtil.getErrorForeground
+                  )
+                  highlighter.setErrorStripeTooltip(
+                    outputBlock.tail.mkString("\n")
+                  )
+                  println((fileName, highlighter))
+                  state.saveHighlighterForFile(fileName, highlighter)
+                else if resultMatch.group(1) == "[warn]" then
+                  val highlighter = markupModel.addLineHighlighter(
+                    resultMatch.group(3).toInt,
+                    HighlighterLayer.WARNING,
+                    new TextAttributes()
+                  )
+                  highlighter.setErrorStripeMarkColor(
+                    UIUtil.getToolTipForeground
+                  )
+                  highlighter.setErrorStripeTooltip(
+                    outputBlock.tail.mkString("\n")
+                  )
+                  state.saveHighlighterForFile(fileName, highlighter)
+            case _ =>
+              state
+                .getHighlightersForFile(fileName)
+                .foreach(hlInfo =>
+                  EditorFactory
+                    .getInstance()
+                    .getAllEditors
+                    .head
+                    .getMarkupModel
+                    .getAllHighlighters
+                    .find { highlighter =>
+                      highlighter.getStartOffset == hlInfo.startOffset &&
+                      highlighter.getEndOffset == hlInfo.endOffset &&
+                      highlighter.getLayer == hlInfo.layer
+                    }
+                    .foreach(hl =>
+                      hl.setErrorStripeMarkColor(null)
+                      hl.setErrorStripeTooltip(null)
+                      selectedEditor.getMarkupModel.removeHighlighter(hl)
+                    )
+                )
+              state.clearHighlightersForFile(fileName)
+        }
+  }
 
   def readFromOptionsFromConf(path: String): Seq[String] =
     ConfigSource.file(path).load[ConfigObject] match {
@@ -153,4 +215,4 @@ package object utils {
     }
 }
 
-def riddlErrorRegex = """(\[\w+\]) ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r
+def riddlErrorRegex = """(\[\w+\]) ([\w\/_-]+\.riddl)\((\d+):(\d+)\)\:""".r

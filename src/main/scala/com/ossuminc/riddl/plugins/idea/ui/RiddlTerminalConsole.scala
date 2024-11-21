@@ -52,17 +52,15 @@ class RiddlTerminalConsole(
       ): Unit = {
         val editor = editorForError(
           numWindow,
-          fileName,
-          lineNumber,
-          charPosition
+          fileName
         )
-        if editor != null then {
+        if editor.isDefined then {
           val logicalPosition =
             new LogicalPosition(
               lineNumber - 1,
               charPosition - 1
             )
-          editor.getCaretModel.moveToLogicalPosition(logicalPosition)
+          editor.get.getCaretModel.moveToLogicalPosition(logicalPosition)
         }
       }
     }

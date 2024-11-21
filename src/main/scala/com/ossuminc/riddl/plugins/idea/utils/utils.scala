@@ -158,7 +158,7 @@ package object utils {
       case Left(m)        => m.group(3).toInt - 1
       case Right((at, _)) => at.col
     }
-    val editor = matchOrAtLine match {
+    val editor: Editor = matchOrAtLine match {
       case Left(_) =>
         editorForError(
           state.getWindowNum,
@@ -169,17 +169,22 @@ package object utils {
       case Right((_, _)) =>
         val file: VirtualFile =
           LocalFileSystem.getInstance.findFileByPath(fileNameOrPath)
-        FileEditorManager
-          .getInstance(getProject)
-          .openTextEditor(
-            new OpenFileDescriptor(
-              getProject,
-              file,
-              lineNumber - 1,
-              col - 1
-            ),
-            true
-          )
+        if file != null then
+          FileEditorManager
+            .getInstance(getProject)
+            .openTextEditor(
+              new OpenFileDescriptor(
+                getProject,
+                file,
+                lineNumber - 1,
+                col - 1
+              ),
+              true
+            )
+        else
+          FileEditorManager
+            .getInstance(getProject)
+            .getSelectedTextEditor()
     }
     val markupModel: MarkupModel = editor.getMarkupModel
     state.setMarkupModel(markupModel)
@@ -190,7 +195,7 @@ package object utils {
       case Left(outBlock) => outBlock.tail.mkString("\n")
       case Right(msg)     => msg
     }
-    println(msg)
+
     if severity == "[error]"
     then
       val highlighter = markupModel.addLineHighlighter(

@@ -4,18 +4,15 @@ import com.ossuminc.riddl.commands.Commands
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.passes.PassesResult
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.plugins.idea.utils
 import com.ossuminc.riddl.utils.{
   Await,
   Logger,
   Logging,
   PlatformContext,
   StringLogger,
-  URL,
   pc
 }
 
-import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 
@@ -36,6 +33,7 @@ object ParsingUtils {
   import ManagerBasedGetterUtils.*
   import ToolWindowUtils.*
 
+  //TODO: switch to using runCommandNames
   def runCommandForWindow(
       numWindow: Int,
       confFile: Option[String]
@@ -69,30 +67,25 @@ object ParsingUtils {
   }
 
   def runCommandForEditor(
-      numWindow: Int
+      numWindow: Int,
+      path: String
   ): Unit = {
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
     val rpi: RiddlParserInput = Await.result(
       RiddlParserInput.fromPath(path),
       FiniteDuration(5, TimeUnit.SECONDS)
     )
-    val tlp: TopLevelParser = TopLevelParser(rpi, false)
+
     pc.withLogger(StringLogger()) { _ =>
       pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
-        tlp.parseRootWithURLs match {
-          case Right((_, paths)) =>
-            windowState.setParsedPaths(
-              paths.map(url => Paths.get(url.path))
-            )
-          case Left((msgs, paths)) =>
+        TopLevelParser.parseNebulaContents(rpi, false) match {
+          case Right(_) => ()
+          case Left(msgs) =>
             windowState.setMessages(msgs)
-            windowState.setParsedPaths(
-              paths.map(url => Paths.get(url.path))
-            )
         }
-
-        updateToolWindowPanes(numWindow, fromReload = true)
       }
     }
+
+    highlightErrorForFile(windowState, path)
   }
 }

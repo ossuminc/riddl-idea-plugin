@@ -12,10 +12,7 @@ import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.*
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
 
-import java.io.{File, PrintWriter}
 import java.nio.file.Path
-import scala.io.Source
-import scala.util.Using
 
 class RiddlDocumentListener extends DocumentListener {
   override def documentChanged(event: DocumentEvent): Unit = {
@@ -54,14 +51,11 @@ class RiddlDocumentListener extends DocumentListener {
               }
               .foreach { state =>
                 state.getMessages
-                  .filter(msg =>
-                    editorFilePath.endsWith(msg.loc.source.origin)
-                  )
+                  .filter(msg => editorFilePath.endsWith(msg.loc.source.origin))
                   .foreach { msg =>
                     runCommandForEditor(
                       state.getWindowNum,
-                      editorFilePath,
-                      true
+                      editor.getVirtualFile.getPath
                     )
                     highlightForErrorMessage(
                       state,

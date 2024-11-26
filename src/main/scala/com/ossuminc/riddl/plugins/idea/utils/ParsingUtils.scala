@@ -33,7 +33,7 @@ object ParsingUtils {
   import ManagerBasedGetterUtils.*
   import ToolWindowUtils.*
 
-  //TODO: switch to using runCommandNames
+  // TODO: switch to using runCommandNamed
   def runCommandForWindow(
       numWindow: Int,
       confFile: Option[String]
@@ -78,7 +78,7 @@ object ParsingUtils {
 
     pc.withLogger(StringLogger()) { _ =>
       pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
-        TopLevelParser.parseNebulaContents(rpi, false) match {
+        TopLevelParser.parseNebula(rpi, false) match {
           case Right(_) => ()
           case Left(msgs) =>
             windowState.setMessages(msgs)

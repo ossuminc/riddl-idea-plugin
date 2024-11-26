@@ -2,15 +2,10 @@ package com.ossuminc.riddl.plugins.idea.files
 
 import com.intellij.openapi.editor.event.{DocumentEvent, DocumentListener}
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.util.TextRange
-import com.ossuminc.riddl.plugins.idea.files.utils.{
-  getWholeWordsSubstrings,
-  highlightKeywordsOnChange
-}
+import com.ossuminc.riddl.plugins.idea.files.utils.highlightKeywords
 import com.ossuminc.riddl.plugins.idea.utils.highlightForErrorMessage
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.*
-import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
 
 import java.nio.file.Path
 
@@ -22,27 +17,11 @@ class RiddlDocumentListener extends DocumentListener {
     if editors.nonEmpty then
       editors.find(_.getDocument == doc) match
         case Some(editor) if doc.getText.nonEmpty =>
-          val newText = doc.getText(
-            new TextRange(event.getOffset, event.getOffset + event.getNewLength)
-          )
-          val wholeWords: Seq[(String, Int)] = getWholeWordsSubstrings(
-            doc.getText,
-            newText,
-            event.getOffset
-          )
-          highlightKeywordsOnChange(
-            wholeWords
-              .zip(
-                RiddlTokenizer
-                  .tokenize(wholeWords.map(_._1).mkString(" "))
-                  .filter(!_._1.isBlank)
-              )
-              .map((wwTup, tokTup) => (wwTup._1, wwTup._2, tokTup._3)),
-            editor
-          )
-
           if editor.getVirtualFile != null then
             val editorFilePath = editor.getVirtualFile.getPath
+
+            highlightKeywords(editor.getDocument.getText, editor)
+
             getRiddlIdeaStates.allStates.values.toSeq
               .filter { state =>
                 state.getTopLevelPath.exists(path =>

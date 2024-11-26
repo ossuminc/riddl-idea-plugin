@@ -10,7 +10,7 @@ import com.ossuminc.riddl.plugins.idea.files.utils.{
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
-import com.ossuminc.riddl.plugins.idea.utils.highlightErrorForFile
+import com.ossuminc.riddl.plugins.idea.utils.highlightErrorsForFile
 
 class RiddlDocumentListener extends DocumentListener {
   override def documentChanged(event: DocumentEvent): Unit = {
@@ -37,7 +37,7 @@ class RiddlDocumentListener extends DocumentListener {
       )
     editors.foreach(editor =>
       if editor.getVirtualFile != null then
-        highlightErrorForFile(
+        highlightErrorsForFile(
           getRiddlIdeaStates.allStates
             .find(state =>
               editor.getVirtualFile.getPath.contains(state._2.getConfPath)

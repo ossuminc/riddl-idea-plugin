@@ -19,7 +19,6 @@ import com.ossuminc.riddl.plugins.idea.ui.{
   RiddlToolWindowContent
 }
 import ParsingUtils.*
-import CreationUtils.*
 import com.intellij.ui.components.JBPanel
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -34,6 +33,7 @@ import javax.swing.border.EmptyBorder
 
 object ToolWindowUtils {
   import ManagerBasedGetterUtils.*
+  import CreationUtils.createGBCs
 
   implicit class ToolWindowExt(toolWindow: ToolWindow) {
     def createAndAddContentToTW(
@@ -116,8 +116,7 @@ object ToolWindowUtils {
     def putUpdateRunPaneAsClientProperty(): Unit =
       contentPanel.putClientProperty(
         genUpdateRunPaneName(numWindow),
-        (fromReload: Boolean, fromLogger: Boolean) =>
-          updateRunPane(fromReload, fromLogger)
+        (fromReload: Boolean) => updateRunPane(fromReload)
       )
 
     if contentPanel.getClientProperty(genUpdateRunPaneName) != null
@@ -137,22 +136,18 @@ object ToolWindowUtils {
       )
 
     def updateRunPane(
-        fromReload: Boolean = false,
-        fromLogger: Boolean = false
+        fromReload: Boolean = false
     ): Unit = {
-      def writeToConsole(s: String): Unit = {
-        console.clear()
+      def writeToConsole(s: String, clear: Boolean = true): Unit = {
+        if clear then console.clear()
         setConsoleProps(console)
-        console.print(s, ConsoleViewContentType.SYSTEM_OUTPUT)
+        console.print(s + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
       }
 
-      def writeStateOutputToConsole(): Unit = writeToConsole(
-        state.getRunOutput.mkString("\n")
-      )
-
-      if fromLogger then
-        writeStateOutputToConsole()
-        return
+      def writeStateOutputToConsole(): Unit = {
+        console.clear()
+        console.printMessages()
+      }
 
       val statePath: String =
         if state != null then state.getConfPath.getOrElse("")
@@ -163,27 +158,28 @@ object ToolWindowUtils {
       if tabContent.getTabName.isBlank then
         tabContent.setDisplayName(genWindowName(numWindow))
 
-      if state.getCommand == "from" then
+      if state != null && state.getCommand == "from" then
         if statePath == null || statePath.isBlank then
           writeToConsole(notConfiguredMessage)
         else if state.getFromOption.isEmpty then
           writeToConsole("From command chosen, but no option has been chosen")
-        else (if state.getRunOutput.nonEmpty
-              then writeStateOutputToConsole()
-              else if state.getCommand == "from" then
-                if confFile.exists() && confFile.isFile then
-                  runCommandForWindow(numWindow, Some(statePath))
-                else
-                  writeToConsole(
-                    s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
-                  )
-              else if fromReload then runCommandForWindow(numWindow))
+        else if confFile.exists() && confFile.isFile then
+          if state.getMessages.nonEmpty
+          then writeStateOutputToConsole()
+          else runCommandForWindow(numWindow, Some(statePath))
+        else
+          writeToConsole(
+            s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
+          )
+      else if state != null then
+        if state.getRunOutput.nonEmpty then
+          console.clear()
+          state.getRunOutput.foreach(msg => writeToConsole(msg, false))
+        else if fromReload then runCommandForWindow(numWindow)
 
-      val fileEditorManager = FileEditorManager
-        .getInstance(project)
-
+      val fileEditorManager = FileEditorManager.getInstance(project)
       fileEditorManager.getSelectedFiles
-        .foreach(file => highlightErrorForFile(state, file.getName))
+        .foreach(file => highlightErrorsForFile(state, file.getName))
     }
 
     // enables auto-compiling
@@ -197,7 +193,6 @@ object ToolWindowUtils {
                 _.isFromSave
               ) && state.getAutoCompile && state.getCommand == "from"
             then {
-              state.clearRunOutput()
               runCommandForWindow(numWindow, state.getConfPath)
             }
           }
@@ -228,14 +223,12 @@ object ToolWindowUtils {
 
   def updateToolWindowRunPane(
       numWindow: Int,
-      fromReload: Boolean = false,
-      fromLogger: Boolean = false
+      fromReload: Boolean = false
   ): Unit =
     getToolWindowContent(numWindow).getComponent
       .getClientProperty(genUpdateRunPaneName(numWindow))
-      .asInstanceOf[(fromReload: Boolean, fromLogger: Boolean) => Unit](
-        fromReload,
-        fromLogger
+      .asInstanceOf[(fromReload: Boolean) => Unit](
+        fromReload
       )
 
   def createNewToolWindow(): Unit =

@@ -1,23 +1,13 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.filePrediction.features.history.FileHistoryManagerWrapper.EditorManagerListener
-import com.intellij.internal.sandbox.Highlighter
-import com.intellij.openapi.components.{
-  PersistentStateComponent,
-  Storage,
-  State as StateAnnotation
-}
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.markup.{
-  HighlighterTargetArea,
-  MarkupModel,
-  RangeHighlighter
-}
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.ossuminc.riddl.language.Messages.Message
+import com.ossuminc.riddl.plugins.idea.readFromOptionsFromConf
 import com.ossuminc.riddl.utils.CommonOptions
-import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
-import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getProject
-import scala.collection.mutable._
+
+import scala.collection.mutable
+import scala.collection.mutable.*
 
 @StateAnnotation(
   name = "RiddlIdeaSettings",
@@ -93,23 +83,22 @@ object RiddlIdeaSettings {
       groupMessagesByKind = true
     )
     private var fromOption: Option[String] = None
-    private var fromOptionsSeq: scala.collection.mutable.Seq[String] =
+    private var fromOptionsSeq: mutable.Seq[String] =
       if riddlConfPath.isDefined then
-        scala.collection.mutable.Seq
+        mutable.Seq
           .from(riddlConfPath.flatMap(readFromOptionsFromConf).toSeq)
-      else scala.collection.mutable.Seq()
-    private val highlightersPerFile
-        : scala.collection.mutable.Map[String, scala.collection.mutable.Seq[
-          HighlighterInfo
-        ]] = scala.collection.mutable.Map.empty
+      else mutable.Seq()
+    private val highlightersPerFile: mutable.Map[String, mutable.Seq[
+      HighlighterInfo
+    ]] = mutable.Map.empty
+
+    private var messagesForRunWindow: mutable.Seq[Message] = mutable.Seq()
 
     def getWindowNum: Int = windowNum
 
     def setConfPath(newPath: Option[String]): Unit = riddlConfPath = newPath
     def getConfPath: Option[String] = riddlConfPath
 
-    def prependRunOutput(newOutput: String): Unit = riddlRunOutput =
-      newOutput +: riddlRunOutput
     def appendRunOutput(newOutput: String): Unit = riddlRunOutput :+= newOutput
     def clearRunOutput(): Unit = riddlRunOutput = scala.collection.mutable.Seq()
     def getRunOutput: scala.collection.mutable.Seq[String] = riddlRunOutput
@@ -131,22 +120,26 @@ object RiddlIdeaSettings {
     )
     def getFromOption: Option[String] = fromOption
 
-    def setFromOptionsSeq(newSeq: scala.collection.mutable.Seq[String]): Unit = fromOptionsSeq = newSeq
+    def setFromOptionsSeq(newSeq: scala.collection.mutable.Seq[String]): Unit =
+      fromOptionsSeq = newSeq
     def getFromOptionsSeq: scala.collection.mutable.Seq[String] = fromOptionsSeq
+
+    def getMessages: mutable.Seq[Message] = messagesForRunWindow
+    def setMessages(newMsgs: mutable.Seq[Message]): Unit = messagesForRunWindow = newMsgs
 
     def saveHighlighterForFile(
         fileName: String,
         highlighter: RangeHighlighter
     ): Unit = highlightersPerFile += (
-        fileName -> (getHighlightersForFile(
-          fileName
-        ) :+ HighlighterInfo.fromRangeHighlighter(highlighter))
-      )
+      fileName -> (getHighlightersForFile(
+        fileName
+      ) :+ HighlighterInfo.fromRangeHighlighter(highlighter))
+    )
 
     def getHighlightersForFile(
         fileName: String
-    ): Seq[HighlighterInfo] =
-      highlightersPerFile.getOrElse(fileName, Seq())
+    ): mutable.Seq[HighlighterInfo] =
+      highlightersPerFile.getOrElse(fileName, mutable.Seq())
 
     def clearHighlightersForFile(fileName: String): Unit = {
       println(highlightersPerFile)
@@ -155,6 +148,6 @@ object RiddlIdeaSettings {
     }
   }
 
-  private val commands = Seq("from", "about", "info")
-  def allCommands: Seq[String] = commands
+  private val commands = mutable.Seq("from", "about", "info")
+  def allCommands: mutable.Seq[String] = commands
 }

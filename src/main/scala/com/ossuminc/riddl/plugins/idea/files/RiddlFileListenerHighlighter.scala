@@ -12,7 +12,7 @@ import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getProject,
   getRiddlIdeaStates
 }
-import com.ossuminc.riddl.plugins.idea.utils.highlightErrorForFile
+import com.ossuminc.riddl.plugins.idea.utils.highlightErrorsForFile
 
 class RiddlFileListenerHighlighter extends FileEditorManagerListener {
   override def fileOpened(
@@ -40,7 +40,7 @@ class RiddlFileListenerHighlighter extends FileEditorManagerListener {
           case textEditor: TextEditor =>
             utils.highlightKeywords(doc.getText, textEditor.getEditor)
             getRiddlIdeaStates.allStates
-              .foreach((_, state) => highlightErrorForFile(state, file.getName))
+              .foreach((_, state) => highlightErrorsForFile(state, file.getName))
         }
       }
     }

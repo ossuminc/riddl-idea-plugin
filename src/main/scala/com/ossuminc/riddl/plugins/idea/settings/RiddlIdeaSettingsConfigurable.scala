@@ -83,7 +83,6 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
     else ConfigurationException("max-include-wait must be an integer")
 
     windowState.setAutoCompile(component.getAutoCompileValue)
-    windowState.clearRunOutput()
     updateToolWindowRunPane(numWindow, fromReload = true)
   }
 }

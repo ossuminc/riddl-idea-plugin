@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
 import com.intellij.util.ui.FormBuilder
-import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
+import com.ossuminc.riddl.plugins.idea.readFromOptionsFromConf
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
   CommonOption,
@@ -170,7 +170,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         commandItem.addActionListener((_: ActionEvent) => {
           commandPicker.setText(command)
           pickedCommandModified = true
-          formBuilderPanel.removeAll()
+          riddlSettingsPanel.removeAll()
           createComponent()
           riddlSettingsPanel.repaint()
         })
@@ -217,7 +217,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       if getConfFieldText.endsWith(".conf") then {
         state.setFromOptionsSeq(
           scala.collection.mutable.Seq.from(
-            readFromOptionsFromConf(getConfFieldText).diff("common")
+            readFromOptionsFromConf(getConfFieldText).diff(Seq("common"))
           )
         )
 

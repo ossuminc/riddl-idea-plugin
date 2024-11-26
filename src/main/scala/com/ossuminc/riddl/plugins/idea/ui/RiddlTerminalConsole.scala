@@ -6,40 +6,31 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
 import com.intellij.ui.awt.RelativePoint
-import com.ossuminc.riddl.plugins.idea.riddlErrorRegex
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
 import com.ossuminc.riddl.plugins.idea.utils.editorForError
-
-import scala.util.matching.Regex
 
 class RiddlTerminalConsole(
     numWindow: Int,
     project: Project
 ) extends ConsoleViewImpl(project, true) {
-  override def print(
-      text: String,
-      contentType: ConsoleViewContentType
-  ): Unit = {
-    text
-      .split("\n")
-      .toList
-      .foreach { line =>
-        riddlErrorRegex.findFirstMatchIn(line) match
-          case Some(resultMatch: Regex.Match) =>
-            linkToEditor(
-              line,
-              resultMatch.group(2),
-              numWindow,
-              resultMatch.group(3).toInt,
-              resultMatch.group(4).toInt
-            )
-          case None =>
-            super.print(line + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
+  def printMessages(): Unit = {
+    getRiddlIdeaState(numWindow).getMessages
+      .foreach { msg =>
+        linkToEditor(
+          msg.loc.source.origin,
+          numWindow,
+          msg.loc.line,
+          msg.loc.offset
+        )
+        super.print(
+          msg.format.split(msg.loc.source.origin).last + "\n\n",
+          ConsoleViewContentType.NORMAL_OUTPUT
+        )
       }
     ()
   }
 
   private def linkToEditor(
-      textLine: String,
       fileName: String,
       numWindow: Int,
       lineNumber: Int,
@@ -55,15 +46,16 @@ class RiddlTerminalConsole(
           fileName
         )
         if editor.isDefined then {
+          println("defined")
           val logicalPosition =
             new LogicalPosition(
-              lineNumber - 1,
-              charPosition - 1
+              lineNumber,
+              charPosition
             )
           editor.get.getCaretModel.moveToLogicalPosition(logicalPosition)
         }
       }
     }
-    this.printHyperlink(textLine + "\n", hyperlinkInfo)
+    this.printHyperlink(fileName, hyperlinkInfo)
   }
 }

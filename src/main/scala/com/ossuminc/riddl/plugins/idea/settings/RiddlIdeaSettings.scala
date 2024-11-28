@@ -1,10 +1,11 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.components.{
-  PersistentStateComponent,
-  Storage,
-  State as StateAnnotation
-}
+import com.intellij.openapi.editor.markup.{MarkupModel, RangeHighlighter}
+import com.ossuminc.riddl.language.Messages.Message
+
+import java.nio.file.Path
+import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
+import com.intellij.util.messages.MessageBusConnection
 import com.ossuminc.riddl.utils.CommonOptions
 import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
 
@@ -59,6 +60,7 @@ object RiddlIdeaSettings {
     private var riddlConfPath: Option[String] = None
     private var riddlRunOutput: Seq[String] = Seq()
     private var autoCompileOnSave: Boolean = true
+    private var vfsConnection: Option[MessageBusConnection] = None
     private var command: String = commands.head
     private var commonOptions: CommonOptions = CommonOptions.empty.copy(
       noANSIMessages = true,
@@ -84,6 +86,9 @@ object RiddlIdeaSettings {
     def setAutoCompile(value: Boolean): Unit = autoCompileOnSave = value
     def getAutoCompile: Boolean = autoCompileOnSave
 
+    def setVFSConnection(connection: MessageBusConnection): Unit = vfsConnection = Some(connection)
+    def disconnectVFSListener: Unit = vfsConnection.foreach(_.disconnect())
+    
     def setCommand(newCommand: String): Unit =
       if commands.contains(newCommand) then command = newCommand
     def getCommand: String = command

@@ -187,8 +187,11 @@ object ToolWindowUtils {
     }
 
     // enables auto-compiling
-    project.getMessageBus
+    val connection = project.getMessageBus
       .connect()
+    state.setVFSConnection(connection)
+    
+    connection
       .subscribe(
         VirtualFileManager.VFS_CHANGES,
         new BulkFileListener {
@@ -197,8 +200,10 @@ object ToolWindowUtils {
                 _.isFromSave
               ) && state.getAutoCompile && state.getCommand == "from"
             then {
+              val filePath = events.asScala.head.getPath
               state.clearRunOutput()
-              runCommandForWindow(numWindow, state.getConfPath)
+              runCommandForWindow(numWindow)
+              highlightErrorForFile(state, filePath)
             }
           }
         }
@@ -251,9 +256,9 @@ object ToolWindowUtils {
       )
 
   private def genWindowName(windowNumber: Int): String = {
-    val windowNumInName =
-      if windowNumber > 1 then s" - (Window #$windowNumber)" else ""
-    s"RIDDL ${getRiddlIdeaState(windowNumber).getCommand}$windowNumInName"
+    if windowNumber > 1 then
+      s"RIDDL ${getRiddlIdeaState(windowNumber).getCommand} - (Window #$windowNumber)"
+    else s"RIDDL ${getRiddlIdeaState(1).getCommand}"
   }
 
   private def genUpdateRunPaneName(numWindow: Int) =

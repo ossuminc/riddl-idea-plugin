@@ -31,8 +31,12 @@
     </actions>
 
     <projectListeners>
-        <listener class="com.ossuminc.riddl.plugins.idea.files.RiddlFileListenerHighlighter"
+        <listener class="com.ossuminc.riddl.plugins.idea.files.RiddlFileEditorListener"
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+        <listener class="com.ossuminc.riddl.plugins.idea.files.RiddlDocumentListener"
+                  topic="com.intellij.openapi.editor.event.DocumentListener"/>
+        <listener class="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowManagerListener"
+                  topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     </projectListeners>
 
 </idea-plugin>

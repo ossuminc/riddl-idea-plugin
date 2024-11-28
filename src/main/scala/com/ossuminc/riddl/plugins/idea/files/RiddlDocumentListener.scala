@@ -14,36 +14,31 @@ class RiddlDocumentListener extends DocumentListener {
     val doc = event.getDocument
 
     val editors = EditorFactory.getInstance().getEditors(doc)
-    if editors.nonEmpty then
-      editors.find(_.getDocument == doc) match
-        case Some(editor) if doc.getText.nonEmpty =>
-          if editor.getVirtualFile != null then
-            val editorFilePath = editor.getVirtualFile.getPath
+    if editors.nonEmpty && doc.getText.nonEmpty then
+      editors.map { editor =>
+        if editor.getVirtualFile != null then
+          val editorFilePath = editor.getVirtualFile.getPath
 
-            highlightKeywords(editor.getDocument.getText, editor)
+          highlightKeywords(editor.getDocument.getText, editor)
 
-            getRiddlIdeaStates.allStates.values.toSeq
-              .filter { state =>
-                state.getTopLevelPath.exists(path =>
-                  editorFilePath.startsWith(
-                    Path.of(path).getParent.toString
-                  )
+          getRiddlIdeaStates.allStates.values.toSeq
+            .filter { state =>
+              state.getTopLevelPath.exists(path =>
+                editorFilePath.startsWith(
+                  Path.of(path).getParent.toString
                 )
-              }
-              .foreach { state =>
-                runCommandForEditor(state.getWindowNum)
-                Thread.sleep(350)
-                state.getMessagesForEditor
-                  .filter(msg => editorFilePath.endsWith(msg.loc.source.origin))
-                  .foreach { msg =>
-                    highlightForErrorMessage(
-                      state,
-                      Seq(),
-                      Right(msg)
-                    )
-                  }
-              }
+              )
+            }
+            .foreach { state =>
+              runCommandForEditor(state.getWindowNum)
+              Thread.sleep(350)
+              state.getMessagesForEditor
+                .filter(msg => editorFilePath.endsWith(msg.loc.source.origin))
+                .foreach { msg =>
+                  highlightForErrorMessage(state, msg)
+                }
 
-        case _ => ()
+            }
+      }
   }
 }

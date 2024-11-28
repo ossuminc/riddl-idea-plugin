@@ -26,7 +26,7 @@ import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
 import com.ossuminc.riddl.plugins.idea.utils.{
   displayNotification,
-  highlightErrorForFile
+  highlightForErrorMessage
 }
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaStates
@@ -153,9 +153,10 @@ object utils {
                 then acc :+ tup._2
                 else acc
               }
-              .foreach { state =>
-                highlightErrorForFile(state, file.getName)
-              }
+              .foreach(state =>
+                state.getMessagesForEditor
+                  .foreach(msg => highlightForErrorMessage(state, msg))
+              )
         }
       }
     }

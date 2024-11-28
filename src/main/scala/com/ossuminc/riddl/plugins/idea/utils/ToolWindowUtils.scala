@@ -169,15 +169,8 @@ object ToolWindowUtils {
         else if state.getFromOption.isEmpty then
           writeToConsole("From command chosen, but no option has been chosen")
         else (if state.getRunOutput.nonEmpty
-              then {
-                writeStateOutputToConsole()
-                FileEditorManager
-                  .getInstance(project)
-                  .getSelectedFiles
-                  .toSeq
-                  .foreach(file => highlightErrorForFile(state, file.getName))
-
-              } else if state.getCommand == "from" then
+              then writeStateOutputToConsole()
+              else if state.getCommand == "from" then
                 if confFile.exists() && confFile.isFile then
                   runCommandForWindow(numWindow, Some(statePath))
                 else
@@ -187,11 +180,14 @@ object ToolWindowUtils {
               else if fromReload then
                 runCommandForWindow(numWindow, state.getConfPath))
 
-      val fileEditorManager = FileEditorManager
+      val editorManager = FileEditorManager
         .getInstance(project)
 
-      fileEditorManager.getSelectedFiles
-        .foreach(file => highlightErrorForFile(state, file.getName))
+      editorManager.getSelectedFiles.foreach(file =>
+        state.getMessagesForEditor
+          .filter(_.loc.source.origin == file.getName)
+          .foreach(msg => highlightForErrorMessage(state, msg))
+      )
     }
 
     // enables auto-compiling
@@ -204,10 +200,12 @@ object ToolWindowUtils {
             if events.asScala.toSeq.exists(
                 _.isFromSave
               ) && state.getAutoCompile && state.getCommand == "from"
-            then {
+            then
               state.clearRunOutput()
               runCommandForWindow(numWindow, state.getConfPath)
-            }
+              updateToolWindowRunPane(numWindow, fromReload = true)
+              state.getMessagesForEditor
+                .foreach(msg => highlightForErrorMessage(state, msg))
           }
         }
       )

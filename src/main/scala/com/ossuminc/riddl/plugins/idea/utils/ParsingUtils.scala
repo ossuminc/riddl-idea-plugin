@@ -14,8 +14,7 @@ import com.ossuminc.riddl.utils.{
   pc
 }
 
-import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
+aimport java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 
 case class RiddlIdeaPluginLogger(
@@ -33,7 +32,6 @@ case class RiddlIdeaPluginLogger(
 
 object ParsingUtils {
   import ManagerBasedGetterUtils.*
-  import ToolWindowUtils.*
 
   def runCommandForWindow(
       numWindow: Int,
@@ -61,18 +59,15 @@ object ParsingUtils {
               windowState.prependRunOutput("The following errors were found:\n")
             case _ => ()
           }
-
-          updateToolWindowRunPane(numWindow, fromReload = true)
         }
       }
   }
 
   def runCommandForEditor(
-      numWindow: Int
+      numWindow: Int,
   ): Unit = {
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
     windowState.getTopLevelPath.foreach { path =>
-      println(path)
       val rpi: RiddlParserInput = Await.result(
         RiddlParserInput.fromPath(path),
         FiniteDuration(5, TimeUnit.SECONDS)
@@ -84,13 +79,11 @@ object ParsingUtils {
             case Right((root, _)) =>
               val passesResult = Pass.runStandardPasses(root)
               if passesResult.messages.hasErrors then
-                println("passesresult")
                 windowState.setMessagesForEditor(
                   passesResult.messages.justErrors
                 )
             case Left((msgs, _)) =>
               windowState.setMessagesForEditor(msgs)
-              println()
           }
         }
       }

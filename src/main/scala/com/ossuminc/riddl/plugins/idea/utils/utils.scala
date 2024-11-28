@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.util.ui.UIUtil
 import com.ossuminc.riddl.language.Messages
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.updateToolWindowRunPane
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getProject,
   getRiddlIdeaState
@@ -25,7 +24,6 @@ import pureconfig.ConfigSource
 
 import scala.jdk.CollectionConverters.*
 import java.awt.GridBagConstraints
-import java.nio.file.Path
 import javax.swing.Icon
 import scala.util.matching.Regex
 
@@ -104,89 +102,25 @@ package object utils {
       )
   }
 
-  def highlightErrorForFile(
-      state: RiddlIdeaSettings.State,
-      fileName: String
-  ): Unit = state.getRunOutput
-    .flatMap(
-      _.split("\n\n")
-        .filter(outputBlock => outputBlock.contains(fileName))
-        .map(_.split("\n").toSeq)
-    )
-    .foreach(block =>
-      riddlErrorRegex.findFirstMatchIn(block.head) match
-        case Some(resultMatch: Regex.Match) =>
-          highlightForErrorMessage(state, block, Left(resultMatch))
-        case _ => ()
-    )
-
   def highlightForErrorMessage(
       state: RiddlIdeaSettings.State,
-      outputBlock: Seq[String],
-      matchOrAtLine: Either[Regex.Match, Messages.Message]
+      message: Messages.Message
   ): Unit = {
-    val severity = matchOrAtLine match {
-      case Left(m) => m.group(1)
-      case Right(m) =>
-        m.kind.severity match {
-          case s if s < 4 => "[warn]"
-          case _          => "[error]"
-        }
-    }
-    val fileNameOrPath: String = matchOrAtLine match {
-      case Left(m) => m.group(2)
-      case Right(msg) =>
-        if state.getTopLevelPath.isEmpty then ""
-        else
-          Path
-            .of(state.getTopLevelPath.get)
-            .getParent
-            .toString + "/" + msg.loc.source.origin
-    }
-    if fileNameOrPath == "" then
-      displayNotification(
-        ".riddl file for editor parsing was not set"
-      )
-      updateToolWindowRunPane(state.getWindowNum)
-      return
+    val severity = message.kind.severity
 
-    val lineNumber = matchOrAtLine match {
-      case Left(m)    => m.group(3).toInt - 1
-      case Right(msg) => msg.loc.line
-    }
-    val col = matchOrAtLine match {
-      case Left(m)    => m.group(3).toInt - 1
-      case Right(msg) => msg.loc.col
-    }
-    val editor: Editor = matchOrAtLine match {
-      case Left(_) =>
-        editorForError(
-          state.getWindowNum,
-          fileNameOrPath,
-          lineNumber,
-          col
-        )
-      case Right(_) =>
-        FileEditorManager
-          .getInstance(getProject)
-          .getSelectedTextEditor()
-    }
+    val lineNumber = message.loc.line
+    val editor: Editor = FileEditorManager
+      .getInstance(getProject)
+      .getSelectedTextEditor()
+
     val markupModel: MarkupModel = editor.getMarkupModel
     state.setMarkupModel(markupModel)
 
     Thread.sleep(500)
 
-    val msg = outputBlock match {
-      case outBlock if outBlock.nonEmpty => outBlock.tail.mkString("\n")
-      case Seq() =>
-        matchOrAtLine match {
-          case Right(msg) => msg.format
-          case Left(_)    => ""
-        }
-    }
+    val formattedMessage = message.format
 
-    if severity == "[error]"
-    then
+    if severity > 4 then
       val highlighter = markupModel.addLineHighlighter(
         lineNumber,
         HighlighterLayer.ERROR,
@@ -195,10 +129,9 @@ package object utils {
       highlighter.setErrorStripeMarkColor(
         UIUtil.getErrorForeground
       )
-      highlighter.setErrorStripeTooltip(msg)
+      highlighter.setErrorStripeTooltip(formattedMessage)
       state.appendErrorHighlighter(highlighter)
-    else if severity == "[warn]"
-    then
+    else
       val highlighter = markupModel.addLineHighlighter(
         lineNumber,
         HighlighterLayer.WARNING,
@@ -207,7 +140,7 @@ package object utils {
       highlighter.setErrorStripeMarkColor(
         UIUtil.getToolTipForeground
       )
-      highlighter.setErrorStripeTooltip(msg)
+      highlighter.setErrorStripeTooltip(formattedMessage)
       state.appendErrorHighlighter(highlighter)
   }
 

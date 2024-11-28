@@ -14,7 +14,7 @@ import com.ossuminc.riddl.utils.{
   pc
 }
 
-aimport java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 
 case class RiddlIdeaPluginLogger(
@@ -64,7 +64,7 @@ object ParsingUtils {
   }
 
   def runCommandForEditor(
-      numWindow: Int,
+      numWindow: Int
   ): Unit = {
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
     windowState.getTopLevelPath.foreach { path =>

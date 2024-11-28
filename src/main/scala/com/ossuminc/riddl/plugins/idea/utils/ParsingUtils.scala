@@ -1,8 +1,9 @@
 package com.ossuminc.riddl.plugins.idea.utils
 
 import com.ossuminc.riddl.commands.Commands
+import com.ossuminc.riddl.language.AST.Root
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
-import com.ossuminc.riddl.passes.PassesResult
+import com.ossuminc.riddl.passes.{Pass, PassesResult}
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.utils.{
   Await,
@@ -13,6 +14,7 @@ import com.ossuminc.riddl.utils.{
   pc
 }
 
+import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 
@@ -33,7 +35,6 @@ object ParsingUtils {
   import ManagerBasedGetterUtils.*
   import ToolWindowUtils.*
 
-  // TODO: switch to using runCommandNamed
   def runCommandForWindow(
       numWindow: Int,
       confFile: Option[String]
@@ -67,25 +68,32 @@ object ParsingUtils {
   }
 
   def runCommandForEditor(
-      numWindow: Int,
-      path: String
+      numWindow: Int
   ): Unit = {
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
-    val rpi: RiddlParserInput = Await.result(
-      RiddlParserInput.fromPath(path),
-      FiniteDuration(5, TimeUnit.SECONDS)
-    )
+    windowState.getTopLevelPath.foreach { path =>
+      println(path)
+      val rpi: RiddlParserInput = Await.result(
+        RiddlParserInput.fromPath(path),
+        FiniteDuration(5, TimeUnit.SECONDS)
+      )
 
-    pc.withLogger(StringLogger()) { _ =>
-      pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
-        TopLevelParser.parseNebula(rpi, false) match {
-          case Right(_) => ()
-          case Left(msgs) =>
-            windowState.setMessages(msgs)
+      pc.withLogger(StringLogger()) { _ =>
+        pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
+          TopLevelParser(rpi, false).parseRootWithURLs match {
+            case Right((root, _)) =>
+              val passesResult = Pass.runStandardPasses(root)
+              if passesResult.messages.hasErrors then
+                println("passesresult")
+                windowState.setMessagesForEditor(
+                  passesResult.messages.justErrors
+                )
+            case Left((msgs, _)) =>
+              windowState.setMessagesForEditor(msgs)
+              println()
+          }
         }
       }
     }
-
-    highlightErrorForFile(windowState, path)
   }
 }

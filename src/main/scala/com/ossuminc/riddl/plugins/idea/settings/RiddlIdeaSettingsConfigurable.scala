@@ -1,18 +1,16 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.options.Configurable
-import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
   FiniteDurationCommonOption,
   IntegerCommonOption
 }
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
+import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.*
-import com.ossuminc.riddl.utils.{Await, StringLogger, pc}
 import org.codehaus.groovy.control.ConfigurationException
 
 import java.io.File
-import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 import javax.swing.JComponent
 import scala.concurrent.duration.FiniteDuration
@@ -28,6 +26,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
   override def isModified: Boolean = component.isModified
 
   override def apply(): Unit = {
+    println(numWindow)
     val windowState = getRiddlIdeaState(numWindow)
 
     windowState.setCommand(component.getPickedCommand)
@@ -37,33 +36,10 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
       if topLevelFile.exists() && topLevelFile.isFile
       then {
         windowState.setTopLevelPath(component.getTopLevelFieldText)
-        val rpi: RiddlParserInput =
-          windowState.getTopLevelPath
-            .map(topLevelPath =>
-              Await.result(
-                RiddlParserInput.fromPath(topLevelPath),
-                FiniteDuration(5, TimeUnit.SECONDS)
-              )
-            )
-            .getOrElse(RiddlParserInput.empty)
 
-        pc.withLogger(StringLogger()) { _ =>
-          pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
-            TopLevelParser(rpi, false).parseRootWithURLs match {
-              case Right((_, paths)) =>
-                windowState.setParsedPaths(
-                  paths.map(url => Paths.get(url.path))
-                )
-              case Left((msgs, paths)) =>
-                windowState.setMessages(msgs)
-                windowState.setParsedPaths(
-                  paths.map(url => Paths.get(url.path))
-                )
-            }
+        runCommandForEditor(numWindow)
 
-            updateToolWindowRunPane(numWindow, fromReload = true)
-          }
-        }
+        updateToolWindowRunPane(numWindow, fromReload = true)
       } else
         windowState.appendRunOutput(
           "The provided top-level file is invalid - cannot run on edit"

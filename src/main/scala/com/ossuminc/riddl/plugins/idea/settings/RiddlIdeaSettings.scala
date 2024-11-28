@@ -2,7 +2,7 @@ package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.editor.markup.{MarkupModel, RangeHighlighter}
 import com.ossuminc.riddl.language.Messages.Message
-import java.nio.file.Path
+
 import com.intellij.openapi.components.{
   PersistentStateComponent,
   Storage,
@@ -74,8 +74,7 @@ object RiddlIdeaSettings {
         riddlConfPath.flatMap(readFromOptionsFromConf).toSeq
       else Seq()
 
-    private var parsedPaths: Seq[Path] = Seq()
-    private var messages: Seq[Message] = Seq()
+    private var messagesForEditor: Seq[Message] = Seq()
     private var errorHighlighters: Seq[RangeHighlighter] = Seq()
     private var markupModelOpt: Option[MarkupModel] = None
 
@@ -84,7 +83,9 @@ object RiddlIdeaSettings {
     def setConfPath(newPath: Option[String]): Unit = riddlConfPath = newPath
     def getConfPath: Option[String] = riddlConfPath
 
-    def setTopLevelPath(newPath: String): Unit = riddlTopLevelPath = Some(newPath)
+    def setTopLevelPath(newPath: String): Unit = riddlTopLevelPath = Some(
+      newPath
+    )
     def getTopLevelPath: Option[String] = riddlTopLevelPath
 
     def prependRunOutput(newOutput: String): Unit = riddlRunOutput =
@@ -104,26 +105,28 @@ object RiddlIdeaSettings {
     def setCommonOptions(newCOs: CommonOptions): Unit =
       commonOptions = newCOs
 
-    def getParsedPaths: Seq[Path] = parsedPaths
-    def setParsedPaths(newPaths: Seq[Path]): Unit =
-      parsedPaths = newPaths
+    def getMessagesForEditor: Seq[Message] = messagesForEditor
+    def setMessagesForEditor(newMsgs: Seq[Message]): Unit =
+      messagesForEditor = newMsgs
 
-    def getMessages: Seq[Message] = messages
-    def setMessages(newMsgs: Seq[Message]): Unit =
-      messages = newMsgs
-
-    def appendErrorHighlighter(rangeHighlighter: RangeHighlighter): Seq[RangeHighlighter] =
+    def appendErrorHighlighter(
+        rangeHighlighter: RangeHighlighter
+    ): Seq[RangeHighlighter] =
       errorHighlighters :+ rangeHighlighter
     def clearErrorHighlighters(): Unit = {
       markupModelOpt.foreach(mm =>
-        errorHighlighters.foreach(mm.removeHighlighter))
+        errorHighlighters.foreach(mm.removeHighlighter)
+      )
       errorHighlighters = Seq()
     }
 
-    def setMarkupModel(newModel: MarkupModel): Unit = markupModelOpt = Some(newModel)
+    def setMarkupModel(newModel: MarkupModel): Unit = markupModelOpt = Some(
+      newModel
+    )
 
-    def setFromOption(newFromOption: String): Unit = fromOption =
-      Some(newFromOption)
+    def setFromOption(newFromOption: String): Unit = fromOption = Some(
+      newFromOption
+    )
     def getFromOption: Option[String] = fromOption
 
     def setFromOptionsSeq(newSeq: Seq[String]): Unit = fromOptionsSeq = newSeq

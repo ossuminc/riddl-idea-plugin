@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.ossuminc.riddl.plugins.idea.files.utils.highlightKeywords
 import com.ossuminc.riddl.plugins.idea.utils.highlightForErrorMessage
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
-import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.*
+import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
 
 import java.nio.file.Path
 
@@ -25,21 +25,21 @@ class RiddlDocumentListener extends DocumentListener {
             getRiddlIdeaStates.allStates.values.toSeq
               .filter { state =>
                 state.getTopLevelPath.exists(path =>
-                  Path.of(path).compareTo(Path.of(editorFilePath)) <= 0
+                  editorFilePath.startsWith(
+                    Path.of(path).getParent.toString
+                  )
                 )
               }
               .foreach { state =>
-                state.getMessages
+                runCommandForEditor(state.getWindowNum)
+                Thread.sleep(350)
+                state.getMessagesForEditor
                   .filter(msg => editorFilePath.endsWith(msg.loc.source.origin))
                   .foreach { msg =>
-                    runCommandForEditor(
-                      state.getWindowNum,
-                      editor.getVirtualFile.getPath
-                    )
                     highlightForErrorMessage(
                       state,
-                      Right(msg.message),
-                      Right((msg.loc, msg.kind.severity))
+                      Seq(),
+                      Right(msg)
                     )
                   }
               }

@@ -13,7 +13,7 @@ import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.util.ui.UIUtil
-import com.ossuminc.riddl.language.At
+import com.ossuminc.riddl.language.Messages
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.updateToolWindowRunPane
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
@@ -116,47 +116,47 @@ package object utils {
     .foreach(block =>
       riddlErrorRegex.findFirstMatchIn(block.head) match
         case Some(resultMatch: Regex.Match) =>
-          highlightForErrorMessage(state, Left(block), Left(resultMatch))
+          highlightForErrorMessage(state, block, Left(resultMatch))
         case _ => ()
     )
 
   def highlightForErrorMessage(
       state: RiddlIdeaSettings.State,
-      outputBlockOrMessage: Either[Seq[String], String],
-      matchOrAtLine: Either[Regex.Match, (At, Int)]
+      outputBlock: Seq[String],
+      matchOrAtLine: Either[Regex.Match, Messages.Message]
   ): Unit = {
     val severity = matchOrAtLine match {
       case Left(m) => m.group(1)
-      case Right((_, s)) =>
-        s match {
+      case Right(m) =>
+        m.kind.severity match {
           case s if s < 4 => "[warn]"
           case _          => "[error]"
         }
     }
     val fileNameOrPath: String = matchOrAtLine match {
       case Left(m) => m.group(2)
-      case Right((at, _)) =>
+      case Right(msg) =>
         if state.getTopLevelPath.isEmpty then ""
         else
           Path
             .of(state.getTopLevelPath.get)
             .getParent
-            .toString + "/" + at.source.origin
+            .toString + "/" + msg.loc.source.origin
     }
     if fileNameOrPath == "" then
-      state.appendRunOutput(
+      displayNotification(
         ".riddl file for editor parsing was not set"
       )
       updateToolWindowRunPane(state.getWindowNum)
       return
 
     val lineNumber = matchOrAtLine match {
-      case Left(m)        => m.group(3).toInt - 1
-      case Right((at, _)) => at.line
+      case Left(m)    => m.group(3).toInt - 1
+      case Right(msg) => msg.loc.line
     }
     val col = matchOrAtLine match {
-      case Left(m)        => m.group(3).toInt - 1
-      case Right((at, _)) => at.col
+      case Left(m)    => m.group(3).toInt - 1
+      case Right(msg) => msg.loc.col
     }
     val editor: Editor = matchOrAtLine match {
       case Left(_) =>
@@ -166,34 +166,23 @@ package object utils {
           lineNumber,
           col
         )
-      case Right((_, _)) =>
-        val file: VirtualFile =
-          LocalFileSystem.getInstance.findFileByPath(fileNameOrPath)
-        if file != null then
-          FileEditorManager
-            .getInstance(getProject)
-            .openTextEditor(
-              new OpenFileDescriptor(
-                getProject,
-                file,
-                lineNumber - 1,
-                col - 1
-              ),
-              true
-            )
-        else
-          FileEditorManager
-            .getInstance(getProject)
-            .getSelectedTextEditor()
+      case Right(_) =>
+        FileEditorManager
+          .getInstance(getProject)
+          .getSelectedTextEditor()
     }
     val markupModel: MarkupModel = editor.getMarkupModel
     state.setMarkupModel(markupModel)
 
     Thread.sleep(500)
 
-    val msg = outputBlockOrMessage match {
-      case Left(outBlock) => outBlock.tail.mkString("\n")
-      case Right(msg)     => msg
+    val msg = outputBlock match {
+      case outBlock if outBlock.nonEmpty => outBlock.tail.mkString("\n")
+      case Seq() =>
+        matchOrAtLine match {
+          case Right(msg) => msg.format
+          case Left(_)    => ""
+        }
     }
 
     if severity == "[error]"
@@ -220,8 +209,6 @@ package object utils {
       )
       highlighter.setErrorStripeTooltip(msg)
       state.appendErrorHighlighter(highlighter)
-
-    println("higlighted " + lineNumber)
   }
 
   def riddlErrorRegex: Regex =

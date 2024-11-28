@@ -147,7 +147,7 @@ object utils {
             getRiddlIdeaStates.allStates
               .foldRight(Seq[RiddlIdeaSettings.State]()) { (tup, acc) =>
                 tup._2.clearErrorHighlighters()
-                if tup._2.getMessages.exists(
+                if tup._2.getMessagesForEditor.exists(
                     _.loc.source.root.path == file.getPath
                   )
                 then acc :+ tup._2

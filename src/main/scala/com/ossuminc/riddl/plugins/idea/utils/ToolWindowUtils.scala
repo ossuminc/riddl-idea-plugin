@@ -180,14 +180,15 @@ object ToolWindowUtils {
               else if fromReload then
                 runCommandForWindow(numWindow, state.getConfPath))
 
-      FileEditorManager
-        .getInstance(project)
-        .getSelectedFiles
-        .foreach(file =>
-          state.getMessagesForEditor
-            .filter(_.loc.source.origin == file.getName)
-            .foreach(msg => highlightForErrorMessage(state, msg))
-        )
+      if state.getTopLevelPath.isEmpty then
+        FileEditorManager
+          .getInstance(project)
+          .getSelectedFiles
+          .foreach(file =>
+            state.getMessagesForEditor
+              .filter(_.loc.source.origin == file.getName)
+              .foreach(msg => highlightForErrorMessage(state, msg))
+          )
     }
 
     // enables auto-compiling
@@ -204,8 +205,9 @@ object ToolWindowUtils {
               state.clearRunOutput()
               runCommandForWindow(numWindow, state.getConfPath)
               updateToolWindowRunPane(numWindow, fromReload = true)
-              state.getMessagesForEditor
-                .foreach(msg => highlightForErrorMessage(state, msg))
+              if state.getTopLevelPath.isEmpty then
+                state.getMessagesForEditor
+                  .foreach(msg => highlightForErrorMessage(state, msg))
           }
         }
       )

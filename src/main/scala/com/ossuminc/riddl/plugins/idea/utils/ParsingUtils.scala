@@ -69,13 +69,13 @@ object ParsingUtils {
     val state = getRiddlIdeaState(numWindow)
 
     val rpi: RiddlParserInput = editorTextOpt match {
+      case Some(editorText) => RiddlParserInput(editorText, "")
       case None if state.getTopLevelPath.isDefined =>
         Await.result(
           RiddlParserInput.fromPath(state.getTopLevelPath.get),
           FiniteDuration(5, TimeUnit.SECONDS)
         )
-      case Some(editorText) => RiddlParserInput(editorText, "")
-      case None             => return
+      case None => return
     }
 
     pc.withLogger(StringLogger()) { _ =>

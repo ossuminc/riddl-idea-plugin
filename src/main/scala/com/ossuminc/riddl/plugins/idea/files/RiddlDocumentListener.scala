@@ -34,16 +34,9 @@ class RiddlDocumentListener extends DocumentListener {
                 Some(event.getDocument.getText)
               )
               Thread.sleep(350)
-              state.getMessagesForEditor
-                .filter(msg =>
-                  editorFilePath
-                    .endsWith(
-                      msg.loc.source.origin
-                    ) || msg.loc.source.isEmpty
-                )
-                .foreach { msg =>
-                  highlightForErrorMessage(state, msg)
-                }
+              state.getMessagesForEditor.foreach { msg =>
+                highlightForErrorMessage(state, msg)
+              }
 
             }
       }

@@ -24,10 +24,7 @@ import com.ossuminc.riddl.language.AST.{
 import com.ossuminc.riddl.language.{At, Messages}
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
-import com.ossuminc.riddl.plugins.idea.utils.{
-  displayNotification,
-  highlightForErrorMessage
-}
+import com.ossuminc.riddl.plugins.idea.utils.highlightForErrorMessage
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaStates
 import com.ossuminc.riddl.utils.StringLogger
@@ -36,8 +33,7 @@ object utils {
   private def annotateTokensWithBooleans(
       ast: Either[Messages.Messages, List[Token]]
   ): Seq[(Token, Int, Int, Seq[Boolean])] = ast match {
-    case Left(msgs) =>
-      displayNotification(msgs.mkString("\n\n"))
+    case Left(_) =>
       Seq((OtherTKN(At()), 0, 0, Seq(false, false)))
     case Right(tokens) =>
       tokens

@@ -12,7 +12,6 @@ import java.nio.file.Path
 class RiddlDocumentListener extends DocumentListener {
   override def documentChanged(event: DocumentEvent): Unit = {
     val doc = event.getDocument
-
     val editors = EditorFactory.getInstance().getEditors(doc)
     if editors.nonEmpty && doc.getText.nonEmpty then
       editors.map { editor =>
@@ -30,10 +29,18 @@ class RiddlDocumentListener extends DocumentListener {
               )
             }
             .foreach { state =>
-              runCommandForEditor(state.getWindowNum)
+              runCommandForEditor(
+                state.getWindowNum,
+                Some(event.getDocument.getText)
+              )
               Thread.sleep(350)
               state.getMessagesForEditor
-                .filter(msg => editorFilePath.endsWith(msg.loc.source.origin))
+                .filter(msg =>
+                  editorFilePath
+                    .endsWith(
+                      msg.loc.source.origin
+                    ) || msg.loc.source.isEmpty
+                )
                 .foreach { msg =>
                   highlightForErrorMessage(state, msg)
                 }

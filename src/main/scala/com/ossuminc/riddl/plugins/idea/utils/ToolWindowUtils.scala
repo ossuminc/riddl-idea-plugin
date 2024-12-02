@@ -180,14 +180,14 @@ object ToolWindowUtils {
               else if fromReload then
                 runCommandForWindow(numWindow, state.getConfPath))
 
-      val editorManager = FileEditorManager
+      FileEditorManager
         .getInstance(project)
-
-      editorManager.getSelectedFiles.foreach(file =>
-        state.getMessagesForEditor
-          .filter(_.loc.source.origin == file.getName)
-          .foreach(msg => highlightForErrorMessage(state, msg))
-      )
+        .getSelectedFiles
+        .foreach(file =>
+          state.getMessagesForEditor
+            .filter(_.loc.source.origin == file.getName)
+            .foreach(msg => highlightForErrorMessage(state, msg))
+        )
     }
 
     // enables auto-compiling

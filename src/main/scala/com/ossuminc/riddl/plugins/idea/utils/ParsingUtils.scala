@@ -1,9 +1,8 @@
 package com.ossuminc.riddl.plugins.idea.utils
 
 import com.ossuminc.riddl.commands.Commands
-import com.ossuminc.riddl.language.AST.Root
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
-import com.ossuminc.riddl.passes.{Pass, PassesResult}
+import com.ossuminc.riddl.passes.PassesResult
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.utils.{
   Await,
@@ -64,27 +63,27 @@ object ParsingUtils {
   }
 
   def runCommandForEditor(
-      numWindow: Int
+      numWindow: Int,
+      editorTextOpt: Option[String] = None
   ): Unit = {
-    val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
-    windowState.getTopLevelPath.foreach { path =>
-      val rpi: RiddlParserInput = Await.result(
-        RiddlParserInput.fromPath(path),
-        FiniteDuration(5, TimeUnit.SECONDS)
-      )
+    val state = getRiddlIdeaState(numWindow)
 
-      pc.withLogger(StringLogger()) { _ =>
-        pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
-          TopLevelParser(rpi, false).parseRootWithURLs match {
-            case Right((root, _)) =>
-              val passesResult = Pass.runStandardPasses(root)
-              if passesResult.messages.hasErrors then
-                windowState.setMessagesForEditor(
-                  passesResult.messages.justErrors
-                )
-            case Left((msgs, _)) =>
-              windowState.setMessagesForEditor(msgs)
-          }
+    val rpi: RiddlParserInput = editorTextOpt match {
+      case None if state.getTopLevelPath.isDefined =>
+        Await.result(
+          RiddlParserInput.fromPath(state.getTopLevelPath.get),
+          FiniteDuration(5, TimeUnit.SECONDS)
+        )
+      case Some(editorText) => RiddlParserInput(editorText, "")
+      case None             => return
+    }
+
+    pc.withLogger(StringLogger()) { _ =>
+      pc.withOptions(state.getCommonOptions) { _ =>
+        TopLevelParser.parseNebula(rpi) match {
+          case Right(_) => ()
+          case Left(msgs) =>
+            state.setMessagesForEditor(msgs)
         }
       }
     }

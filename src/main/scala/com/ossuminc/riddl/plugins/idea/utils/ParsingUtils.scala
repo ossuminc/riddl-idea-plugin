@@ -4,7 +4,6 @@ import com.ossuminc.riddl.commands.Commands
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.passes.PassesResult
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
 import com.ossuminc.riddl.utils.{
   JVMPlatformContext,
   Logger,
@@ -14,14 +13,7 @@ import com.ossuminc.riddl.utils.{
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
-import com.ossuminc.riddl.utils.{
-  Await,
-  Logger,
-  Logging,
-  PlatformContext,
-  StringLogger,
-  pc
-}
+import com.ossuminc.riddl.utils.{Await, StringLogger, pc}
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
@@ -108,7 +100,7 @@ object ParsingUtils {
         TopLevelParser.parseNebula(rpi) match {
           case Right(_) => ()
           case Left(msgs) =>
-            state.setMessagesForEditor(msgs)
+            state.setMessagesForEditor(mutable.Seq.from(msgs))
         }
       }
     }

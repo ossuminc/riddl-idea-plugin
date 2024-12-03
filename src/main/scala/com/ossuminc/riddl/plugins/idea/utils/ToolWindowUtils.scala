@@ -176,16 +176,6 @@ object ToolWindowUtils {
           console.clear()
           state.getRunOutput.foreach(msg => writeToConsole(msg, false))
         else if fromReload then runCommandForWindow(numWindow)
-
-     if state.getTopLevelPath.isEmpty then
-        FileEditorManager
-          .getInstance(project)
-          .getSelectedFiles
-          .foreach(file =>
-            state.getMessagesForEditor
-              .filter(_.loc.source.origin == file.getName)
-              .foreach(msg => highlightForErrorMessage(state, msg))
-          )
     }
 
     // enables auto-compiling
@@ -204,7 +194,12 @@ object ToolWindowUtils {
               updateToolWindowRunPane(numWindow, fromReload = true)
               if state.getTopLevelPath.isEmpty then
                 state.getMessagesForEditor
-                  .foreach(msg => highlightForErrorMessage(state, msg))
+                  .foreach(msg =>
+                    highlightErrorMessagesForFile(
+                      state,
+                      Right(msg.loc.source.origin)
+                    )
+                  )
           }
         }
       )
@@ -213,6 +208,13 @@ object ToolWindowUtils {
       console.getComponent,
       createGBCs(1, 0, 1, 1, GridBagConstraints.BOTH)
     )
+
+    FileEditorManager
+      .getInstance(project)
+      .getSelectedFiles
+      .foreach(file =>
+        highlightErrorMessagesForFile(state, Right(file.getName))
+      )
   }
 
   private def getContentManager: ContentManager = ToolWindowManager

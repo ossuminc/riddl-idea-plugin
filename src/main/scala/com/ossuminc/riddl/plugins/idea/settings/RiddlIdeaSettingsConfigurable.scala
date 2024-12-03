@@ -9,7 +9,7 @@ import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.*
-import com.ossuminc.riddl.plugins.idea.utils.highlightForErrorMessage
+import com.ossuminc.riddl.plugins.idea.utils.highlightErrorMessagesForFile
 import org.codehaus.groovy.control.ConfigurationException
 
 import java.io.File
@@ -41,7 +41,10 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
         runCommandForEditor(numWindow)
         Thread.sleep(350)
         windowState.getMessagesForEditor.foreach(msg =>
-          highlightForErrorMessage(windowState, msg)
+          highlightErrorMessagesForFile(
+            windowState,
+            Right(msg.loc.source.origin)
+          )
         )
       else
         windowState.appendRunOutput(

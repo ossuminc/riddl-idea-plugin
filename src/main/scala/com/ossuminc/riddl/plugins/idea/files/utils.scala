@@ -24,7 +24,7 @@ import com.ossuminc.riddl.language.AST.{
 import com.ossuminc.riddl.language.{At, Messages}
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
-import com.ossuminc.riddl.plugins.idea.utils.highlightForErrorMessage
+import com.ossuminc.riddl.plugins.idea.utils.highlightErrorMessagesForFile
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaStates
 import com.ossuminc.riddl.utils.StringLogger
@@ -151,7 +151,12 @@ object utils {
               }
               .foreach(state =>
                 state.getMessagesForEditor
-                  .foreach(msg => highlightForErrorMessage(state, msg))
+                  .foreach(msg =>
+                    highlightErrorMessagesForFile(
+                      state,
+                      Right(msg.loc.source.origin)
+                    )
+                  )
               )
         }
       }

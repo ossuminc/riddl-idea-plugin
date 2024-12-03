@@ -3,7 +3,12 @@ package com.ossuminc.riddl.plugins.idea
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.editor.{Editor, EditorFactory}
-import com.intellij.openapi.editor.markup.{HighlighterLayer, MarkupModel, TextAttributes}
+import com.intellij.openapi.editor.markup.{
+  HighlighterLayer,
+  MarkupModel,
+  RangeHighlighter,
+  TextAttributes
+}
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
@@ -23,6 +28,7 @@ import scala.jdk.CollectionConverters.*
 import com.intellij.openapi.fileEditor.FileDocumentManager
 
 import java.awt.GridBagConstraints
+import java.nio.file.Path
 import javax.swing.Icon
 
 package object utils {
@@ -74,7 +80,7 @@ package object utils {
   def editorForError(
       numWindow: Int,
       fileName: String
-  ): Editor = {
+  ): Option[Editor] = {
     val pathToFolderWithConf = getRiddlIdeaState(numWindow).getConfPath
       .getOrElse("")
       .split("/")
@@ -107,70 +113,91 @@ package object utils {
     editor
   }
 
-  def highlightForErrorMessage(
+  def highlightErrorMessagesForFile(
       state: RiddlIdeaSettings.State,
-      fileName: String
+      fileNameOrEditor: Either[Editor, String]
   ): Unit = state.getMessages match {
     case empty if empty.isEmpty =>
-      state
-        .getHighlightersForFile(fileName)
-        .foreach(hlInfo =>
-          EditorFactory
-            .getInstance()
-            .getAllEditors
-            .head
-            .getMarkupModel
-            .getAllHighlighters
-            .find { highlighter =>
-              highlighter.getStartOffset == hlInfo.startOffset &&
-              highlighter.getEndOffset == hlInfo.endOffset &&
-              highlighter.getLayer == hlInfo.layer
-            }
-            .foreach(hl =>
-              hl.setErrorStripeMarkColor(null)
-              hl.setErrorStripeTooltip(null)
-              selectedEditor.getMarkupModel.removeHighlighter(hl)
-            )
-        )
-      state.clearHighlightersForFile(fileName)
+      fileNameOrEditor.foreach { fileName =>
+        state
+          .getHighlightersForFile(fileName)
+          .foreach(hlInfo =>
+            EditorFactory
+              .getInstance()
+              .getAllEditors
+              .head
+              .getMarkupModel
+              .getAllHighlighters
+              .find { highlighter =>
+                highlighter.getStartOffset == hlInfo.startOffset &&
+                highlighter.getEndOffset == hlInfo.endOffset &&
+                highlighter.getLayer == hlInfo.layer
+              }
+              .foreach(hl =>
+                hl.setErrorStripeMarkColor(null)
+                hl.setErrorStripeTooltip(null)
+                selectedEditor.getMarkupModel.removeHighlighter(hl)
+              )
+          )
+        state.clearHighlightersForFile(fileName)
+      }
     case output =>
       output.foreach { msg =>
-        val editor = editorForError(
-          state.getWindowNum,
-          fileName
-        )
+        (fileNameOrEditor match {
+          case Right(fileName) =>
+            (
+              editorForError(state.getWindowNum, fileName),
+              Some(fileName)
+            )
+          case Left(editor) =>
+            (
+              Some(editor),
+              state.getTopLevelPath
+                .map { topPath =>
+                  val pathFromRoot: Seq[String] =
+                    editor.getVirtualFile.getPath
+                      .split(
+                        Path.of(topPath).getParent.toString
+                      )
+                      .toSeq
+                  if pathFromRoot.nonEmpty && pathFromRoot.length < 2 then
+                    pathFromRoot(1)
+                  else topPath
+                }
+            )
+        }) match {
+          case (Some(editor), Some(fileNameFromRoot)) =>
+            val markupModel: MarkupModel = editor.getMarkupModel
+            val highlighter: RangeHighlighter =
+              markupModel.addLineHighlighter(
+                msg.loc.line,
+                HighlighterLayer.WARNING,
+                new TextAttributes()
+              )
+            if msg.kind.severity == Error.severity then
+              val highlighter = markupModel.addLineHighlighter(
+                msg.loc.line,
+                HighlighterLayer.ERROR,
+                new TextAttributes()
+              )
 
-        if editor.isDefined then
-          val markupModel = editor.get.getMarkupModel
-          if msg.kind.severity == Error.severity then
-            val highlighter = markupModel.addLineHighlighter(
-              msg.loc.line,
-              HighlighterLayer.ERROR,
-              new TextAttributes()
-            )
-            highlighter.setErrorStripeMarkColor(
-              UIUtil.getErrorForeground
-            )
-            highlighter.setErrorStripeTooltip(
-              msg.message
-            )
-            println((fileName, highlighter))
-            state.saveHighlighterForFile(fileName, highlighter)
-          else if msg.kind.severity == Warning.severity then
-            val highlighter = markupModel.addLineHighlighter(
-              msg.loc.line,
-              HighlighterLayer.WARNING,
-              new TextAttributes()
-            )
-            highlighter.setErrorStripeMarkColor(
-              UIUtil.getToolTipForeground
-            )
-            highlighter.setErrorStripeTooltip(
-              msg.message
-            )
-            state.saveHighlighterForFile(fileName, highlighter)
+              highlighter.setErrorStripeMarkColor(
+                UIUtil.getErrorForeground
+              )
+              highlighter.setErrorStripeTooltip(
+                msg.message
+              )
+            else if msg.kind.severity == Warning.severity then
+              highlighter.setErrorStripeMarkColor(
+                UIUtil.getToolTipForeground
+              )
+              highlighter.setErrorStripeTooltip(
+                msg.message
+              )
+            state.saveHighlighterForFile(fileNameFromRoot, highlighter)
+          case _ => ()
+        }
       }
-      state.clearHighlightersForFile(fileName)
   }
 }
 

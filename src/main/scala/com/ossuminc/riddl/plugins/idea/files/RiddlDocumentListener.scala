@@ -3,7 +3,7 @@ package com.ossuminc.riddl.plugins.idea.files
 import com.intellij.openapi.editor.event.{DocumentEvent, DocumentListener}
 import com.intellij.openapi.editor.EditorFactory
 import com.ossuminc.riddl.plugins.idea.files.utils.highlightKeywords
-import com.ossuminc.riddl.plugins.idea.utils.highlightForErrorMessage
+import com.ossuminc.riddl.plugins.idea.utils.highlightErrorMessagesForFile
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
 
@@ -34,9 +34,7 @@ class RiddlDocumentListener extends DocumentListener {
                 Some(event.getDocument.getText)
               )
               Thread.sleep(350)
-              state.getMessagesForEditor.foreach { msg =>
-                highlightForErrorMessage(state, msg)
-              }
+              highlightErrorMessagesForFile(state, Left(editor))
 
             }
       }

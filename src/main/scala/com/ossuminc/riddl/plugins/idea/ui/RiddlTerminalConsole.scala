@@ -6,7 +6,7 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
 import com.intellij.ui.awt.RelativePoint
-import com.ossuminc.riddl.plugins.idea.riddlErrorRegex
+import com.ossuminc.riddl.plugins.idea.utils.riddlErrorRegex
 import com.ossuminc.riddl.plugins.idea.utils.editorForError
 
 import scala.util.matching.Regex
@@ -18,7 +18,7 @@ class RiddlTerminalConsole(
   override def print(
       text: String,
       contentType: ConsoleViewContentType
-  ): Unit = {
+  ): Unit =
     text
       .split("\n")
       .toList
@@ -34,9 +34,8 @@ class RiddlTerminalConsole(
             )
           case None =>
             super.print(line + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
+            ()
       }
-    ()
-  }
 
   private def linkToEditor(
       textLine: String,
@@ -45,27 +44,27 @@ class RiddlTerminalConsole(
       lineNumber: Int,
       charPosition: Int
   ): Unit = {
+    val editor = editorForError(
+      numWindow,
+      fileName,
+      lineNumber,
+      charPosition
+    )
+
     val hyperlinkInfo = new HyperlinkInfoBase {
       override def navigate(
           project: Project,
           relativePoint: RelativePoint
-      ): Unit = {
-        val editor = editorForError(
-          numWindow,
-          fileName,
-          lineNumber,
-          charPosition
-        )
-        if editor != null then {
-          val logicalPosition =
-            new LogicalPosition(
-              lineNumber - 1,
-              charPosition - 1
-            )
-          editor.getCaretModel.moveToLogicalPosition(logicalPosition)
-        }
+      ): Unit = if editor != null then {
+        val logicalPosition =
+          new LogicalPosition(
+            lineNumber - 1,
+            charPosition - 1
+          )
+        editor.getCaretModel.moveToLogicalPosition(logicalPosition)
       }
     }
+
     this.printHyperlink(textLine + "\n", hyperlinkInfo)
   }
 }

@@ -2,23 +2,27 @@ package com.ossuminc.riddl.plugins.idea
 
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
+import com.intellij.openapi.editor.markup.{
+  HighlighterLayer,
+  MarkupModel,
+  TextAttributes
+}
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.markup.{HighlighterLayer, TextAttributes}
 import com.intellij.openapi.fileEditor.{FileEditorManager, OpenFileDescriptor}
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.util.ui.UIUtil
+import com.ossuminc.riddl.language.Messages
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getProject,
   getRiddlIdeaState
 }
-import com.ossuminc.riddl.plugins.idea.riddlErrorRegex
 import com.typesafe.config.ConfigObject
 import pureconfig.ConfigSource
-import scala.jdk.CollectionConverters.*
 
+import scala.jdk.CollectionConverters.*
 import java.awt.GridBagConstraints
 import javax.swing.Icon
 import scala.util.matching.Regex
@@ -28,7 +32,7 @@ package object utils {
     IconLoader.getIcon("images/RIDDL-icon.jpg", classType)
 
   object ManagerBasedGetterUtils {
-    val application: Application = ApplicationManager.getApplication
+    private val application: Application = ApplicationManager.getApplication
 
     def getProject: Project = ProjectManager.getInstance().getOpenProjects.head
 
@@ -39,8 +43,8 @@ package object utils {
         )
         .getState
 
-    def getRiddlIdeaState(numToolWindow: Int): RiddlIdeaSettings.State =
-      getRiddlIdeaStates.getState(numToolWindow)
+    def getRiddlIdeaState(numWindow: Int): RiddlIdeaSettings.State =
+      getRiddlIdeaStates.getState(numWindow)
   }
 
   object CreationUtils {
@@ -85,7 +89,6 @@ package object utils {
       LocalFileSystem.getInstance.findFileByPath(
         s"$pathToConf/$fileName"
       )
-
     FileEditorManager
       .getInstance(getProject)
       .openTextEditor(
@@ -99,50 +102,50 @@ package object utils {
       )
   }
 
-  def highlightErrorForFile(
+  def highlightForErrorMessage(
       state: RiddlIdeaSettings.State,
-      fileName: String
-  ): Unit = state.getRunOutput
-    .flatMap(
-      _.split("\n\n")
-        .filter(outputBlock => outputBlock.contains(fileName))
-        .map(_.split("\n").toSeq)
-    )
-    .foreach { outputBlock =>
-      riddlErrorRegex.findFirstMatchIn(outputBlock.head) match
-        case Some(resultMatch: Regex.Match) =>
-          val editor = editorForError(
-            state.getWindowNum,
-            resultMatch.group(2),
-            resultMatch.group(3).toInt,
-            resultMatch.group(4).toInt
-          )
+      message: Messages.Message
+  ): Unit = {
+    val severity = message.kind.severity
 
-          editor.getMarkupModel.removeAllHighlighters()
-          Thread.sleep(500)
+    val lineNumber = message.loc.line
+    val editor: Editor = FileEditorManager
+      .getInstance(getProject)
+      .getSelectedTextEditor()
 
-          if resultMatch.group(1) == "[ERROR]" then
-            val highlighter = editor.getMarkupModel.addLineHighlighter(
-              resultMatch.group(3).toInt,
-              HighlighterLayer.ERROR,
-              new TextAttributes()
-            )
-            highlighter.setErrorStripeMarkColor(
-              UIUtil.getErrorForeground
-            )
-            highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
-          else if resultMatch.group(1) == "[WARN]" then
-            val highlighter = editor.getMarkupModel.addLineHighlighter(
-              resultMatch.group(3).toInt,
-              HighlighterLayer.WARNING,
-              new TextAttributes()
-            )
-            highlighter.setErrorStripeMarkColor(
-              UIUtil.getToolTipForeground
-            )
-            highlighter.setErrorStripeTooltip(outputBlock.tail.mkString("\n"))
-        case _ => ()
-    }
+    val markupModel: MarkupModel = editor.getMarkupModel
+    state.setMarkupModel(markupModel)
+
+    Thread.sleep(500)
+
+    val formattedMessage = message.format
+
+    if severity > 4 then
+      val highlighter = markupModel.addLineHighlighter(
+        lineNumber,
+        HighlighterLayer.ERROR,
+        new TextAttributes()
+      )
+      highlighter.setErrorStripeMarkColor(
+        UIUtil.getErrorForeground
+      )
+      highlighter.setErrorStripeTooltip(formattedMessage)
+      state.appendErrorHighlighter(highlighter)
+    else
+      val highlighter = markupModel.addLineHighlighter(
+        lineNumber,
+        HighlighterLayer.WARNING,
+        new TextAttributes()
+      )
+      highlighter.setErrorStripeMarkColor(
+        UIUtil.getToolTipForeground
+      )
+      highlighter.setErrorStripeTooltip(formattedMessage)
+      state.appendErrorHighlighter(highlighter)
+  }
+
+  def riddlErrorRegex: Regex =
+    """(\[\w+\]) ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r
 
   def readFromOptionsFromConf(path: String): Seq[String] =
     ConfigSource.file(path).load[ConfigObject] match {
@@ -152,5 +155,3 @@ package object utils {
         Seq()
     }
 }
-
-def riddlErrorRegex = """(\[\w+\]) ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r

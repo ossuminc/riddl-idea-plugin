@@ -177,20 +177,25 @@ object ToolWindowUtils {
                   writeToConsole(
                     s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
                   )
-              else if fromReload then runCommandForWindow(numWindow))
+              else if fromReload then
+                runCommandForWindow(numWindow, state.getConfPath))
 
-      val fileEditorManager = FileEditorManager
-        .getInstance(project)
-
-      fileEditorManager.getSelectedFiles
-        .foreach(file => highlightErrorForFile(state, file.getName))
+      if state.getTopLevelPath.isEmpty then
+        FileEditorManager
+          .getInstance(project)
+          .getSelectedFiles
+          .foreach(file =>
+            state.getMessagesForEditor
+              .filter(_.loc.source.origin == file.getName)
+              .foreach(msg => highlightForErrorMessage(state, msg))
+          )
     }
 
     // enables auto-compiling
     val connection = project.getMessageBus
       .connect()
     state.setVFSConnection(connection)
-    
+
     connection
       .subscribe(
         VirtualFileManager.VFS_CHANGES,
@@ -199,12 +204,13 @@ object ToolWindowUtils {
             if events.asScala.toSeq.exists(
                 _.isFromSave
               ) && state.getAutoCompile && state.getCommand == "from"
-            then {
-              val filePath = events.asScala.head.getPath
+            then
               state.clearRunOutput()
-              runCommandForWindow(numWindow)
-              highlightErrorForFile(state, filePath)
-            }
+              runCommandForWindow(numWindow, state.getConfPath)
+              updateToolWindowRunPane(numWindow, fromReload = true)
+              if state.getTopLevelPath.isEmpty then
+                state.getMessagesForEditor
+                  .foreach(msg => highlightForErrorMessage(state, msg))
           }
         }
       )

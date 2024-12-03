@@ -84,6 +84,7 @@ object ToolWindowUtils {
                 null
               )
               riddlContentManager.removeContentManagerListener(this)
+              getRiddlIdeaState(windowNum).disconnectVFSListener()
               getRiddlIdeaStates.removeState(windowNumber)
             }
           }

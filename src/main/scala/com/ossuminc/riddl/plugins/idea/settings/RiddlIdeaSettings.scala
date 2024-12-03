@@ -102,7 +102,7 @@ object RiddlIdeaSettings {
     def getAutoCompile: Boolean = autoCompileOnSave
 
     def setVFSConnection(connection: MessageBusConnection): Unit = vfsConnection = Some(connection)
-    def disconnectVFSListener: Unit = vfsConnection.foreach(_.disconnect())
+    def disconnectVFSListener(): Unit = vfsConnection.foreach(_.disconnect())
 
     def setCommand(newCommand: String): Unit =
       if commands.contains(newCommand) then command = newCommand

@@ -17,7 +17,8 @@
                                  displayName="riddl Project Settings"/>
         <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
         <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory"
-                    id="riddl" anchor="right" icon="/images/RIDDL-logo.jpg" canCloseContents="true"/>
+                    id="riddl" anchor="left" icon="/images/RIDDL-logo.jpg" canCloseContents="true"
+                    />
         <fileType name="RiddlFileType" language="RIDDL"
                   implementationClass="com.ossuminc.riddl.plugins.idea.files.RiddlFileType" extensions="riddl"/>
         <colorSettingsPage implementation="com.ossuminc.riddl.plugins.idea.files.RiddlColorSettingsPage" />
@@ -35,8 +36,6 @@
                   topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
         <listener class="com.ossuminc.riddl.plugins.idea.files.RiddlDocumentListener"
                   topic="com.intellij.openapi.editor.event.DocumentListener"/>
-        <listener class="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowManagerListener"
-                  topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     </projectListeners>
 
 </idea-plugin>

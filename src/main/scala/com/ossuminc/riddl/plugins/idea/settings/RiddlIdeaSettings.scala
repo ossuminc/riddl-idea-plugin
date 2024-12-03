@@ -1,6 +1,9 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.editor.markup.{MarkupModel, RangeHighlighter}
+import java.nio.file.Path
+import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
+import com.intellij.util.messages.MessageBusConnection
 import com.ossuminc.riddl.language.Messages.Message
 
 import com.intellij.openapi.components.{
@@ -63,6 +66,7 @@ object RiddlIdeaSettings {
     private var riddlTopLevelPath: Option[String] = None
     private var riddlRunOutput: Seq[String] = Seq()
     private var autoCompileOnSave: Boolean = true
+    private var vfsConnection: Option[MessageBusConnection] = None
     private var command: String = commands.head
     private var commonOptions: CommonOptions = CommonOptions.empty.copy(
       noANSIMessages = true,
@@ -96,6 +100,9 @@ object RiddlIdeaSettings {
 
     def setAutoCompile(value: Boolean): Unit = autoCompileOnSave = value
     def getAutoCompile: Boolean = autoCompileOnSave
+
+    def setVFSConnection(connection: MessageBusConnection): Unit = vfsConnection = Some(connection)
+    def disconnectVFSListener(): Unit = vfsConnection.foreach(_.disconnect())
 
     def setCommand(newCommand: String): Unit =
       if commands.contains(newCommand) then command = newCommand

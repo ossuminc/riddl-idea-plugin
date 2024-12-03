@@ -84,6 +84,7 @@ object ToolWindowUtils {
                 null
               )
               riddlContentManager.removeContentManagerListener(this)
+              getRiddlIdeaState(windowNum).disconnectVFSListener()
               getRiddlIdeaStates.removeState(windowNumber)
             }
           }
@@ -192,8 +193,11 @@ object ToolWindowUtils {
     }
 
     // enables auto-compiling
-    project.getMessageBus
+    val connection = project.getMessageBus
       .connect()
+    state.setVFSConnection(connection)
+
+    connection
       .subscribe(
         VirtualFileManager.VFS_CHANGES,
         new BulkFileListener {
@@ -259,9 +263,9 @@ object ToolWindowUtils {
       )
 
   private def genWindowName(windowNumber: Int): String = {
-    val windowNumInName =
-      if windowNumber > 1 then s" - (Window #$windowNumber)" else ""
-    s"RIDDL ${getRiddlIdeaState(windowNumber).getCommand}$windowNumInName"
+    if windowNumber > 1 then
+      s"RIDDL ${getRiddlIdeaState(windowNumber).getCommand} - (Window #$windowNumber)"
+    else s"RIDDL ${getRiddlIdeaState(1).getCommand}"
   }
 
   private def genUpdateRunPaneName(numWindow: Int) =

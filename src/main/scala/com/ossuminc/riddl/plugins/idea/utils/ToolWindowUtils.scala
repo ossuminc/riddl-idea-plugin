@@ -177,9 +177,15 @@ object ToolWindowUtils {
           state.getRunOutput.foreach(msg => writeToConsole(msg, false))
         else if fromReload then runCommandForWindow(numWindow)
 
-      val fileEditorManager = FileEditorManager.getInstance(project)
-      fileEditorManager.getSelectedFiles
-        .foreach(file => highlightErrorsForFile(state, file.getName))
+     if state.getTopLevelPath.isEmpty then
+        FileEditorManager
+          .getInstance(project)
+          .getSelectedFiles
+          .foreach(file =>
+            state.getMessagesForEditor
+              .filter(_.loc.source.origin == file.getName)
+              .foreach(msg => highlightForErrorMessage(state, msg))
+          )
     }
 
     // enables auto-compiling
@@ -192,9 +198,13 @@ object ToolWindowUtils {
             if events.asScala.toSeq.exists(
                 _.isFromSave
               ) && state.getAutoCompile && state.getCommand == "from"
-            then {
+            then
+              state.clearRunOutput()
               runCommandForWindow(numWindow, state.getConfPath)
-            }
+              updateToolWindowRunPane(numWindow, fromReload = true)
+              if state.getTopLevelPath.isEmpty then
+                state.getMessagesForEditor
+                  .foreach(msg => highlightForErrorMessage(state, msg))
           }
         }
       )

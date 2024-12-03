@@ -1,9 +1,14 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.ossuminc.riddl.language.Messages.Message
 import com.ossuminc.riddl.plugins.idea.readFromOptionsFromConf
+
+import com.intellij.openapi.editor.markup.{MarkupModel, RangeHighlighter}
+import com.intellij.openapi.components.{
+  PersistentStateComponent,
+  Storage,
+  State as StateAnnotation
+}
 import com.ossuminc.riddl.utils.CommonOptions
 
 import scala.collection.mutable
@@ -74,6 +79,7 @@ object RiddlIdeaSettings {
 
   class State(windowNum: Int) {
     private var riddlConfPath: Option[String] = None
+    private var riddlTopLevelPath: Option[String] = None
     private var riddlRunOutput: scala.collection.mutable.Seq[String] =
       scala.collection.mutable.Seq()
     private var autoCompileOnSave: Boolean = true
@@ -94,11 +100,22 @@ object RiddlIdeaSettings {
 
     private var messagesForRunWindow: mutable.Seq[Message] = mutable.Seq()
 
+    private var messagesForEditor: Seq[Message] = Seq()
+    private var errorHighlighters: Seq[RangeHighlighter] = Seq()
+    private var markupModelOpt: Option[MarkupModel] = None
+
     def getWindowNum: Int = windowNum
 
     def setConfPath(newPath: Option[String]): Unit = riddlConfPath = newPath
     def getConfPath: Option[String] = riddlConfPath
 
+    def setTopLevelPath(newPath: String): Unit = riddlTopLevelPath = Some(
+      newPath
+    )
+    def getTopLevelPath: Option[String] = riddlTopLevelPath
+
+    def prependRunOutput(newOutput: String): Unit = riddlRunOutput =
+      newOutput +: riddlRunOutput
     def appendRunOutput(newOutput: String): Unit = riddlRunOutput :+= newOutput
     def clearRunOutput(): Unit = riddlRunOutput = scala.collection.mutable.Seq()
     def getRunOutput: scala.collection.mutable.Seq[String] = riddlRunOutput
@@ -111,9 +128,27 @@ object RiddlIdeaSettings {
     def getCommand: String = command
 
     def getCommonOptions: CommonOptions = commonOptions
-    def setCommonOptions(newCOs: CommonOptions): Unit = {
+    def setCommonOptions(newCOs: CommonOptions): Unit =
       commonOptions = newCOs
+
+    def getMessagesForEditor: Seq[Message] = messagesForEditor
+    def setMessagesForEditor(newMsgs: Seq[Message]): Unit =
+      messagesForEditor = newMsgs
+
+    def appendErrorHighlighter(
+        rangeHighlighter: RangeHighlighter
+    ): Seq[RangeHighlighter] =
+      errorHighlighters :+ rangeHighlighter
+    def clearErrorHighlighters(): Unit = {
+      markupModelOpt.foreach(mm =>
+        errorHighlighters.foreach(mm.removeHighlighter)
+      )
+      errorHighlighters = Seq()
     }
+
+    def setMarkupModel(newModel: MarkupModel): Unit = markupModelOpt = Some(
+      newModel
+    )
 
     def setFromOption(newFromOption: String): Unit = fromOption = Some(
       newFromOption

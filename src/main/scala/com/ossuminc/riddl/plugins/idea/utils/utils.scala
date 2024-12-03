@@ -3,12 +3,13 @@ package com.ossuminc.riddl.plugins.idea
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.editor.{Editor, EditorFactory}
-import com.intellij.openapi.editor.markup.{HighlighterLayer, TextAttributes}
+import com.intellij.openapi.editor.markup.{HighlighterLayer, MarkupModel, TextAttributes}
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.util.ui.UIUtil
+import com.ossuminc.riddl.language.Messages
 import com.ossuminc.riddl.language.Messages.{Error, Warning}
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
@@ -29,7 +30,7 @@ package object utils {
     IconLoader.getIcon("images/RIDDL-icon.jpg", classType)
 
   object ManagerBasedGetterUtils {
-    val application: Application = ApplicationManager.getApplication
+    private val application: Application = ApplicationManager.getApplication
 
     def getProject: Project = ProjectManager.getInstance().getOpenProjects.head
 
@@ -73,7 +74,7 @@ package object utils {
   def editorForError(
       numWindow: Int,
       fileName: String
-  ): Option[Editor] = {
+  ): Editor = {
     val pathToFolderWithConf = getRiddlIdeaState(numWindow).getConfPath
       .getOrElse("")
       .split("/")
@@ -106,7 +107,7 @@ package object utils {
     editor
   }
 
-  def highlightErrorsForFile(
+  def highlightForErrorMessage(
       state: RiddlIdeaSettings.State,
       fileName: String
   ): Unit = state.getMessages match {
@@ -181,5 +182,3 @@ def readFromOptionsFromConf(path: String): Seq[String] = ConfigSource
   case Left(err) =>
     Seq()
 }
-
-def riddlErrorRegex = """(\[\w+\]) ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r

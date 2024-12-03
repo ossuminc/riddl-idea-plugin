@@ -1,6 +1,7 @@
 package com.ossuminc.riddl.plugins.idea.utils
 
 import com.ossuminc.riddl.commands.Commands
+import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.passes.PassesResult
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
@@ -13,6 +14,17 @@ import com.ossuminc.riddl.utils.{
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
+import com.ossuminc.riddl.utils.{
+  Await,
+  Logger,
+  Logging,
+  PlatformContext,
+  StringLogger,
+  pc
+}
+
+import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.FiniteDuration
 
 case class RiddlIdeaPluginLogger(
     numWindow: Int
@@ -34,6 +46,7 @@ class RiddlPluginPlatformContext(numWindow: Int) extends JVMPlatformContext {
 
 object ParsingUtils {
   import ToolWindowUtils.*
+  import ManagerBasedGetterUtils.*
 
   def runCommandForWindow(
       numWindow: Int,
@@ -72,5 +85,32 @@ object ParsingUtils {
         }
       }
     updateToolWindowRunPane(numWindow, fromReload = true)
+  }
+
+  def runCommandForEditor(
+      numWindow: Int,
+      editorTextOpt: Option[String] = None
+  ): Unit = {
+    val state = getRiddlIdeaState(numWindow)
+
+    val rpi: RiddlParserInput = editorTextOpt match {
+      case Some(editorText) => RiddlParserInput(editorText, "")
+      case None if state.getTopLevelPath.isDefined =>
+        Await.result(
+          RiddlParserInput.fromPath(state.getTopLevelPath.get),
+          FiniteDuration(5, TimeUnit.SECONDS)
+        )
+      case None => return
+    }
+
+    pc.withLogger(StringLogger()) { _ =>
+      pc.withOptions(state.getCommonOptions) { _ =>
+        TopLevelParser.parseNebula(rpi) match {
+          case Right(_) => ()
+          case Left(msgs) =>
+            state.setMessagesForEditor(msgs)
+        }
+      }
+    }
   }
 }

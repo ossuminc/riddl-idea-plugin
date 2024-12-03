@@ -1,12 +1,15 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.options.Configurable
 import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
   FiniteDurationCommonOption,
   IntegerCommonOption
 }
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
+import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.*
+import com.ossuminc.riddl.plugins.idea.utils.highlightForErrorMessage
 import org.codehaus.groovy.control.ConfigurationException
 
 import java.io.File
@@ -25,19 +28,38 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
   override def isModified: Boolean = component.isModified
 
   override def apply(): Unit = {
+    println(numWindow)
     val windowState = getRiddlIdeaState(numWindow)
 
     windowState.setCommand(component.getPickedCommand)
 
-    val fileForPath = File(component.getConfFieldText)
+    if component.getTopLevelFieldText.endsWith(".riddl") then
+      val topLevelFile = File(component.getTopLevelFieldText)
+      if topLevelFile.exists() && topLevelFile.isFile
+      then
+        windowState.setTopLevelPath(component.getTopLevelFieldText)
+        runCommandForEditor(numWindow)
+        Thread.sleep(350)
+        windowState.getMessagesForEditor.foreach(msg =>
+          highlightForErrorMessage(windowState, msg)
+        )
+      else
+        windowState.appendRunOutput(
+          "The provided top-level file is invalid - cannot run on edit"
+        )
+
+    val confPath = File(component.getConfFieldText)
     if component.getPickedCommand == "from" &&
-      (fileForPath.exists() && fileForPath.isFile)
+      (confPath.exists() && confPath.isFile)
     then {
       windowState.setConfPath(Some(component.getConfFieldText))
 
       if windowState.getFromOptionsSeq.contains(component.getPickedFromOption)
       then windowState.setFromOption(component.getPickedFromOption)
       else windowState.setFromOptionsSeq(scala.collection.mutable.Seq())
+
+      windowState.clearRunOutput()
+      updateToolWindowRunPane(numWindow, fromReload = true)
     }
 
     component.getBooleanCommonOptions.foreach(option =>
@@ -83,6 +105,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
     else ConfigurationException("max-include-wait must be an integer")
 
     windowState.setAutoCompile(component.getAutoCompileValue)
+    windowState.clearRunOutput()
     updateToolWindowRunPane(numWindow, fromReload = true)
   }
 }

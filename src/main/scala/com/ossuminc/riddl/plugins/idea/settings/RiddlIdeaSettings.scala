@@ -1,5 +1,7 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
+import java.nio.file.Path
+import com.intellij.util.messages.MessageBusConnection
 import com.ossuminc.riddl.language.Messages.Message
 import com.ossuminc.riddl.plugins.idea.readFromOptionsFromConf
 
@@ -83,6 +85,7 @@ object RiddlIdeaSettings {
     private var riddlRunOutput: scala.collection.mutable.Seq[String] =
       scala.collection.mutable.Seq()
     private var autoCompileOnSave: Boolean = true
+    private var vfsConnection: Option[MessageBusConnection] = None
     private var command: String = commands.head
     private var commonOptions: CommonOptions = CommonOptions.empty.copy(
       noANSIMessages = true,
@@ -122,6 +125,9 @@ object RiddlIdeaSettings {
 
     def setAutoCompile(value: Boolean): Unit = autoCompileOnSave = value
     def getAutoCompile: Boolean = autoCompileOnSave
+
+    def setVFSConnection(connection: MessageBusConnection): Unit = vfsConnection = Some(connection)
+    def disconnectVFSListener(): Unit = vfsConnection.foreach(_.disconnect())
 
     def setCommand(newCommand: String): Unit =
       if commands.contains(newCommand) then command = newCommand

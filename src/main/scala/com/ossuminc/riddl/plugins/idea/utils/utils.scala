@@ -16,7 +16,10 @@ import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.util.ui.UIUtil
 import com.ossuminc.riddl.language.Messages
 import com.ossuminc.riddl.language.Messages.{Error, Warning}
-import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.plugins.idea.settings.{
+  HighlighterInfo,
+  RiddlIdeaSettings
+}
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getProject,
   getRiddlIdeaState
@@ -92,10 +95,7 @@ package object utils {
         s"$pathToFolderWithConf/$fileName"
       )
 
-    val fileEditorManager = FileEditorManager
-      .getInstance(getProject)
-    val editor = fileEditorManager.getSelectedTextEditor
-
+    val editor = selectedEditor
     if editor != null && file != null then
       val virtualFile =
         FileDocumentManager.getInstance().getFile(editor.getDocument)
@@ -105,7 +105,7 @@ package object utils {
     else None
   }
 
-  private def selectedEditor: Editor = {
+  def selectedEditor: Editor = {
     val fileEditorManager = FileEditorManager
       .getInstance(getProject)
     val editor = fileEditorManager.getSelectedTextEditor
@@ -115,97 +115,120 @@ package object utils {
 
   def highlightErrorMessagesForFile(
       state: RiddlIdeaSettings.State,
-      fileNameOrEditor: Either[Editor, String]
-  ): Unit = state.getMessages match {
-    case empty if empty.isEmpty =>
-      fileNameOrEditor.foreach { fileName =>
-        state
-          .getHighlightersForFile(fileName)
-          .foreach(hlInfo =>
-            EditorFactory
-              .getInstance()
-              .getAllEditors
-              .head
-              .getMarkupModel
-              .getAllHighlighters
-              .find { highlighter =>
-                highlighter.getStartOffset == hlInfo.startOffset &&
-                highlighter.getEndOffset == hlInfo.endOffset &&
-                highlighter.getLayer == hlInfo.layer
-              }
-              .foreach(hl =>
-                hl.setErrorStripeMarkColor(null)
-                hl.setErrorStripeTooltip(null)
-                selectedEditor.getMarkupModel.removeHighlighter(hl)
-              )
+      fileNameOrEditor: Either[Editor, String],
+      forConsole: Boolean = false
+  ): Unit = {
+    val fileName: String = fileNameOrEditor match {
+      case Right(fName) => fName
+      case Left(editor) =>
+        val path = Path.of(editor.getVirtualFile.getPath)
+        path.iterator().asScala.toSeq.takeRight(2).mkString("/")
+    }
+
+    state
+      .getHighlightersForFile(fileName)
+      .foreach { highlighterInfo =>
+        EditorFactory
+          .getInstance()
+          .getAllEditors
+          .find(editor =>
+            isFilePathBelowAnother(
+              editor.getVirtualFile.getPath,
+              state.getConfPath
+            )
           )
-        state.clearHighlightersForFile(fileName)
+          .foreach { editor =>
+            editor.getMarkupModel.getAllHighlighters
+              .find { highlighter =>
+                highlighter.getStartOffset == highlighterInfo.startOffset &&
+                highlighter.getEndOffset == highlighterInfo.endOffset &&
+                highlighter.getLayer == highlighterInfo.layer
+              }
+              .foreach(rangeHighlighter =>
+                rangeHighlighter.setErrorStripeMarkColor(null)
+                rangeHighlighter.setErrorStripeTooltip(null)
+                editor.getMarkupModel.removeHighlighter(rangeHighlighter)
+              )
+          }
       }
-    case output =>
-      output.foreach { msg =>
-        (fileNameOrEditor match {
-          case Right(fileName) =>
-            (
-              editorForError(state.getWindowNum, fileName),
-              Some(fileName)
-            )
-          case Left(editor) =>
-            (
-              Some(editor),
-              state.getTopLevelPath
-                .map { topPath =>
-                  val pathFromRoot: Seq[String] =
-                    editor.getVirtualFile.getPath
-                      .split(
-                        Path.of(topPath).getParent.toString
-                      )
-                      .toSeq
-                  if pathFromRoot.nonEmpty && pathFromRoot.length < 2 then
-                    pathFromRoot(1)
-                  else topPath
-                }
-            )
-        }) match {
-          case (Some(editor), Some(fileNameFromRoot)) =>
-            val markupModel: MarkupModel = editor.getMarkupModel
-            val highlighter: RangeHighlighter =
-              markupModel.addLineHighlighter(
-                msg.loc.line,
-                HighlighterLayer.WARNING,
-                new TextAttributes()
-              )
-            if msg.kind.severity == Error.severity then
-              val highlighter = markupModel.addLineHighlighter(
-                msg.loc.line,
-                HighlighterLayer.ERROR,
-                new TextAttributes()
-              )
+    state.clearHighlightersForFile(fileName)
 
-              highlighter.setErrorStripeMarkColor(
-                UIUtil.getErrorForeground
-              )
-              highlighter.setErrorStripeTooltip(
-                msg.message
-              )
-            else if msg.kind.severity == Warning.severity then
-              highlighter.setErrorStripeMarkColor(
-                UIUtil.getToolTipForeground
-              )
-              highlighter.setErrorStripeTooltip(
-                msg.message
-              )
-            state.saveHighlighterForFile(fileNameFromRoot, highlighter)
-          case _ => ()
-        }
+    (if forConsole then state.getMessagesForConsole
+     else state.getMessagesForEditor).foreach { msg =>
+      val thing = fileNameOrEditor match {
+        case Right(fileName) =>
+          (
+            editorForError(state.getWindowNum, fileName),
+            Some(fileName)
+          )
+        case Left(editor) =>
+          (
+            Some(editor),
+            state.getConfPath
+              .map { topPath =>
+                val pathFromRoot: Seq[String] =
+                  editor.getVirtualFile.getPath
+                    .split(
+                      Path.of(topPath).getParent.toString
+                    )
+                    .toSeq
+                if pathFromRoot.nonEmpty && pathFromRoot.length < 2 then
+                  pathFromRoot(1)
+                else topPath
+              }
+          )
       }
+      println(thing)
+      thing match {
+        case (Some(editor), Some(fileNameFromRoot)) =>
+          val markupModel: MarkupModel = editor.getMarkupModel
+          val highlighter: RangeHighlighter =
+            markupModel.addLineHighlighter(
+              msg.loc.line,
+              HighlighterLayer.WARNING,
+              new TextAttributes()
+            )
+          if msg.kind.severity == Error.severity then
+            val highlighter = markupModel.addLineHighlighter(
+              msg.loc.line,
+              HighlighterLayer.ERROR,
+              new TextAttributes()
+            )
+
+            highlighter.setErrorStripeMarkColor(
+              UIUtil.getErrorForeground
+            )
+            highlighter.setErrorStripeTooltip(
+              msg.format
+            )
+          else if msg.kind.severity == Warning.severity then
+            highlighter.setErrorStripeMarkColor(
+              UIUtil.getToolTipForeground
+            )
+            highlighter.setErrorStripeTooltip(
+              msg.format
+            )
+          state.saveHighlighterForFile(fileNameFromRoot, highlighter)
+        case _ => ()
+      }
+    }
   }
-}
 
-def readFromOptionsFromConf(path: String): Seq[String] = ConfigSource
-  .file(path)
-  .load[ConfigObject] match {
-  case Right(configObject) =>
-    configObject.keySet().iterator().asScala.toSeq
-  case Left(err) =>
-    Seq()
+  def isFilePathBelowAnother(
+      filePath: String,
+      otherPath: Option[String]
+  ): Boolean = otherPath.exists(path =>
+    filePath.startsWith(
+      Path.of(path).getParent.toString
+    )
+  )
+
+  def readFromOptionsFromConf(path: String): Seq[String] = ConfigSource
+    .file(path)
+    .load[ConfigObject] match {
+    case Right(configObject) =>
+      configObject.keySet().iterator().asScala.toSeq
+    case Left(_) =>
+      Seq()
+  }
 }

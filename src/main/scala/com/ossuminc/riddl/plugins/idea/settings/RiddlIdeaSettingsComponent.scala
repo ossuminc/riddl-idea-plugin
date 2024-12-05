@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.{JBCheckBox, JBLabel, JBPanel}
 import com.intellij.util.ui.FormBuilder
-import com.ossuminc.riddl.plugins.idea.readFromOptionsFromConf
+import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
   CommonOption,

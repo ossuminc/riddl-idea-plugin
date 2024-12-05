@@ -14,7 +14,7 @@ class RiddlTerminalConsole(
     project: Project
 ) extends ConsoleViewImpl(project, true) {
   def printMessages(): Unit = {
-    getRiddlIdeaState(numWindow).getMessages
+    getRiddlIdeaState(numWindow).getMessagesForConsole
       .foreach { msg =>
         linkToEditor(
           msg.loc.source.origin,

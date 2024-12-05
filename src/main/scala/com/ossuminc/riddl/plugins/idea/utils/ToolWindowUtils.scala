@@ -150,14 +150,21 @@ object ToolWindowUtils {
         console.printMessages()
       }
 
-      val statePath: String =
-        if state != null then state.getConfPath.getOrElse("")
-        else ""
-      val confFile = File(statePath)
+      def highlightMessages(): Unit = 
+        if isFilePathBelowAnother(
+            selectedEditor.getVirtualFile.getPath,
+            state.getConfPath
+          )
+        then highlightErrorMessagesForFile(state, Left(selectedEditor), true)
 
       val tabContent: Content = getToolWindowContent(numWindow)
       if tabContent.getTabName.isBlank then
         tabContent.setDisplayName(genWindowName(numWindow))
+        
+      val statePath: String =
+        if state != null then state.getConfPath.getOrElse("")
+        else ""
+      val confFile = File(statePath)
 
       if state != null && state.getCommand == "from" then
         if statePath == null || statePath.isBlank then
@@ -165,9 +172,11 @@ object ToolWindowUtils {
         else if state.getFromOption.isEmpty then
           writeToConsole("From command chosen, but no option has been chosen")
         else if confFile.exists() && confFile.isFile then
-          if state.getMessages.nonEmpty
-          then writeStateOutputToConsole()
-          else runCommandForWindow(numWindow, Some(statePath))
+          if state.getMessagesForConsole.nonEmpty
+          then
+            writeStateOutputToConsole()
+            highlightMessages()
+          else runCommandForConsole(numWindow, Some(statePath))
         else
           writeToConsole(
             s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
@@ -176,7 +185,7 @@ object ToolWindowUtils {
         if state.getRunOutput.nonEmpty then
           console.clear()
           state.getRunOutput.foreach(msg => writeToConsole(msg, false))
-        else if fromReload then runCommandForWindow(numWindow)
+        else if fromReload then runCommandForConsole(numWindow)
     }
 
     // enables auto-compiling
@@ -194,10 +203,10 @@ object ToolWindowUtils {
               ) && state.getAutoCompile && state.getCommand == "from"
             then
               state.clearRunOutput()
-              runCommandForWindow(numWindow, state.getConfPath)
+              runCommandForConsole(numWindow, state.getConfPath)
               updateToolWindowRunPane(numWindow, fromReload = true)
               if state.getTopLevelPath.isEmpty then
-                state.getMessagesForEditor
+                state.getMessagesForConsole
                   .foreach(msg =>
                     highlightErrorMessagesForFile(
                       state,

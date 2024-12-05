@@ -3,7 +3,7 @@ package com.ossuminc.riddl.plugins.idea.settings
 import java.nio.file.Path
 import com.intellij.util.messages.MessageBusConnection
 import com.ossuminc.riddl.language.Messages.Message
-import com.ossuminc.riddl.plugins.idea.readFromOptionsFromConf
+import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
 
 import com.intellij.openapi.editor.markup.{MarkupModel, RangeHighlighter}
 import com.intellij.openapi.components.{
@@ -97,15 +97,12 @@ object RiddlIdeaSettings {
         mutable.Seq
           .from(riddlConfPath.flatMap(readFromOptionsFromConf).toSeq)
       else mutable.Seq()
-    private val highlightersPerFile: mutable.Map[String, mutable.Seq[
+    private var highlightersPerFile: mutable.Map[String, mutable.Seq[
       HighlighterInfo
     ]] = mutable.Map.empty
 
-    private var messagesForRunWindow: mutable.Seq[Message] = mutable.Seq()
-
-    private var messagesForEditor: Seq[Message] = Seq()
-    private var errorHighlighters: Seq[RangeHighlighter] = Seq()
-    private var markupModelOpt: Option[MarkupModel] = None
+    private var messagesForConsole: mutable.Seq[Message] = mutable.Seq()
+    private var messagesForEditor: mutable.Seq[Message] = mutable.Seq()
 
     def getWindowNum: Int = windowNum
 
@@ -117,8 +114,6 @@ object RiddlIdeaSettings {
     )
     def getTopLevelPath: Option[String] = riddlTopLevelPath
 
-    def prependRunOutput(newOutput: String): Unit = riddlRunOutput =
-      newOutput +: riddlRunOutput
     def appendRunOutput(newOutput: String): Unit = riddlRunOutput :+= newOutput
     def clearRunOutput(): Unit = riddlRunOutput = scala.collection.mutable.Seq()
     def getRunOutput: scala.collection.mutable.Seq[String] = riddlRunOutput
@@ -137,24 +132,12 @@ object RiddlIdeaSettings {
     def setCommonOptions(newCOs: CommonOptions): Unit =
       commonOptions = newCOs
 
-    def getMessagesForEditor: Seq[Message] = messagesForEditor
-    def setMessagesForEditor(newMsgs: Seq[Message]): Unit =
+    def getMessagesForEditor: mutable.Seq[Message] = messagesForEditor
+    def setMessagesForEditor(newMsgs: mutable.Seq[Message]): Unit =
       messagesForEditor = newMsgs
-
-    def appendErrorHighlighter(
-        rangeHighlighter: RangeHighlighter
-    ): Seq[RangeHighlighter] =
-      errorHighlighters :+ rangeHighlighter
-    def clearErrorHighlighters(): Unit = {
-      markupModelOpt.foreach(mm =>
-        errorHighlighters.foreach(mm.removeHighlighter)
-      )
-      errorHighlighters = Seq()
-    }
-
-    def setMarkupModel(newModel: MarkupModel): Unit = markupModelOpt = Some(
-      newModel
-    )
+    def getMessagesForConsole: mutable.Seq[Message] = messagesForConsole
+    def setMessagesForConsole(newMsgs: mutable.Seq[Message]): Unit =
+      messagesForConsole = newMsgs
 
     def setFromOption(newFromOption: String): Unit = fromOption = Some(
       newFromOption
@@ -165,9 +148,6 @@ object RiddlIdeaSettings {
       fromOptionsSeq = newSeq
     def getFromOptionsSeq: scala.collection.mutable.Seq[String] = fromOptionsSeq
 
-    def getMessages: mutable.Seq[Message] = messagesForRunWindow
-    def setMessages(newMsgs: mutable.Seq[Message]): Unit = messagesForRunWindow = newMsgs
-
     def saveHighlighterForFile(
         fileName: String,
         highlighter: RangeHighlighter
@@ -176,17 +156,16 @@ object RiddlIdeaSettings {
         fileName
       ) :+ HighlighterInfo.fromRangeHighlighter(highlighter))
     )
-
     def getHighlightersForFile(
         fileName: String
     ): mutable.Seq[HighlighterInfo] =
       highlightersPerFile.getOrElse(fileName, mutable.Seq())
-
     def clearHighlightersForFile(fileName: String): Unit = {
       println(highlightersPerFile)
       println(fileName)
       highlightersPerFile -= fileName
     }
+    def clearAllHighlighters(): Unit = highlightersPerFile = mutable.Map()
   }
 
   private val commands = mutable.Seq("from", "about", "info")

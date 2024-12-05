@@ -40,7 +40,7 @@ object ParsingUtils {
   import ToolWindowUtils.*
   import ManagerBasedGetterUtils.*
 
-  def runCommandForWindow(
+  def runCommandForConsole(
       numWindow: Int,
       confFile: Option[String] = None
   ): Unit = {
@@ -48,14 +48,13 @@ object ParsingUtils {
 
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
     windowState.clearRunOutput()
-    windowState.setMessages(mutable.Seq())
+    windowState.setMessagesForConsole(mutable.Seq())
     windowState.clearRunOutput()
 
     if windowState.getCommand.nonEmpty && (
         (windowState.getCommand != "from" &&
           Seq("about", "info").contains(windowState.getCommand)) ||
-          (windowState.getCommand == "from" &&
-            (confFile.isDefined || windowState.getFromOption.isDefined))
+          (windowState.getCommand == "from" && confFile.isDefined && windowState.getFromOption.isDefined)
       )
     then
       io.withOptions(windowState.getCommonOptions) { _ =>
@@ -64,18 +63,17 @@ object ParsingUtils {
             windowState.getCommand,
             confFile.getOrElse(""),
             if windowState.getCommand == "from" then
-              windowState.getFromOption.getOrElse("")
+              windowState.getFromOption.get
             else ""
           ).filter(_.nonEmpty)
         ) match {
           case Right(result) =>
-            println("Right: " + result.outputs.messages)
-            windowState.setMessages(mutable.Seq.from(result.messages))
+            windowState.setMessagesForConsole(mutable.Seq.from(result.messages))
           case Left(msgs) =>
-            println("Left: " + msgs.mkString("\n"))
-            windowState.setMessages(mutable.Seq.from(msgs))
+            windowState.setMessagesForConsole(mutable.Seq.from(msgs))
         }
       }
+    Thread.sleep(100)
     updateToolWindowRunPane(numWindow, fromReload = true)
   }
 
@@ -98,11 +96,13 @@ object ParsingUtils {
     pc.withLogger(StringLogger()) { _ =>
       pc.withOptions(state.getCommonOptions) { _ =>
         TopLevelParser.parseNebula(rpi) match {
-          case Right(_) => ()
+          case Right(_) =>
+            ()
           case Left(msgs) =>
             state.setMessagesForEditor(mutable.Seq.from(msgs))
         }
       }
     }
+    Thread.sleep(100)
   }
 }

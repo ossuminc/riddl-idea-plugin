@@ -7,7 +7,10 @@ import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
   IntegerCommonOption
 }
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
-import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
+import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.{
+  runCommandForConsole,
+  runCommandForEditor
+}
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.{
   displayNotification,
@@ -56,13 +59,9 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
       (confPath.exists() && confPath.isFile)
     then
       windowState.setConfPath(Some(component.getConfFieldText))
-
       if windowState.getFromOptionsSeq.contains(component.getPickedFromOption)
       then windowState.setFromOption(component.getPickedFromOption)
       else windowState.setFromOptionsSeq(scala.collection.mutable.Seq())
-
-      windowState.clearRunOutput()
-      updateToolWindowRunPane(numWindow, fromReload = true)
 
     component.getBooleanCommonOptions.foreach(option =>
       windowState.setCommonOptions(

@@ -24,10 +24,7 @@ import com.ossuminc.riddl.language.AST.{
 import com.ossuminc.riddl.language.{At, Messages}
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
-import com.ossuminc.riddl.plugins.idea.utils.{
-  highlightErrorMessagesForFile,
-  isFilePathBelowAnother
-}
+import com.ossuminc.riddl.plugins.idea.utils.isFilePathBelowAnother
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaStates
 import com.ossuminc.riddl.utils.StringLogger

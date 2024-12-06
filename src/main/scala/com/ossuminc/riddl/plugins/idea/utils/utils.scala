@@ -119,7 +119,8 @@ package object utils {
       forConsole: Boolean = false
   ): Unit = {
     val fileName: String = fileNameOrEditor match {
-      case Right(fName) => fName
+      case Right(fName) =>
+        fName
       case Left(editor) =>
         val path = Path.of(editor.getVirtualFile.getPath)
         path.iterator().asScala.toSeq.takeRight(2).mkString("/")
@@ -135,7 +136,7 @@ package object utils {
             isFilePathBelowAnother(
               editor.getVirtualFile.getPath,
               state.getConfPath
-            )
+            ) && editor.getVirtualFile.getPath.endsWith(fileName)
           )
           .foreach { editor =>
             editor.getMarkupModel.getAllHighlighters
@@ -155,62 +156,63 @@ package object utils {
 
     (if forConsole then state.getMessagesForConsole
      else state.getMessagesForEditor).foreach { msg =>
-      val thing = fileNameOrEditor match {
-        case Right(fileName) =>
-          (
-            editorForError(state.getWindowNum, fileName),
-            Some(fileName)
-          )
-        case Left(editor) =>
-          (
-            Some(editor),
-            state.getConfPath
-              .map { topPath =>
-                val pathFromRoot: Seq[String] =
-                  editor.getVirtualFile.getPath
-                    .split(
-                      Path.of(topPath).getParent.toString
-                    )
-                    .toSeq
-                if pathFromRoot.nonEmpty && pathFromRoot.length < 2 then
-                  pathFromRoot(1)
-                else topPath
-              }
-          )
-      }
-      println(thing)
-      thing match {
-        case (Some(editor), Some(fileNameFromRoot)) =>
-          val markupModel: MarkupModel = editor.getMarkupModel
+      val msgFileName = msg.loc.source.origin
+      if fileNameOrEditor.exists(_ == msgFileName) || fileNameOrEditor.isLeft
+      then
+        (fileNameOrEditor match {
+          case Right(fName) if fName.endsWith(msgFileName) =>
+            editorForError(state.getWindowNum, fName)
+          case Left(editor)
+              if editor.getVirtualFile.getPath.endsWith(msgFileName) =>
+            Some(editor)
+          case _ => None
+        }).foreach(editor =>
           val highlighter: RangeHighlighter =
-            markupModel.addLineHighlighter(
-              msg.loc.line,
-              HighlighterLayer.WARNING,
-              new TextAttributes()
-            )
-          if msg.kind.severity == Error.severity then
-            val highlighter = markupModel.addLineHighlighter(
-              msg.loc.line,
-              HighlighterLayer.ERROR,
-              new TextAttributes()
-            )
-
-            highlighter.setErrorStripeMarkColor(
-              UIUtil.getErrorForeground
-            )
-            highlighter.setErrorStripeTooltip(
-              msg.format
-            )
-          else if msg.kind.severity == Warning.severity then
-            highlighter.setErrorStripeMarkColor(
-              UIUtil.getToolTipForeground
-            )
-            highlighter.setErrorStripeTooltip(
-              msg.format
-            )
-          state.saveHighlighterForFile(fileNameFromRoot, highlighter)
-        case _ => ()
-      }
+            if msg.kind.severity == Error.severity then {
+              val hl: RangeHighlighter =
+                editor.getMarkupModel.addLineHighlighter(
+                  msg.loc.line,
+                  HighlighterLayer.ERROR,
+                  new TextAttributes()
+                )
+              hl.setErrorStripeMarkColor(
+                UIUtil.getErrorForeground
+              )
+              hl.setErrorStripeTooltip(
+                msg.format
+              )
+              hl
+            } else if msg.kind.severity == Warning.severity then {
+              val hl: RangeHighlighter =
+                editor.getMarkupModel.addLineHighlighter(
+                  msg.loc.line,
+                  HighlighterLayer.WARNING,
+                  new TextAttributes()
+                )
+              hl.setErrorStripeMarkColor(
+                UIUtil.getToolTipForeground
+              )
+              hl.setErrorStripeTooltip(
+                msg.format
+              )
+              hl
+            } else {
+              val hl: RangeHighlighter =
+                editor.getMarkupModel.addLineHighlighter(
+                  msg.loc.line,
+                  HighlighterLayer.SYNTAX,
+                  new TextAttributes()
+                )
+              hl.setErrorStripeMarkColor(
+                UIUtil.getToolTipForeground
+              )
+              hl.setErrorStripeTooltip(
+                msg.format
+              )
+              hl
+            }
+          state.saveHighlighterForFile(msgFileName, highlighter)
+        )
     }
   }
 

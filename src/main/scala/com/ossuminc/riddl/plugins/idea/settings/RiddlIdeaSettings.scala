@@ -160,11 +160,8 @@ object RiddlIdeaSettings {
         fileName: String
     ): mutable.Seq[HighlighterInfo] =
       highlightersPerFile.getOrElse(fileName, mutable.Seq())
-    def clearHighlightersForFile(fileName: String): Unit = {
-      println(highlightersPerFile)
-      println(fileName)
+    def clearHighlightersForFile(fileName: String): Unit =
       highlightersPerFile -= fileName
-    }
     def clearAllHighlighters(): Unit = highlightersPerFile = mutable.Map()
   }
 

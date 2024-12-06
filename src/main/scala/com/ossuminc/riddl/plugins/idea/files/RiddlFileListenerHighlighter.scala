@@ -41,7 +41,13 @@ class RiddlFileListenerHighlighter extends FileEditorManagerListener {
             utils.highlightKeywords(doc.getText, textEditor.getEditor)
             getRiddlIdeaStates.allStates
               .foreach((_, state) =>
-                highlightErrorMessagesForFile(state, Right(file.getName))
+                if state.getConfPath.isDefined || state.getTopLevelPath.isDefined
+                then
+                  highlightErrorMessagesForFile(
+                    state,
+                    Right(file.getName),
+                    state.getConfPath.isDefined
+                  )
               )
         }
       }

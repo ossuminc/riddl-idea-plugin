@@ -3,7 +3,10 @@ package com.ossuminc.riddl.plugins.idea.files
 import com.intellij.openapi.editor.event.{DocumentEvent, DocumentListener}
 import com.intellij.openapi.editor.EditorFactory
 import com.ossuminc.riddl.plugins.idea.files.utils.highlightKeywords
-import com.ossuminc.riddl.plugins.idea.utils.highlightErrorMessagesForFile
+import com.ossuminc.riddl.plugins.idea.utils.{
+  highlightErrorMessagesForFile,
+  isFilePathBelowAnother
+}
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
 
@@ -16,16 +19,13 @@ class RiddlDocumentListener extends DocumentListener {
     if editors.nonEmpty && doc.getText.nonEmpty then
       editors.map { editor =>
         if editor.getVirtualFile != null then
-          val editorFilePath = editor.getVirtualFile.getPath
-
           highlightKeywords(editor.getDocument.getText, editor)
 
           getRiddlIdeaStates.allStates.values.toSeq
             .filter { state =>
-              state.getTopLevelPath.exists(path =>
-                editorFilePath.startsWith(
-                  Path.of(path).getParent.toString
-                )
+              isFilePathBelowAnother(
+                editor.getVirtualFile.getPath,
+                state.getTopLevelPath
               )
             }
             .foreach { state =>
@@ -33,9 +33,7 @@ class RiddlDocumentListener extends DocumentListener {
                 state.getWindowNum,
                 Some(event.getDocument.getText)
               )
-              Thread.sleep(350)
               highlightErrorMessagesForFile(state, Left(editor))
-
             }
       }
   }

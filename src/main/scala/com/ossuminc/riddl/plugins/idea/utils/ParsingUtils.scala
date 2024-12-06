@@ -41,8 +41,7 @@ object ParsingUtils {
   import ManagerBasedGetterUtils.*
 
   def runCommandForConsole(
-      numWindow: Int,
-      confFile: Option[String] = None
+      numWindow: Int
   ): Unit = {
     given io: PlatformContext = RiddlPluginPlatformContext(numWindow)
 
@@ -52,16 +51,22 @@ object ParsingUtils {
     windowState.clearRunOutput()
 
     if windowState.getCommand.nonEmpty && (
-        (windowState.getCommand != "from" &&
-          Seq("about", "info").contains(windowState.getCommand)) ||
-          (windowState.getCommand == "from" && confFile.isDefined && windowState.getFromOption.isDefined)
+        (windowState.getCommand != "from" && 
+          Seq("about", "info").contains(
+            windowState.getCommand
+          )
+        ) || (
+          windowState.getCommand == "from" &&
+            windowState.getConfPath.isDefined && 
+            windowState.getFromOption.isDefined
+        )
       )
     then
       io.withOptions(windowState.getCommonOptions) { _ =>
         Commands.runCommandWithArgs(
           Array(
             windowState.getCommand,
-            confFile.getOrElse(""),
+            windowState.getConfPath.getOrElse(""),
             if windowState.getCommand == "from" then
               windowState.getFromOption.get
             else ""

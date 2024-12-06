@@ -150,7 +150,7 @@ object ToolWindowUtils {
         console.printMessages()
       }
 
-      def highlightMessages(): Unit = 
+      def highlightMessages(): Unit =
         if isFilePathBelowAnother(
             selectedEditor.getVirtualFile.getPath,
             state.getConfPath
@@ -160,7 +160,7 @@ object ToolWindowUtils {
       val tabContent: Content = getToolWindowContent(numWindow)
       if tabContent.getTabName.isBlank then
         tabContent.setDisplayName(genWindowName(numWindow))
-        
+
       val statePath: String =
         if state != null then state.getConfPath.getOrElse("")
         else ""
@@ -176,7 +176,15 @@ object ToolWindowUtils {
           then
             writeStateOutputToConsole()
             highlightMessages()
-          else runCommandForConsole(numWindow, Some(statePath))
+          else
+            runCommandForConsole(numWindow)
+            FileEditorManager
+              .getInstance(project)
+              .getSelectedFiles
+              .foreach(file =>
+                if isFilePathBelowAnother(file.getName, Some(statePath)) then
+                  highlightErrorMessagesForFile(state, Right(file.getName))
+              )
         else
           writeToConsole(
             s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
@@ -202,16 +210,20 @@ object ToolWindowUtils {
                 _.isFromSave
               ) && state.getAutoCompile && state.getCommand == "from"
             then
+              runCommandForConsole(numWindow)
               state.clearRunOutput()
-              runCommandForConsole(numWindow, state.getConfPath)
               updateToolWindowRunPane(numWindow, fromReload = true)
-              if state.getTopLevelPath.isEmpty then
+              if state.getConfPath.isDefined then
                 state.getMessagesForConsole
                   .foreach(msg =>
-                    highlightErrorMessagesForFile(
-                      state,
-                      Right(msg.loc.source.origin)
-                    )
+                    if events.asScala.exists(
+                        _.getFile.getPath.endsWith(msg.loc.source.origin)
+                      )
+                    then
+                      highlightErrorMessagesForFile(
+                        state,
+                        Right(msg.loc.source.origin)
+                      )
                   )
           }
         }
@@ -221,13 +233,6 @@ object ToolWindowUtils {
       console.getComponent,
       createGBCs(1, 0, 1, 1, GridBagConstraints.BOTH)
     )
-
-    FileEditorManager
-      .getInstance(project)
-      .getSelectedFiles
-      .foreach(file =>
-        highlightErrorMessagesForFile(state, Right(file.getName))
-      )
   }
 
   private def getContentManager: ContentManager = ToolWindowManager

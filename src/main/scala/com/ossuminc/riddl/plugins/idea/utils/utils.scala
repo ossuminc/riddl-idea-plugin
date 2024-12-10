@@ -120,15 +120,16 @@ package object utils {
       fileNameOrEditor: Either[Editor, String],
       forConsole: Boolean = false
   ): Unit = {
-    val (fileName, editor): (String, Option[Editor]) = fileNameOrEditor match {
-      case Right(fName) =>
-        (fName, editorForErroneousFile(state.getWindowNum, fName))
-      case Left(editor) =>
-        (
-          new File(editor.getVirtualFile.getPath).getName,
-          Some(editor)
-        )
-    }
+    val (fileName, editorOpt): (String, Option[Editor]) =
+      fileNameOrEditor match {
+        case Right(fName) =>
+          (fName, editorForErroneousFile(state.getWindowNum, fName))
+        case Left(editor) =>
+          (
+            new File(editor.getVirtualFile.getPath).getName,
+            Some(editor)
+          )
+      }
 
     state
       .getHighlightersForFile(fileName)
@@ -136,13 +137,14 @@ package object utils {
         EditorFactory
           .getInstance()
           .getAllEditors
-          .find(editor =>
+          .filter(_.getVirtualFile != null)
+          .find { editor =>
             val editorFilePath = editor.getVirtualFile.getPath
             editorFilePath != null && isFilePathBelowAnother(
               editorFilePath,
               state.getConfPath
             ) && editorFilePath.endsWith(fileName)
-          )
+          }
           .foreach { editor =>
             editor.getMarkupModel.getAllHighlighters
               .find { highlighter =>
@@ -163,12 +165,12 @@ package object utils {
     (if forConsole then state.getMessagesForConsole
      else state.getMessagesForEditor)
       .find((msgFileName, _) =>
-        editor.exists(
+        editorOpt.exists(
           _.getVirtualFile.getPath.endsWith(msgFileName)
         )
       )
       .foreach { (msgFileName, msgs) =>
-        editor.foreach { editor =>
+        editorOpt.foreach { editor =>
           msgs
             .foreach { msg =>
               val highlighter: RangeHighlighter =

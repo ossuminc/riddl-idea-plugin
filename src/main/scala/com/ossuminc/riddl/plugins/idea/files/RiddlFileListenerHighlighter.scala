@@ -9,7 +9,10 @@ import com.intellij.openapi.fileEditor.{
 }
 import com.intellij.openapi.vfs.VirtualFile
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
+import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.{
+  runCommandForConsole,
+  runCommandForEditor
+}
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getProject,
   getRiddlIdeaStates
@@ -35,13 +38,11 @@ class RiddlFileListenerHighlighter extends FileEditorManagerListener {
   private def relativizeLeafToRunPath(
       state: RiddlIdeaSettings.State,
       leafPath: String
-  ): Option[String] = (state.getTopLevelPath match {
-    case Some(topPath) => Some(Path.of(topPath).getParent)
-    case None =>
-      state.getConfPath.map(confPath => Path.of(confPath).getParent)
-  }).map { folderPath =>
-    folderPath.relativize(Path.of(leafPath)).toString
-  }
+  ): Option[String] =
+    state.getTopLevelPath
+      .map(topPath => Path.of(topPath).getParent)
+      .orElse(state.getConfPath.map(confPath => Path.of(confPath).getParent))
+      .map(_.relativize(Path.of(leafPath)).toString)
 
   private def highlightKeywordsAndErrors(
       source: FileEditorManager,

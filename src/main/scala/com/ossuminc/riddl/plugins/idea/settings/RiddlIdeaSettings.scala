@@ -1,11 +1,10 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import java.nio.file.Path
 import com.intellij.util.messages.MessageBusConnection
 import com.ossuminc.riddl.language.Messages.Message
 import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
 
-import com.intellij.openapi.editor.markup.{MarkupModel, RangeHighlighter}
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.components.{
   PersistentStateComponent,
   Storage,
@@ -101,8 +100,12 @@ object RiddlIdeaSettings {
       HighlighterInfo
     ]] = mutable.Map.empty
 
-    private var messagesForConsole: mutable.Seq[Message] = mutable.Seq()
-    private var messagesForEditor: mutable.Seq[Message] = mutable.Seq()
+    private var messagesForConsole: mutable.Map[String, mutable.Seq[
+      Message
+    ]] = mutable.Map()
+    private var messagesForEditor: mutable.Map[String, mutable.Seq[
+      Message
+    ]] = mutable.Map()
 
     def getWindowNum: Int = windowNum
 
@@ -118,8 +121,8 @@ object RiddlIdeaSettings {
     def clearRunOutput(): Unit = riddlRunOutput = scala.collection.mutable.Seq()
     def getRunOutput: scala.collection.mutable.Seq[String] = riddlRunOutput
 
-    def setAutoCompile(value: Boolean): Unit = autoCompileOnSave = value
-    def getAutoCompile: Boolean = autoCompileOnSave
+    def setAutoParse(value: Boolean): Unit = autoCompileOnSave = value
+    def getAutoParse: Boolean = autoCompileOnSave
 
     def setVFSConnection(connection: MessageBusConnection): Unit = vfsConnection = Some(connection)
     def disconnectVFSListener(): Unit = vfsConnection.foreach(_.disconnect())
@@ -132,12 +135,14 @@ object RiddlIdeaSettings {
     def setCommonOptions(newCOs: CommonOptions): Unit =
       commonOptions = newCOs
 
-    def getMessagesForEditor: mutable.Seq[Message] = messagesForEditor
-    def setMessagesForEditor(newMsgs: mutable.Seq[Message]): Unit =
-      messagesForEditor = newMsgs
-    def getMessagesForConsole: mutable.Seq[Message] = messagesForConsole
+    def hasMessages: Boolean = messagesForConsole.nonEmpty || messagesForEditor.nonEmpty
+
+    def getMessagesForEditor: mutable.Map[String, mutable.Seq[Message]] = messagesForEditor
+    def setMessagesForEditor(fileName: String, newMsgs: mutable.Seq[Message]): Unit =
+      messagesForEditor += fileName -> newMsgs
+    def getMessagesForConsole: mutable.Map[String, mutable.Seq[Message]] = messagesForConsole
     def setMessagesForConsole(newMsgs: mutable.Seq[Message]): Unit =
-      messagesForConsole = newMsgs
+      messagesForConsole ++= newMsgs.groupBy(_.loc.source.origin)
 
     def setFromOption(newFromOption: String): Unit = fromOption = Some(
       newFromOption

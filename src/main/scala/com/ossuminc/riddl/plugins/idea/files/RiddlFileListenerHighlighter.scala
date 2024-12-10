@@ -8,11 +8,15 @@ import com.intellij.openapi.fileEditor.{
   TextEditor
 }
 import com.intellij.openapi.vfs.VirtualFile
+import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
+import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
   getProject,
   getRiddlIdeaStates
 }
 import com.ossuminc.riddl.plugins.idea.utils.highlightErrorMessagesForFile
+
+import java.nio.file.Path
 
 class RiddlFileListenerHighlighter extends FileEditorManagerListener {
   override def fileOpened(
@@ -28,6 +32,17 @@ class RiddlFileListenerHighlighter extends FileEditorManagerListener {
         event.getNewFile
       )
 
+  private def relativizeLeafToRunPath(
+      state: RiddlIdeaSettings.State,
+      leafPath: String
+  ): Option[String] = (state.getTopLevelPath match {
+    case Some(topPath) => Some(Path.of(topPath).getParent)
+    case None =>
+      state.getConfPath.map(confPath => Path.of(confPath).getParent)
+  }).map { folderPath =>
+    folderPath.relativize(Path.of(leafPath)).toString
+  }
+
   private def highlightKeywordsAndErrors(
       source: FileEditorManager,
       file: VirtualFile
@@ -41,13 +56,18 @@ class RiddlFileListenerHighlighter extends FileEditorManagerListener {
             utils.highlightKeywords(doc.getText, textEditor.getEditor)
             getRiddlIdeaStates.allStates
               .foreach((_, state) =>
-                if state.getConfPath.isDefined || state.getTopLevelPath.isDefined
-                then
-                  highlightErrorMessagesForFile(
-                    state,
-                    Right(file.getName),
-                    state.getConfPath.isDefined
-                  )
+                relativizeLeafToRunPath(state, file.getPath).foreach(
+                  relativePath =>
+                    if state.getTopLevelPath.isDefined then
+                      runCommandForEditor(state.getWindowNum)
+                    if state.hasMessages
+                    then
+                      highlightErrorMessagesForFile(
+                        state,
+                        Right(relativePath),
+                        state.getConfPath.isDefined
+                      )
+                )
               )
         }
       }

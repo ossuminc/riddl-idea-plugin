@@ -1,12 +1,6 @@
 package com.ossuminc.riddl.plugins.idea.files
 
-import com.intellij.openapi.fileEditor.{
-  FileDocumentManager,
-  FileEditorManager,
-  TextEditor
-}
 import com.intellij.openapi.editor.{DefaultLanguageHighlighterColors, Editor}
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.editor.markup.{
   HighlighterLayer,
   HighlighterTargetArea

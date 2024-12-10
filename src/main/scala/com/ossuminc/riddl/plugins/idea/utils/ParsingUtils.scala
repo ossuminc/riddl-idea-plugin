@@ -48,16 +48,14 @@ object ParsingUtils {
     val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
     windowState.clearRunOutput()
     windowState.setMessagesForConsole(mutable.Seq())
-    windowState.clearRunOutput()
 
     if windowState.getCommand.nonEmpty && (
-        (windowState.getCommand != "from" && 
+        (windowState.getCommand != "from" &&
           Seq("about", "info").contains(
             windowState.getCommand
-          )
-        ) || (
+          )) || (
           windowState.getCommand == "from" &&
-            windowState.getConfPath.isDefined && 
+            windowState.getConfPath.isDefined &&
             windowState.getFromOption.isDefined
         )
       )
@@ -67,9 +65,12 @@ object ParsingUtils {
           Array(
             windowState.getCommand,
             windowState.getConfPath.getOrElse(""),
-            if windowState.getCommand == "from" then
-              windowState.getFromOption.get
-            else ""
+            windowState.getFromOption
+              .map(fromOption =>
+                if windowState.getCommand == "from" then fromOption
+                else ""
+              )
+              .getOrElse("")
           ).filter(_.nonEmpty)
         ) match {
           case Right(result) =>
@@ -84,12 +85,12 @@ object ParsingUtils {
 
   def runCommandForEditor(
       numWindow: Int,
-      editorTextOpt: Option[String] = None
+      editorTextWithFileNameOpt: Option[(String, String)] = None
   ): Unit = {
     val state = getRiddlIdeaState(numWindow)
 
-    val rpi: RiddlParserInput = editorTextOpt match {
-      case Some(editorText) => RiddlParserInput(editorText, "")
+    val rpi: RiddlParserInput = editorTextWithFileNameOpt match {
+      case Some((editorText, _)) => RiddlParserInput(editorText, "")
       case None if state.getTopLevelPath.isDefined =>
         Await.result(
           RiddlParserInput.fromPath(state.getTopLevelPath.get),
@@ -104,10 +105,18 @@ object ParsingUtils {
           case Right(_) =>
             ()
           case Left(msgs) =>
-            state.setMessagesForEditor(mutable.Seq.from(msgs))
+            editorTextWithFileNameOpt match {
+              case Some((_, fileName)) =>
+                state.setMessagesForEditor(fileName, mutable.Seq.from(msgs))
+              case None =>
+                msgs
+                  .groupBy(_.loc.source.origin)
+                  .map(tup => (tup._1, mutable.Seq.from(tup._2)))
+                  .foreach(state.setMessagesForEditor.tupled)
+            }
         }
       }
     }
-    Thread.sleep(100)
+    Thread.sleep(200)
   }
 }

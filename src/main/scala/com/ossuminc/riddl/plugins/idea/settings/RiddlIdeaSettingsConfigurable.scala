@@ -1,16 +1,12 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.options.Configurable
 import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
   FiniteDurationCommonOption,
   IntegerCommonOption
 }
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
-import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.{
-  runCommandForConsole,
-  runCommandForEditor
-}
+import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.{
   displayNotification,
@@ -111,7 +107,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
       (confPath.exists() && confPath.isFile)
     then windowState.clearAllHighlighters()
 
-    windowState.setAutoCompile(component.getAutoCompileValue)
+    windowState.setAutoParse(component.getAutoParseValue)
     windowState.clearRunOutput()
     updateToolWindowRunPane(numWindow, fromReload = true)
   }

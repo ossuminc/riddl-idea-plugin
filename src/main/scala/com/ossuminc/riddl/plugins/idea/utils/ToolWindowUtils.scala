@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.openapi.fileEditor.FileEditorManager
 
 import scala.jdk.CollectionConverters.*
 import java.awt.GridBagConstraints
@@ -176,15 +175,7 @@ object ToolWindowUtils {
           then
             writeStateOutputToConsole()
             highlightMessages()
-          else
-            runCommandForConsole(numWindow)
-            FileEditorManager
-              .getInstance(project)
-              .getSelectedFiles
-              .foreach(file =>
-                if isFilePathBelowAnother(file.getName, Some(statePath)) then
-                  highlightErrorMessagesForFile(state, Right(file.getName))
-              )
+          else runCommandForConsole(numWindow)
         else
           writeToConsole(
             s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
@@ -208,23 +199,11 @@ object ToolWindowUtils {
           override def after(events: java.util.List[? <: VFileEvent]): Unit = {
             if events.asScala.toSeq.exists(
                 _.isFromSave
-              ) && state.getAutoCompile && state.getCommand == "from"
+              ) && state.getAutoParse && state.getCommand == "from"
             then
-              runCommandForConsole(numWindow)
               state.clearRunOutput()
+              runCommandForConsole(numWindow)
               updateToolWindowRunPane(numWindow, fromReload = true)
-              if state.getConfPath.isDefined then
-                state.getMessagesForConsole
-                  .foreach(msg =>
-                    if events.asScala.exists(
-                        _.getFile.getPath.endsWith(msg.loc.source.origin)
-                      )
-                    then
-                      highlightErrorMessagesForFile(
-                        state,
-                        Right(msg.loc.source.origin)
-                      )
-                  )
           }
         }
       )

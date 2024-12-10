@@ -7,14 +7,14 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
 import com.intellij.ui.awt.RelativePoint
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
-import com.ossuminc.riddl.plugins.idea.utils.editorForError
+import com.ossuminc.riddl.plugins.idea.utils.editorForErroneousFile
 
 class RiddlTerminalConsole(
     numWindow: Int,
     project: Project
 ) extends ConsoleViewImpl(project, true) {
   def printMessages(): Unit = {
-    getRiddlIdeaState(numWindow).getMessagesForConsole
+    getRiddlIdeaState(numWindow).getMessagesForConsole.values.toSeq.flatten
       .foreach { msg =>
         linkToEditor(
           msg.loc.source.origin,
@@ -36,7 +36,7 @@ class RiddlTerminalConsole(
       lineNumber: Int,
       charPosition: Int
   ): Unit = {
-    val editor = editorForError(numWindow, fileName)
+    val editor = editorForErroneousFile(numWindow, fileName)
 
     val hyperlinkInfo = new HyperlinkInfoBase {
       override def navigate(
@@ -45,8 +45,8 @@ class RiddlTerminalConsole(
       ): Unit = if editor.isDefined then {
         val logicalPosition =
           new LogicalPosition(
-            lineNumber - 1,
-            charPosition - 1
+            lineNumber,
+            charPosition
           )
         editor.foreach(
           _.getCaretModel.moveToLogicalPosition(logicalPosition)

@@ -10,8 +10,6 @@ import com.ossuminc.riddl.plugins.idea.utils.{
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
 
-import java.nio.file.Path
-
 class RiddlDocumentListener extends DocumentListener {
   override def documentChanged(event: DocumentEvent): Unit = {
     val doc = event.getDocument
@@ -22,7 +20,7 @@ class RiddlDocumentListener extends DocumentListener {
           highlightKeywords(editor.getDocument.getText, editor)
 
           getRiddlIdeaStates.allStates.values.toSeq
-            .filter { state =>
+            .find { state =>
               isFilePathBelowAnother(
                 editor.getVirtualFile.getPath,
                 state.getTopLevelPath
@@ -31,9 +29,10 @@ class RiddlDocumentListener extends DocumentListener {
             .foreach { state =>
               runCommandForEditor(
                 state.getWindowNum,
-                Some(event.getDocument.getText)
+                Some((event.getDocument.getText, editor.getVirtualFile.getPath))
               )
-              highlightErrorMessagesForFile(state, Left(editor))
+              if state.getMessagesForEditor.nonEmpty
+              then highlightErrorMessagesForFile(state, Left(editor))
             }
       }
   }

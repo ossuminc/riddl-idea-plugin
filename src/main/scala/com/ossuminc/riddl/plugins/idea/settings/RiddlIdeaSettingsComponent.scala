@@ -202,7 +202,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   finiteDurationOptionRow.add(finiteDurationLabel)
   commonOptionsPanel.add(finiteDurationOptionRow)
 
-  private var autoCompileValue: Boolean = state.getAutoCompile
+  private var autoParseValue: Boolean = state.getAutoParse
 
   private val riddlSettingsPanel = new JBPanel()
 
@@ -342,29 +342,29 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         .addComponentFillVertically(new JPanel(), 0)
         .addComponent(fromOptionPicker)
 
-    val autoCompileCheckBox: JBCheckBox = JBCheckBox()
+    val autoParseCheckBox: JBCheckBox = JBCheckBox()
     riddlFormBuilder
       .addComponentFillVertically(new JPanel(), 0)
       .addLabeledComponent(
-        "Automatically re-compile on save",
-        autoCompileCheckBox
+        "Automatically re-parse on save",
+        autoParseCheckBox
       )
 
-    autoCompileCheckBox.setSelected(autoCompileValue)
+    autoParseCheckBox.setSelected(autoParseValue)
 
-    val autoCompileListener = new ItemListener {
+    val autoParseListener = new ItemListener {
       def itemStateChanged(e: ItemEvent): Unit =
-        autoCompileValue = !autoCompileValue
+        autoParseValue = !autoParseValue
     }
 
-    def newAutoCompileListener(): Unit =
-      autoCompileCheckBox.addItemListener(autoCompileListener)
+    def newAutoParseListener(): Unit =
+      autoParseCheckBox.addItemListener(autoParseListener)
 
-    if !autoCompileCheckBox.getItemListeners.isEmpty then
-      autoCompileCheckBox.getItemListeners.foreach(
-        autoCompileCheckBox.removeItemListener
+    if !autoParseCheckBox.getItemListeners.isEmpty then
+      autoParseCheckBox.getItemListeners.foreach(
+        autoParseCheckBox.removeItemListener
       )
-    newAutoCompileListener()
+    newAutoParseListener()
   }
 
   createComponent()
@@ -377,12 +377,12 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   def isModified: Boolean =
     areAnyComponentsModified ||
       pickedCommandModified || pickedFromOptionModified ||
-      autoCompileValue != state.getAutoCompile
+      autoParseValue != state.getAutoParse
 
   def getPickedCommand: String = commandPicker.getText
   def getPickedFromOption: String = fromOptionPicker.getText
 
-  def getAutoCompileValue: Boolean = autoCompileValue
+  def getAutoParseValue: Boolean = autoParseValue
 
   def getBooleanCommonOptions: Seq[(JBCheckBox, CommonOption[Boolean])] =
     booleanCommonOptions

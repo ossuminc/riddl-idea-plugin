@@ -74,31 +74,27 @@ package object utils {
     )
   )
 
-  def editorForErroneousFile(
+  def getCurrentEditorForFile(
       filePath: String
   ): Option[Editor] = {
-    val erroneousFile: VirtualFile =
+    val file: VirtualFile =
       LocalFileSystem.getInstance.findFileByPath(
         filePath
       )
 
     val editor = selectedEditor
-    if editor != null && erroneousFile != null then
+    if editor != null && file != null then
       val editorFile =
         FileDocumentManager.getInstance().getFile(editor.getDocument)
-      if editorFile != null && erroneousFile.getName == editorFile.getName then
+      if editorFile != null && file.getName == editorFile.getName then
         Some(editor)
       else None
     else None
   }
 
-  def selectedEditor: Editor = {
-    val fileEditorManager = FileEditorManager
-      .getInstance(getProject)
-    val editor = fileEditorManager.getSelectedTextEditor
-
-    editor
-  }
+  def selectedEditor: Editor = FileEditorManager
+    .getInstance(getProject)
+    .getSelectedTextEditor
 
   def clearHighlightersForFile(
       filePath: String,
@@ -126,7 +122,6 @@ package object utils {
             hl.getTargetArea == HighlighterTargetArea.LINES_IN_RANGE
           )
           .foreach(rangeHighlighter =>
-            println("found")
             rangeHighlighter.setErrorStripeMarkColor(null)
             rangeHighlighter.setErrorStripeTooltip(null)
             editor.getMarkupModel.removeHighlighter(rangeHighlighter)
@@ -143,7 +138,7 @@ package object utils {
     val (filePath, editorOpt): (String, Option[Editor]) =
       filePathOrEditor match {
         case Right(fPath) =>
-          (fPath, editorForErroneousFile(fPath))
+          (fPath, getCurrentEditorForFile(fPath))
         case Left(editor) =>
           (
             editor.getVirtualFile.getPath,

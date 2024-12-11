@@ -142,7 +142,7 @@ object RiddlIdeaSettings {
       messagesForEditor += fileName -> newMsgs
     def getMessagesForConsole: mutable.Map[String, mutable.Seq[Message]] = messagesForConsole
     def setMessagesForConsole(newMsgs: mutable.Seq[Message]): Unit =
-      messagesForConsole ++= newMsgs.groupBy(_.loc.source.origin)
+      messagesForConsole = mutable.Map.from(newMsgs.groupBy(_.loc.source.origin))
 
     def setFromOption(newFromOption: String): Unit = fromOption = Some(
       newFromOption

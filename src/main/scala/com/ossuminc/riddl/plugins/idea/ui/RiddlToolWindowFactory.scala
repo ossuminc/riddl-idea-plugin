@@ -12,7 +12,7 @@ import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.JBPanel
 import com.ossuminc.riddl.plugins.idea.actions.{
   RiddlNewToolWindowAction,
-  RiddlToolWindowCompileAction,
+  RiddlToolWindowParseAction,
   RiddlToolWindowSettingsOpenAction
 }
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.*
@@ -50,9 +50,9 @@ class RiddlToolWindowContent(
       false
     )
   actionGroup.add(new RiddlNewToolWindowAction)
-  private val compileAction: RiddlToolWindowCompileAction =
-    new RiddlToolWindowCompileAction(numWindow)
-  actionGroup.add(compileAction)
+  private val parseAction: RiddlToolWindowParseAction =
+    new RiddlToolWindowParseAction(numWindow)
+  actionGroup.add(parseAction)
   private val openAction: RiddlToolWindowSettingsOpenAction =
     new RiddlToolWindowSettingsOpenAction(numWindow)
   actionGroup.add(openAction)

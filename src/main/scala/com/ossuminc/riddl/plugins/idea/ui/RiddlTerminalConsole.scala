@@ -3,68 +3,77 @@ package com.ossuminc.riddl.plugins.idea.ui
 import com.intellij.execution.filters.HyperlinkInfoBase
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.{Editor, LogicalPosition}
+import com.intellij.openapi.fileEditor.{FileEditorManager, OpenFileDescriptor}
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.ui.awt.RelativePoint
-import com.ossuminc.riddl.plugins.idea.utils.riddlErrorRegex
-import com.ossuminc.riddl.plugins.idea.utils.editorForError
+import com.ossuminc.riddl.language.Messages.Message
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
+import com.ossuminc.riddl.plugins.idea.utils.selectedEditor
 
-import scala.util.matching.Regex
+import java.nio.file.Path
 
 class RiddlTerminalConsole(
     numWindow: Int,
     project: Project
 ) extends ConsoleViewImpl(project, true) {
-  override def print(
-      text: String,
-      contentType: ConsoleViewContentType
-  ): Unit =
-    text
-      .split("\n")
-      .toList
-      .foreach { line =>
-        riddlErrorRegex.findFirstMatchIn(line) match
-          case Some(resultMatch: Regex.Match) =>
-            linkToEditor(
-              line,
-              resultMatch.group(2),
-              numWindow,
-              resultMatch.group(3).toInt,
-              resultMatch.group(4).toInt
-            )
-          case None =>
-            super.print(line + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
-            ()
+  def printMessages(): Unit = {
+    val state = getRiddlIdeaState(numWindow)
+    state.getMessagesForConsole.values.toSeq.flatten
+      .foreach { msg =>
+        state.getConfPath.foreach(path =>
+          linkToEditor(
+            Path.of(path).getParent.toFile.getPath,
+            msg
+          )
+        )
+        super.print(
+          msg.format.replace(msg.loc.format, "") + "\n\n",
+          ConsoleViewContentType.NORMAL_OUTPUT
+        )
       }
+    ()
+  }
 
   private def linkToEditor(
-      textLine: String,
-      fileName: String,
-      numWindow: Int,
-      lineNumber: Int,
-      charPosition: Int
+      confFolder: String,
+      msg: Message
   ): Unit = {
-    val editor = editorForError(
-      numWindow,
-      fileName,
-      lineNumber,
-      charPosition
+    val filePath = confFolder + "/" + msg.loc.source.origin
+    val file: VirtualFile = LocalFileSystem.getInstance.findFileByPath(
+      filePath
     )
 
     val hyperlinkInfo = new HyperlinkInfoBase {
       override def navigate(
           project: Project,
           relativePoint: RelativePoint
-      ): Unit = if editor != null then {
+      ): Unit = {
+        val editor: Editor =
+          if filePath == selectedEditor.getVirtualFile.getPath
+          then selectedEditor
+          else
+            FileEditorManager
+              .getInstance(project)
+              .openTextEditor(
+                new OpenFileDescriptor(
+                  project,
+                  file,
+                  msg.loc.line - 1,
+                  msg.loc.offset
+                ),
+                true
+              )
         val logicalPosition =
           new LogicalPosition(
-            lineNumber - 1,
-            charPosition - 1
+            msg.loc.line - 1,
+            msg.loc.offset
           )
         editor.getCaretModel.moveToLogicalPosition(logicalPosition)
       }
     }
 
-    this.printHyperlink(textLine + "\n", hyperlinkInfo)
+    this.printHyperlink(msg.loc.format, hyperlinkInfo)
   }
 }

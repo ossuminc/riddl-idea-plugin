@@ -11,12 +11,10 @@ import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.updateToolWindowRun
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
 import org.jetbrains.annotations.NotNull
 
-class RiddlToolWindowCompileAction(windowNum: Int) extends AnAction with DumbAware {
+class RiddlToolWindowParseAction(windowNum: Int) extends AnAction with DumbAware {
 
-  override def actionPerformed(@NotNull anActionEvent: AnActionEvent): Unit = {
-    getRiddlIdeaState(windowNum).clearRunOutput()
+  override def actionPerformed(@NotNull anActionEvent: AnActionEvent): Unit = 
     updateToolWindowRunPane(windowNum, true)
-  }
 
   override def update(e: AnActionEvent): Unit = {
     super.update(e)

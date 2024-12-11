@@ -1,12 +1,6 @@
 package com.ossuminc.riddl.plugins.idea.files
 
-import com.intellij.openapi.fileEditor.{
-  FileDocumentManager,
-  FileEditorManager,
-  TextEditor
-}
 import com.intellij.openapi.editor.{DefaultLanguageHighlighterColors, Editor}
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.editor.markup.{
   HighlighterLayer,
   HighlighterTargetArea
@@ -24,10 +18,11 @@ import com.ossuminc.riddl.language.AST.{
 import com.ossuminc.riddl.language.{At, Messages}
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
-import com.ossuminc.riddl.plugins.idea.utils.highlightForErrorMessage
+import com.ossuminc.riddl.plugins.idea.utils.isFilePathBelowAnother
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaStates
 import com.ossuminc.riddl.utils.StringLogger
+import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.*
 
 object utils {
   private def annotateTokensWithBooleans(
@@ -128,32 +123,4 @@ object utils {
     )
     editor.getContentComponent.repaint()
   }
-
-  def highlightKeywordsAndErrorsForFile(
-      source: FileEditorManager,
-      file: VirtualFile
-  ): Unit = source
-    .getAllEditors(file)
-    .foreach { te =>
-      val doc = FileDocumentManager.getInstance().getDocument(file)
-      if doc != null then {
-        te match {
-          case textEditor: TextEditor =>
-            highlightKeywords(doc.getText, textEditor.getEditor)
-            getRiddlIdeaStates.allStates
-              .foldRight(Seq[RiddlIdeaSettings.State]()) { (tup, acc) =>
-                tup._2.clearErrorHighlighters()
-                if tup._2.getMessagesForEditor.exists(
-                    _.loc.source.root.path == file.getPath
-                  )
-                then acc :+ tup._2
-                else acc
-              }
-              .foreach(state =>
-                state.getMessagesForEditor
-                  .foreach(msg => highlightForErrorMessage(state, msg))
-              )
-        }
-      }
-    }
 }

@@ -2,30 +2,31 @@ package com.ossuminc.riddl.plugins.idea
 
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
+import com.intellij.openapi.editor.{Editor, EditorFactory}
 import com.intellij.openapi.editor.markup.{
   HighlighterLayer,
-  MarkupModel,
+  HighlighterTargetArea,
+  RangeHighlighter,
   TextAttributes
 }
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.{FileEditorManager, OpenFileDescriptor}
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.util.ui.UIUtil
 import com.ossuminc.riddl.language.Messages
+import com.ossuminc.riddl.language.Messages.{Error, Warning}
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
-  getProject,
-  getRiddlIdeaState
-}
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getProject
 import com.typesafe.config.ConfigObject
 import pureconfig.ConfigSource
 
 import scala.jdk.CollectionConverters.*
+import com.intellij.openapi.fileEditor.FileDocumentManager
+
 import java.awt.GridBagConstraints
+import java.nio.file.Path
 import javax.swing.Icon
-import scala.util.matching.Regex
 
 package object utils {
   def RiddlIcon[T <: Class[?]](classType: T): Icon =
@@ -43,8 +44,8 @@ package object utils {
         )
         .getState
 
-    def getRiddlIdeaState(numWindow: Int): RiddlIdeaSettings.State =
-      getRiddlIdeaStates.getState(numWindow)
+    def getRiddlIdeaState(numToolWindow: Int): RiddlIdeaSettings.State =
+      getRiddlIdeaStates.getState(numToolWindow)
   }
 
   object CreationUtils {
@@ -73,85 +74,156 @@ package object utils {
     )
   )
 
-  def editorForError(
-      numWindow: Int,
-      fileName: String,
-      lineNumber: Int,
-      charNumber: Int
-  ): Editor = {
-    val pathToConf = getRiddlIdeaState(numWindow).getConfPath
-      .getOrElse("")
-      .split("/")
-      .dropRight(1)
-      .mkString("/")
-
+  def getCurrentEditorForFile(
+      filePath: String
+  ): Option[Editor] = {
     val file: VirtualFile =
       LocalFileSystem.getInstance.findFileByPath(
-        s"$pathToConf/$fileName"
+        filePath
       )
-    FileEditorManager
-      .getInstance(getProject)
-      .openTextEditor(
-        new OpenFileDescriptor(
-          getProject,
-          file,
-          lineNumber - 1,
-          charNumber - 1
-        ),
-        true
-      )
+
+    val editor = selectedEditor
+    if editor != null && file != null then
+      val editorFile =
+        FileDocumentManager.getInstance().getFile(editor.getDocument)
+      if editorFile != null && file.getName == editorFile.getName then
+        Some(editor)
+      else None
+    else None
   }
 
-  def highlightForErrorMessage(
-      state: RiddlIdeaSettings.State,
-      message: Messages.Message
+  def selectedEditor: Editor = FileEditorManager
+    .getInstance(getProject)
+    .getSelectedTextEditor
+
+  def clearHighlightersForFile(
+      filePath: String,
+      state: RiddlIdeaSettings.State
   ): Unit = {
-    val severity = message.kind.severity
-
-    val lineNumber = message.loc.line
-    val editor: Editor = FileEditorManager
-      .getInstance(getProject)
-      .getSelectedTextEditor()
-
-    val markupModel: MarkupModel = editor.getMarkupModel
-    state.setMarkupModel(markupModel)
-
-    Thread.sleep(500)
-
-    val formattedMessage = message.format
-
-    if severity > 4 then
-      val highlighter = markupModel.addLineHighlighter(
-        lineNumber,
-        HighlighterLayer.ERROR,
-        new TextAttributes()
-      )
-      highlighter.setErrorStripeMarkColor(
-        UIUtil.getErrorForeground
-      )
-      highlighter.setErrorStripeTooltip(formattedMessage)
-      state.appendErrorHighlighter(highlighter)
-    else
-      val highlighter = markupModel.addLineHighlighter(
-        lineNumber,
-        HighlighterLayer.WARNING,
-        new TextAttributes()
-      )
-      highlighter.setErrorStripeMarkColor(
-        UIUtil.getToolTipForeground
-      )
-      highlighter.setErrorStripeTooltip(formattedMessage)
-      state.appendErrorHighlighter(highlighter)
+    EditorFactory
+      .getInstance()
+      .getAllEditors
+      .filter(_.getVirtualFile != null)
+      .find { editor =>
+        val editorFilePath = editor.getVirtualFile.getPath
+        editorFilePath != null && editorFilePath == filePath && (
+          isFilePathBelowAnother(
+            editorFilePath,
+            state.getConfPath
+          ) || isFilePathBelowAnother(
+            editorFilePath,
+            state.getTopLevelPath
+          )
+        )
+      }
+      .foreach { editor =>
+        editor.getMarkupModel.getAllHighlighters
+          .filter(hl =>
+            hl.getTargetArea == HighlighterTargetArea.LINES_IN_RANGE
+          )
+          .foreach(rangeHighlighter =>
+            rangeHighlighter.setErrorStripeMarkColor(null)
+            rangeHighlighter.setErrorStripeTooltip(null)
+            editor.getMarkupModel.removeHighlighter(rangeHighlighter)
+          )
+      }
+    state.clearHighlightersForFile(filePath)
   }
 
-  def riddlErrorRegex: Regex =
-    """(\[\w+\]) ([\w/_-]+\.riddl)\((\d+):(\d+)\)\:""".r
+  def highlightErrorMessagesForFile(
+      state: RiddlIdeaSettings.State,
+      filePathOrEditor: Either[Editor, String],
+      forConsole: Boolean = false
+  ): Unit = {
+    val (filePath, editorOpt): (String, Option[Editor]) =
+      filePathOrEditor match {
+        case Right(fPath) =>
+          (fPath, getCurrentEditorForFile(fPath))
+        case Left(editor) =>
+          (
+            editor.getVirtualFile.getPath,
+            Some(editor)
+          )
+      }
 
-  def readFromOptionsFromConf(path: String): Seq[String] =
-    ConfigSource.file(path).load[ConfigObject] match {
-      case Right(configObject) =>
-        configObject.keySet().iterator().asScala.toSeq
-      case Left(err) =>
-        Seq()
+    editorOpt.foreach { editor =>
+      clearHighlightersForFile(filePath, state)
+      state.clearHighlightersForFile(filePath)
+
+      (if forConsole then state.getMessagesForConsole
+       else state.getMessagesForEditor)
+        .find((msgFileName, _) =>
+          editor.getVirtualFile.getPath.endsWith(msgFileName)
+        )
+        .foreach { (_, msgs) =>
+          msgs
+            .foreach { msg =>
+              val highlighter: RangeHighlighter =
+                if msg.kind.severity == Error.severity
+                then {
+                  val hl: RangeHighlighter =
+                    editor.getMarkupModel.addLineHighlighter(
+                      msg.loc.line - 1,
+                      HighlighterLayer.ERROR,
+                      new TextAttributes()
+                    )
+                  hl.setErrorStripeMarkColor(
+                    UIUtil.getErrorForeground
+                  )
+                  hl.setErrorStripeTooltip(
+                    msg.format
+                  )
+                  hl
+                } else if msg.kind.severity == Warning.severity then {
+                  val hl: RangeHighlighter =
+                    editor.getMarkupModel.addLineHighlighter(
+                      msg.loc.line - 1,
+                      HighlighterLayer.WARNING,
+                      new TextAttributes()
+                    )
+                  hl.setErrorStripeMarkColor(
+                    UIUtil.getToolTipForeground
+                  )
+                  hl.setErrorStripeTooltip(
+                    msg.format
+                  )
+                  hl
+                } else {
+                  val hl: RangeHighlighter =
+                    editor.getMarkupModel.addLineHighlighter(
+                      msg.loc.line - 1,
+                      HighlighterLayer.SYNTAX,
+                      new TextAttributes()
+                    )
+                  hl.setErrorStripeMarkColor(
+                    UIUtil.getToolTipForeground
+                  )
+                  hl.setErrorStripeTooltip(
+                    msg.format
+                  )
+                  hl
+                }
+              state.saveHighlighterForFile(filePath, highlighter)
+            }
+        }
     }
+  }
+
+  def isFilePathBelowAnother(
+      filePath: String,
+      otherPath: Option[String]
+  ): Boolean = otherPath.exists(path =>
+    filePath.startsWith(
+      Path.of(path).getParent.toString
+    )
+  )
+
+  def readFromOptionsFromConf(path: String): Seq[String] = ConfigSource
+    .file(path)
+    .load[ConfigObject] match {
+    case Right(configObject) =>
+      configObject.keySet().iterator().asScala.toSeq
+    case Left(_) =>
+      Seq()
+  }
 }

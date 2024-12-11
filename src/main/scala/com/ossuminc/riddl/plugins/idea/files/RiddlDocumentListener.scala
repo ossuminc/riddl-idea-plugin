@@ -3,11 +3,12 @@ package com.ossuminc.riddl.plugins.idea.files
 import com.intellij.openapi.editor.event.{DocumentEvent, DocumentListener}
 import com.intellij.openapi.editor.EditorFactory
 import com.ossuminc.riddl.plugins.idea.files.utils.highlightKeywords
-import com.ossuminc.riddl.plugins.idea.utils.highlightForErrorMessage
+import com.ossuminc.riddl.plugins.idea.utils.{
+  highlightErrorMessagesForFile,
+  isFilePathBelowAnother
+}
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
-
-import java.nio.file.Path
 
 class RiddlDocumentListener extends DocumentListener {
   override def documentChanged(event: DocumentEvent): Unit = {
@@ -16,28 +17,22 @@ class RiddlDocumentListener extends DocumentListener {
     if editors.nonEmpty && doc.getText.nonEmpty then
       editors.map { editor =>
         if editor.getVirtualFile != null then
-          val editorFilePath = editor.getVirtualFile.getPath
-
           highlightKeywords(editor.getDocument.getText, editor)
 
           getRiddlIdeaStates.allStates.values.toSeq
-            .filter { state =>
-              state.getTopLevelPath.exists(path =>
-                editorFilePath.startsWith(
-                  Path.of(path).getParent.toString
-                )
+            .find { state =>
+              isFilePathBelowAnother(
+                editor.getVirtualFile.getPath,
+                state.getTopLevelPath
               )
             }
             .foreach { state =>
               runCommandForEditor(
                 state.getWindowNum,
-                Some(event.getDocument.getText)
+                Some((event.getDocument.getText, editor.getVirtualFile.getPath))
               )
-              Thread.sleep(350)
-              state.getMessagesForEditor.foreach { msg =>
-                highlightForErrorMessage(state, msg)
-              }
-
+              if state.getMessagesForEditor.nonEmpty
+              then highlightErrorMessagesForFile(state, Left(editor))
             }
       }
   }

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.editor.{Editor, EditorFactory}
 import com.intellij.openapi.editor.markup.{
   HighlighterLayer,
+  HighlighterTargetArea,
   RangeHighlighter,
   TextAttributes
 }
@@ -16,10 +17,7 @@ import com.intellij.util.ui.UIUtil
 import com.ossuminc.riddl.language.Messages
 import com.ossuminc.riddl.language.Messages.{Error, Warning}
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.{
-  getProject,
-  getRiddlIdeaState
-}
+import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getProject
 import com.typesafe.config.ConfigObject
 import pureconfig.ConfigSource
 
@@ -27,7 +25,6 @@ import scala.jdk.CollectionConverters.*
 import com.intellij.openapi.fileEditor.FileDocumentManager
 
 import java.awt.GridBagConstraints
-import java.io.File
 import java.nio.file.Path
 import javax.swing.Icon
 
@@ -78,23 +75,11 @@ package object utils {
   )
 
   def editorForErroneousFile(
-      numWindow: Int,
-      fileName: String
+      filePath: String
   ): Option[Editor] = {
-    val runPathFolder = Path
-      .of(
-        getRiddlIdeaState(numWindow).getConfPath
-          .getOrElse(
-            getRiddlIdeaState(numWindow).getTopLevelPath.getOrElse("")
-          )
-      )
-      .getParent
-      .toFile
-      .getPath
-
     val erroneousFile: VirtualFile =
       LocalFileSystem.getInstance.findFileByPath(
-        s"$runPathFolder/$fileName"
+        filePath
       )
 
     val editor = selectedEditor
@@ -115,69 +100,75 @@ package object utils {
     editor
   }
 
+  def clearHighlightersForFile(
+      filePath: String,
+      state: RiddlIdeaSettings.State
+  ): Unit = {
+    EditorFactory
+      .getInstance()
+      .getAllEditors
+      .filter(_.getVirtualFile != null)
+      .find { editor =>
+        val editorFilePath = editor.getVirtualFile.getPath
+        editorFilePath != null && editorFilePath == filePath && (
+          isFilePathBelowAnother(
+            editorFilePath,
+            state.getConfPath
+          ) || isFilePathBelowAnother(
+            editorFilePath,
+            state.getTopLevelPath
+          )
+        )
+      }
+      .foreach { editor =>
+        editor.getMarkupModel.getAllHighlighters
+          .filter(hl =>
+            hl.getTargetArea == HighlighterTargetArea.LINES_IN_RANGE
+          )
+          .foreach(rangeHighlighter =>
+            println("found")
+            rangeHighlighter.setErrorStripeMarkColor(null)
+            rangeHighlighter.setErrorStripeTooltip(null)
+            editor.getMarkupModel.removeHighlighter(rangeHighlighter)
+          )
+      }
+    state.clearHighlightersForFile(filePath)
+  }
+
   def highlightErrorMessagesForFile(
       state: RiddlIdeaSettings.State,
-      fileNameOrEditor: Either[Editor, String],
+      filePathOrEditor: Either[Editor, String],
       forConsole: Boolean = false
   ): Unit = {
-    val (fileName, editorOpt): (String, Option[Editor]) =
-      fileNameOrEditor match {
-        case Right(fName) =>
-          (fName, editorForErroneousFile(state.getWindowNum, fName))
+    val (filePath, editorOpt): (String, Option[Editor]) =
+      filePathOrEditor match {
+        case Right(fPath) =>
+          (fPath, editorForErroneousFile(fPath))
         case Left(editor) =>
           (
-            new File(editor.getVirtualFile.getPath).getName,
+            editor.getVirtualFile.getPath,
             Some(editor)
           )
       }
 
-    state
-      .getHighlightersForFile(fileName)
-      .foreach { highlighterInfo =>
-        EditorFactory
-          .getInstance()
-          .getAllEditors
-          .filter(_.getVirtualFile != null)
-          .find { editor =>
-            val editorFilePath = editor.getVirtualFile.getPath
-            editorFilePath != null && isFilePathBelowAnother(
-              editorFilePath,
-              state.getConfPath
-            ) && editorFilePath.endsWith(fileName)
-          }
-          .foreach { editor =>
-            editor.getMarkupModel.getAllHighlighters
-              .find { highlighter =>
-                highlighter.getStartOffset == highlighterInfo.startOffset &&
-                highlighter.getEndOffset == highlighterInfo.endOffset &&
-                highlighter.getLayer == highlighterInfo.layer
-              }
-              .foreach(rangeHighlighter =>
-                println("found")
-                rangeHighlighter.setErrorStripeMarkColor(null)
-                rangeHighlighter.setErrorStripeTooltip(null)
-                editor.getMarkupModel.removeHighlighter(rangeHighlighter)
-              )
-          }
-      }
-    state.clearHighlightersForFile(fileName)
+    editorOpt.foreach { editor =>
+      clearHighlightersForFile(filePath, state)
+      state.clearHighlightersForFile(filePath)
 
-    (if forConsole then state.getMessagesForConsole
-     else state.getMessagesForEditor)
-      .find((msgFileName, _) =>
-        editorOpt.exists(
-          _.getVirtualFile.getPath.endsWith(msgFileName)
+      (if forConsole then state.getMessagesForConsole
+       else state.getMessagesForEditor)
+        .find((msgFileName, _) =>
+          editor.getVirtualFile.getPath.endsWith(msgFileName)
         )
-      )
-      .foreach { (msgFileName, msgs) =>
-        editorOpt.foreach { editor =>
+        .foreach { (_, msgs) =>
           msgs
             .foreach { msg =>
               val highlighter: RangeHighlighter =
-                if msg.kind.severity == Error.severity then {
+                if msg.kind.severity == Error.severity
+                then {
                   val hl: RangeHighlighter =
                     editor.getMarkupModel.addLineHighlighter(
-                      msg.loc.line,
+                      msg.loc.line - 1,
                       HighlighterLayer.ERROR,
                       new TextAttributes()
                     )
@@ -191,7 +182,7 @@ package object utils {
                 } else if msg.kind.severity == Warning.severity then {
                   val hl: RangeHighlighter =
                     editor.getMarkupModel.addLineHighlighter(
-                      msg.loc.line,
+                      msg.loc.line - 1,
                       HighlighterLayer.WARNING,
                       new TextAttributes()
                     )
@@ -205,7 +196,7 @@ package object utils {
                 } else {
                   val hl: RangeHighlighter =
                     editor.getMarkupModel.addLineHighlighter(
-                      msg.loc.line,
+                      msg.loc.line - 1,
                       HighlighterLayer.SYNTAX,
                       new TextAttributes()
                     )
@@ -217,10 +208,10 @@ package object utils {
                   )
                   hl
                 }
-              state.saveHighlighterForFile(msgFileName, highlighter)
+              state.saveHighlighterForFile(filePath, highlighter)
             }
         }
-      }
+    }
   }
 
   def isFilePathBelowAnother(

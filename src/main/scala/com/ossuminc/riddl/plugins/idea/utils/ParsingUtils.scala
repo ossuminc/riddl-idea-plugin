@@ -85,11 +85,11 @@ object ParsingUtils {
 
   def runCommandForEditor(
       numWindow: Int,
-      editorTextWithFileNameOpt: Option[(String, String)] = None
+      editorTextWithFilePathOpt: Option[(String, String)] = None
   ): Unit = {
     val state = getRiddlIdeaState(numWindow)
 
-    val rpi: RiddlParserInput = editorTextWithFileNameOpt match {
+    val rpi: RiddlParserInput = editorTextWithFilePathOpt match {
       case Some((editorText, _)) => RiddlParserInput(editorText, "")
       case None if state.getTopLevelPath.isDefined =>
         Await.result(
@@ -103,16 +103,23 @@ object ParsingUtils {
       pc.withOptions(state.getCommonOptions) { _ =>
         TopLevelParser.parseNebula(rpi) match {
           case Right(_) =>
+            editorTextWithFilePathOpt.foreach((_, filePath) =>
+              clearHighlightersForFile(filePath, state)
+              state.setMessagesForFileForEditor(filePath, mutable.Seq())
+            )
             ()
           case Left(msgs) =>
-            editorTextWithFileNameOpt match {
-              case Some((_, fileName)) =>
-                state.setMessagesForEditor(fileName, mutable.Seq.from(msgs))
+            editorTextWithFilePathOpt match {
+              case Some((_, filePath)) =>
+                state.setMessagesForFileForEditor(
+                  filePath,
+                  mutable.Seq.from(msgs)
+                )
               case None =>
                 msgs
                   .groupBy(_.loc.source.origin)
                   .map(tup => (tup._1, mutable.Seq.from(tup._2)))
-                  .foreach(state.setMessagesForEditor.tupled)
+                  .foreach(state.setMessagesForFileForEditor.tupled)
             }
         }
       }

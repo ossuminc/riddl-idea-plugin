@@ -138,7 +138,7 @@ object RiddlIdeaSettings {
     def hasMessages: Boolean = messagesForConsole.nonEmpty || messagesForEditor.nonEmpty
 
     def getMessagesForEditor: mutable.Map[String, mutable.Seq[Message]] = messagesForEditor
-    def setMessagesForEditor(fileName: String, newMsgs: mutable.Seq[Message]): Unit =
+    def setMessagesForFileForEditor(fileName: String, newMsgs: mutable.Seq[Message]): Unit =
       messagesForEditor += fileName -> newMsgs
     def getMessagesForConsole: mutable.Map[String, mutable.Seq[Message]] = messagesForConsole
     def setMessagesForConsole(newMsgs: mutable.Seq[Message]): Unit =
@@ -156,11 +156,11 @@ object RiddlIdeaSettings {
     def saveHighlighterForFile(
         fileName: String,
         highlighter: RangeHighlighter
-    ): Unit = highlightersPerFile += (
-      fileName -> (getHighlightersForFile(
-        fileName
-      ) :+ HighlighterInfo.fromRangeHighlighter(highlighter))
-    )
+    ): Unit =
+      highlightersPerFile.addOne(
+        fileName, mutable.Seq(HighlighterInfo.fromRangeHighlighter(highlighter))
+      )
+    def highlightersForFile: mutable.Map[String, mutable.Seq[HighlighterInfo]] = highlightersPerFile
     def getHighlightersForFile(
         fileName: String
     ): mutable.Seq[HighlighterInfo] =

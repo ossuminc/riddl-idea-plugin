@@ -18,7 +18,6 @@ class RiddlTerminalConsole(
       .foreach { msg =>
         linkToEditor(
           msg.loc.source.origin,
-          numWindow,
           msg.loc.line,
           msg.loc.offset
         )
@@ -32,11 +31,10 @@ class RiddlTerminalConsole(
 
   private def linkToEditor(
       fileName: String,
-      numWindow: Int,
       lineNumber: Int,
       charPosition: Int
   ): Unit = {
-    val editor = editorForErroneousFile(numWindow, fileName)
+    val editor = editorForErroneousFile(fileName)
 
     val hyperlinkInfo = new HyperlinkInfoBase {
       override def navigate(

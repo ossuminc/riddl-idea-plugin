@@ -23,20 +23,9 @@ import com.ossuminc.riddl.utils.StringLogger
 object utils {
   private def annotateTokensWithBooleans(
       ast: Either[Messages.Messages, List[Token]]
-  ): Seq[(Token, Int, Int, Seq[Boolean])] = ast match {
-    case Left(_) =>
-      Seq((OtherTKN(At()), 0, 0, Seq(false, false)))
-    case Right(tokens) =>
-      tokens
-        .map(tok => (tok, tok.at.offset, tok.at.endOffset))
-        .zip(tokens.map {
-          case _: CommentTKN      => Seq(false, true)
-          case _: QuotedStringTKN => Seq(true, false)
-          case _                  => Seq(false, false)
-        })
-        .map((offsetTup, tokSeq) =>
-          (offsetTup._1, offsetTup._2, offsetTup._3, tokSeq)
-        )
+  ): Seq[Token] = ast match {
+    case Left(_)       => Seq(OtherTKN(At()))
+    case Right(tokens) => tokens.map(tok => tok)
   }
 
   def highlightKeywords(docText: String, editor: Editor): Unit = {
@@ -56,8 +45,23 @@ object utils {
 
   private def applyColorToToken(
       editor: Editor
-  )(token: Token, offset: Int, endOffset: Int, flags: Seq[Boolean]): Unit =
+  )(token: Token): Unit = {
+    val offset = token.at.offset
+    val endOffset = token.at.endOffset
+
     token match
+      case _: CommentTKN =>
+        applyColourKey(editor)(
+          DefaultLanguageHighlighterColors.LINE_COMMENT,
+          offset,
+          endOffset - offset
+        )
+      case _: QuotedStringTKN =>
+        applyColourKey(editor)(
+          DefaultLanguageHighlighterColors.STRING,
+          offset,
+          endOffset - offset
+        )
       case _: KeywordTKN =>
         applyColourKey(editor)(
           CUSTOM_KEYWORD_KEYWORD,
@@ -82,22 +86,7 @@ object utils {
           offset,
           endOffset - offset
         )
-
-    flags match {
-      case Seq(isQuoted, _) if isQuoted =>
-        applyColourKey(editor)(
-          DefaultLanguageHighlighterColors.STRING,
-          offset,
-          endOffset - offset
-        )
-      case Seq(_, isComment) if isComment =>
-        applyColourKey(editor)(
-          DefaultLanguageHighlighterColors.LINE_COMMENT,
-          offset,
-          endOffset - offset
-        )
-      case Seq(_, _) => ()
-    }
+  }
 
   private def applyColourKey(editor: Editor)(
       colorKey: TextAttributesKey,

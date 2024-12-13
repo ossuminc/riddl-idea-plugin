@@ -160,11 +160,6 @@ object RiddlIdeaSettings {
       highlightersPerFile.addOne(
         fileName, mutable.Seq(HighlighterInfo.fromRangeHighlighter(highlighter))
       )
-    def highlightersForFile: mutable.Map[String, mutable.Seq[HighlighterInfo]] = highlightersPerFile
-    def getHighlightersForFile(
-        fileName: String
-    ): mutable.Seq[HighlighterInfo] =
-      highlightersPerFile.getOrElse(fileName, mutable.Seq())
     def clearHighlightersForFile(fileName: String): Unit =
       highlightersPerFile -= fileName
     def clearAllHighlighters(): Unit = highlightersPerFile = mutable.Map()

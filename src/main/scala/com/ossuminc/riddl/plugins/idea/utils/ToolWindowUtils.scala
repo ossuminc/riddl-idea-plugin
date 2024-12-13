@@ -19,13 +19,11 @@ import com.ossuminc.riddl.plugins.idea.ui.{
   RiddlToolWindowContent
 }
 import ParsingUtils.*
-import CreationUtils.*
 import com.intellij.ui.components.JBPanel
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.openapi.fileEditor.FileEditorManager
 
 import scala.jdk.CollectionConverters.*
 import java.awt.GridBagConstraints
@@ -34,6 +32,7 @@ import javax.swing.border.EmptyBorder
 
 object ToolWindowUtils {
   import ManagerBasedGetterUtils.*
+  import CreationUtils.createGBCs
 
   implicit class ToolWindowExt(toolWindow: ToolWindow) {
     def createAndAddContentToTW(
@@ -117,8 +116,7 @@ object ToolWindowUtils {
     def putUpdateRunPaneAsClientProperty(): Unit =
       contentPanel.putClientProperty(
         genUpdateRunPaneName(numWindow),
-        (fromReload: Boolean, fromLogger: Boolean) =>
-          updateRunPane(fromReload, fromLogger)
+        (fromReload: Boolean) => updateRunPane(fromReload)
       )
 
     if contentPanel.getClientProperty(genUpdateRunPaneName) != null
@@ -138,58 +136,55 @@ object ToolWindowUtils {
       )
 
     def updateRunPane(
-        fromReload: Boolean = false,
-        fromLogger: Boolean = false
+        fromReload: Boolean = false
     ): Unit = {
-      def writeToConsole(s: String): Unit = {
-        console.clear()
+      def writeToConsole(s: String, clear: Boolean = true): Unit = {
+        if clear then console.clear()
         setConsoleProps(console)
-        console.print(s, ConsoleViewContentType.SYSTEM_OUTPUT)
+        console.print(s + "\n", ConsoleViewContentType.NORMAL_OUTPUT)
       }
 
-      def writeStateOutputToConsole(): Unit = writeToConsole(
-        state.getRunOutput.mkString("\n")
-      )
+      def writeStateOutputToConsole(): Unit = {
+        console.clear()
+        console.printMessages()
+      }
 
-      if fromLogger then
-        writeStateOutputToConsole()
-        return
+      def highlightMessages(): Unit =
+        if isFilePathBelowAnother(
+            selectedEditor.getVirtualFile.getPath,
+            state.getConfPath
+          )
+        then highlightErrorMessagesForFile(state, Left(selectedEditor), true)
+
+      val tabContent: Content = getToolWindowContent(numWindow)
+      if tabContent.getTabName.isBlank then
+        tabContent.setDisplayName(genWindowName(numWindow))
 
       val statePath: String =
         if state != null then state.getConfPath.getOrElse("")
         else ""
       val confFile = File(statePath)
 
-      val tabContent: Content = getToolWindowContent(numWindow)
-      if tabContent.getTabName.isBlank then
-        tabContent.setDisplayName(genWindowName(numWindow))
-
-      if state.getCommand == "from" then
+      if state != null && state.getCommand == "from" then
         if statePath == null || statePath.isBlank then
           writeToConsole(notConfiguredMessage)
         else if state.getFromOption.isEmpty then
           writeToConsole("From command chosen, but no option has been chosen")
-        else (if state.getRunOutput.nonEmpty
-              then writeStateOutputToConsole()
-              else if state.getCommand == "from" then
-                if confFile.exists() && confFile.isFile then
-                  runCommandForWindow(numWindow, Some(statePath))
-                else
-                  writeToConsole(
-                    s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
-                  )
-              else if fromReload then
-                runCommandForWindow(numWindow, state.getConfPath))
-
-      if state.getTopLevelPath.isEmpty then
-        FileEditorManager
-          .getInstance(project)
-          .getSelectedFiles
-          .foreach(file =>
-            state.getMessagesForEditor
-              .filter(_.loc.source.origin == file.getName)
-              .foreach(msg => highlightForErrorMessage(state, msg))
+        else if confFile.exists() && confFile.isFile then
+          if state.getMessagesForConsole.nonEmpty
+          then
+            writeStateOutputToConsole()
+            highlightMessages()
+          else runCommandForConsole(numWindow)
+        else
+          writeToConsole(
+            s"This window's configuration file:\n  " + statePath + "\nwas not found, please configure it in settings"
           )
+      else if state != null then
+        if state.getRunOutput.nonEmpty then
+          console.clear()
+          state.getRunOutput.foreach(msg => writeToConsole(msg, false))
+        else if fromReload then runCommandForConsole(numWindow)
     }
 
     // enables auto-compiling
@@ -204,14 +199,11 @@ object ToolWindowUtils {
           override def after(events: java.util.List[? <: VFileEvent]): Unit = {
             if events.asScala.toSeq.exists(
                 _.isFromSave
-              ) && state.getAutoCompile && state.getCommand == "from"
+              ) && state.getAutoParse && state.getCommand == "from"
             then
               state.clearRunOutput()
-              runCommandForWindow(numWindow, state.getConfPath)
+              runCommandForConsole(numWindow)
               updateToolWindowRunPane(numWindow, fromReload = true)
-              if state.getTopLevelPath.isEmpty then
-                state.getMessagesForEditor
-                  .foreach(msg => highlightForErrorMessage(state, msg))
           }
         }
       )
@@ -240,14 +232,12 @@ object ToolWindowUtils {
 
   def updateToolWindowRunPane(
       numWindow: Int,
-      fromReload: Boolean = false,
-      fromLogger: Boolean = false
+      fromReload: Boolean = false
   ): Unit =
     getToolWindowContent(numWindow).getComponent
       .getClientProperty(genUpdateRunPaneName(numWindow))
-      .asInstanceOf[(fromReload: Boolean, fromLogger: Boolean) => Unit](
-        fromReload,
-        fromLogger
+      .asInstanceOf[(fromReload: Boolean) => Unit](
+        fromReload
       )
 
   def createNewToolWindow(): Unit =

@@ -1,6 +1,5 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.options.Configurable
 import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
   FiniteDurationCommonOption,
@@ -9,7 +8,11 @@ import com.ossuminc.riddl.plugins.idea.settings.CommonOptionsUtils.{
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.runCommandForEditor
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.*
-import com.ossuminc.riddl.plugins.idea.utils.highlightForErrorMessage
+import com.ossuminc.riddl.plugins.idea.utils.{
+  displayNotification,
+  highlightErrorMessagesForFile,
+  selectedEditor
+}
 import org.codehaus.groovy.control.ConfigurationException
 
 import java.io.File
@@ -28,7 +31,6 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
   override def isModified: Boolean = component.isModified
 
   override def apply(): Unit = {
-    println(numWindow)
     val windowState = getRiddlIdeaState(numWindow)
 
     windowState.setCommand(component.getPickedCommand)
@@ -39,28 +41,23 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
       then
         windowState.setTopLevelPath(component.getTopLevelFieldText)
         runCommandForEditor(numWindow)
-        Thread.sleep(350)
-        windowState.getMessagesForEditor.foreach(msg =>
-          highlightForErrorMessage(windowState, msg)
+        highlightErrorMessagesForFile(
+          windowState,
+          Left(selectedEditor)
         )
       else
-        windowState.appendRunOutput(
+        displayNotification(
           "The provided top-level file is invalid - cannot run on edit"
         )
 
     val confPath = File(component.getConfFieldText)
     if component.getPickedCommand == "from" &&
       (confPath.exists() && confPath.isFile)
-    then {
+    then
       windowState.setConfPath(Some(component.getConfFieldText))
-
       if windowState.getFromOptionsSeq.contains(component.getPickedFromOption)
       then windowState.setFromOption(component.getPickedFromOption)
-      else windowState.setFromOptionsSeq(Seq())
-
-      windowState.clearRunOutput()
-      updateToolWindowRunPane(numWindow, fromReload = true)
-    }
+      else windowState.setFromOptionsSeq(scala.collection.mutable.Seq())
 
     component.getBooleanCommonOptions.foreach(option =>
       windowState.setCommonOptions(
@@ -104,6 +101,14 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
       else ConfigurationException("max-include-wait must be less than 1 minute")
     else ConfigurationException("max-include-wait must be an integer")
 
-    windowState.setAutoCompile(component.getAutoCompileValue)
+    if component.getTopLevelFieldText.endsWith(".riddl") then
+      windowState.clearAllHighlighters()
+    else if component.getPickedCommand == "from" &&
+      (confPath.exists() && confPath.isFile)
+    then windowState.clearAllHighlighters()
+
+    windowState.setAutoParse(component.getAutoParseValue)
+    windowState.clearRunOutput()
+    updateToolWindowRunPane(numWindow, fromReload = true)
   }
 }

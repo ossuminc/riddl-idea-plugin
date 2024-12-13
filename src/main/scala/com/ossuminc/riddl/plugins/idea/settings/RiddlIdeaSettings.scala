@@ -1,18 +1,19 @@
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.editor.markup.{MarkupModel, RangeHighlighter}
-import java.nio.file.Path
-import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
 import com.intellij.util.messages.MessageBusConnection
 import com.ossuminc.riddl.language.Messages.Message
+import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
 
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.components.{
   PersistentStateComponent,
   Storage,
   State as StateAnnotation
 }
 import com.ossuminc.riddl.utils.CommonOptions
-import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
+
+import scala.collection.mutable
+import scala.collection.mutable.*
 
 @StateAnnotation(
   name = "RiddlIdeaSettings",
@@ -34,14 +35,27 @@ class RiddlIdeaSettings
   }
 }
 
+case class HighlighterInfo(startOffset: Int, endOffset: Int, layer: Int)
+
+object HighlighterInfo {
+  def fromRangeHighlighter(highlighter: RangeHighlighter): HighlighterInfo = {
+    HighlighterInfo(
+      highlighter.getStartOffset,
+      highlighter.getEndOffset,
+      highlighter.getLayer
+    )
+  }
+}
+
 object RiddlIdeaSettings {
   class States {
-    private var states: Map[Int, State] = Map()
+    private var states: scala.collection.mutable.Map[Int, State] =
+      scala.collection.mutable.Map()
 
     def load(newStates: States): Unit = states = newStates.states
 
     def getState(numToolWindow: Int): State = states(numToolWindow)
-    def allStates: Map[Int, State] = states
+    def allStates: scala.collection.mutable.Map[Int, State] = states
 
     def length: Int = states.size
 
@@ -53,18 +67,22 @@ object RiddlIdeaSettings {
             .find(num => !states.keys.iterator.toSeq.contains(num))
             .getOrElse(length + 1)
 
-      states = states.concat(Map(newWindowNum -> new State(newWindowNum)))
+      states = states.concat(
+        scala.collection.mutable.Map(newWindowNum -> new State(newWindowNum))
+      )
       newWindowNum
     }
 
     def removeState(numWindow: Int): Unit =
-      states = states.view.filterKeys(_ != numWindow).toMap
+      states = scala.collection.mutable.Map
+        .from(states.view.filterKeys(_ != numWindow).toMap)
   }
 
   class State(windowNum: Int) {
     private var riddlConfPath: Option[String] = None
     private var riddlTopLevelPath: Option[String] = None
-    private var riddlRunOutput: Seq[String] = Seq()
+    private var riddlRunOutput: scala.collection.mutable.Seq[String] =
+      scala.collection.mutable.Seq()
     private var autoCompileOnSave: Boolean = true
     private var vfsConnection: Option[MessageBusConnection] = None
     private var command: String = commands.head
@@ -73,14 +91,21 @@ object RiddlIdeaSettings {
       groupMessagesByKind = true
     )
     private var fromOption: Option[String] = None
-    private var fromOptionsSeq: Seq[String] =
+    private var fromOptionsSeq: mutable.Seq[String] =
       if riddlConfPath.isDefined then
-        riddlConfPath.flatMap(readFromOptionsFromConf).toSeq
-      else Seq()
+        mutable.Seq
+          .from(riddlConfPath.flatMap(readFromOptionsFromConf).toSeq)
+      else mutable.Seq()
+    private var highlightersPerFile: mutable.Map[String, mutable.Seq[
+      HighlighterInfo
+    ]] = mutable.Map.empty
 
-    private var messagesForEditor: Seq[Message] = Seq()
-    private var errorHighlighters: Seq[RangeHighlighter] = Seq()
-    private var markupModelOpt: Option[MarkupModel] = None
+    private var messagesForConsole: mutable.Map[String, mutable.Seq[
+      Message
+    ]] = mutable.Map()
+    private var messagesForEditor: mutable.Map[String, mutable.Seq[
+      Message
+    ]] = mutable.Map()
 
     def getWindowNum: Int = windowNum
 
@@ -92,14 +117,12 @@ object RiddlIdeaSettings {
     )
     def getTopLevelPath: Option[String] = riddlTopLevelPath
 
-    def prependRunOutput(newOutput: String): Unit = riddlRunOutput =
-      newOutput +: riddlRunOutput
     def appendRunOutput(newOutput: String): Unit = riddlRunOutput :+= newOutput
-    def clearRunOutput(): Unit = riddlRunOutput = Seq()
-    def getRunOutput: Seq[String] = riddlRunOutput
+    def clearRunOutput(): Unit = riddlRunOutput = scala.collection.mutable.Seq()
+    def getRunOutput: scala.collection.mutable.Seq[String] = riddlRunOutput
 
-    def setAutoCompile(value: Boolean): Unit = autoCompileOnSave = value
-    def getAutoCompile: Boolean = autoCompileOnSave
+    def setAutoParse(value: Boolean): Unit = autoCompileOnSave = value
+    def getAutoParse: Boolean = autoCompileOnSave
 
     def setVFSConnection(connection: MessageBusConnection): Unit = vfsConnection = Some(connection)
     def disconnectVFSListener(): Unit = vfsConnection.foreach(_.disconnect())
@@ -112,34 +135,41 @@ object RiddlIdeaSettings {
     def setCommonOptions(newCOs: CommonOptions): Unit =
       commonOptions = newCOs
 
-    def getMessagesForEditor: Seq[Message] = messagesForEditor
-    def setMessagesForEditor(newMsgs: Seq[Message]): Unit =
-      messagesForEditor = newMsgs
+    def hasMessages: Boolean = messagesForConsole.nonEmpty || messagesForEditor.nonEmpty
 
-    def appendErrorHighlighter(
-        rangeHighlighter: RangeHighlighter
-    ): Seq[RangeHighlighter] =
-      errorHighlighters :+ rangeHighlighter
-    def clearErrorHighlighters(): Unit = {
-      markupModelOpt.foreach(mm =>
-        errorHighlighters.foreach(mm.removeHighlighter)
-      )
-      errorHighlighters = Seq()
-    }
-
-    def setMarkupModel(newModel: MarkupModel): Unit = markupModelOpt = Some(
-      newModel
-    )
+    def getMessagesForEditor: mutable.Map[String, mutable.Seq[Message]] = messagesForEditor
+    def setMessagesForFileForEditor(fileName: String, newMsgs: mutable.Seq[Message]): Unit =
+      messagesForEditor += fileName -> newMsgs
+    def getMessagesForConsole: mutable.Map[String, mutable.Seq[Message]] = messagesForConsole
+    def setMessagesForConsole(newMsgs: mutable.Seq[Message]): Unit =
+      messagesForConsole = mutable.Map.from(newMsgs.groupBy(_.loc.source.origin))
 
     def setFromOption(newFromOption: String): Unit = fromOption = Some(
       newFromOption
     )
     def getFromOption: Option[String] = fromOption
 
-    def setFromOptionsSeq(newSeq: Seq[String]): Unit = fromOptionsSeq = newSeq
-    def getFromOptionsSeq: Seq[String] = fromOptionsSeq
+    def setFromOptionsSeq(newSeq: scala.collection.mutable.Seq[String]): Unit =
+      fromOptionsSeq = newSeq
+    def getFromOptionsSeq: scala.collection.mutable.Seq[String] = fromOptionsSeq
+
+    def saveHighlighterForFile(
+        fileName: String,
+        highlighter: RangeHighlighter
+    ): Unit =
+      highlightersPerFile.addOne(
+        fileName, mutable.Seq(HighlighterInfo.fromRangeHighlighter(highlighter))
+      )
+    def highlightersForFile: mutable.Map[String, mutable.Seq[HighlighterInfo]] = highlightersPerFile
+    def getHighlightersForFile(
+        fileName: String
+    ): mutable.Seq[HighlighterInfo] =
+      highlightersPerFile.getOrElse(fileName, mutable.Seq())
+    def clearHighlightersForFile(fileName: String): Unit =
+      highlightersPerFile -= fileName
+    def clearAllHighlighters(): Unit = highlightersPerFile = mutable.Map()
   }
 
-  private val commands = Seq("from", "about", "info")
-  def allCommands: Seq[String] = commands
+  private val commands = mutable.Seq("from", "about", "info")
+  def allCommands: mutable.Seq[String] = commands
 }

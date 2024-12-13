@@ -5,13 +5,15 @@ import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.passes.PassesResult
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.utils.{
-  Await,
+  JVMPlatformContext,
   Logger,
   Logging,
-  PlatformContext,
-  StringLogger,
-  pc
+  PlatformContext
 }
+
+import scala.collection.mutable
+import scala.concurrent.ExecutionContext
+import com.ossuminc.riddl.utils.{Await, StringLogger, pc}
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
@@ -20,56 +22,75 @@ case class RiddlIdeaPluginLogger(
     numWindow: Int
 )(using io: PlatformContext)
     extends Logger(using io: PlatformContext) {
-
   import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
 
   override def write(level: Logging.Lvl, s: String): Unit = {
-    val state = getRiddlIdeaState(numWindow)
-    state.appendRunOutput(highlight(level, s))
+    super.count(level)
+    getRiddlIdeaState(numWindow).appendRunOutput(highlight(level, s))
   }
 }
 
+class RiddlPluginPlatformContext(numWindow: Int) extends JVMPlatformContext {
+  override def ec: ExecutionContext = scala.concurrent.ExecutionContext.global
+
+  override def log: Logger = RiddlIdeaPluginLogger(numWindow)
+}
+
 object ParsingUtils {
+  import ToolWindowUtils.*
   import ManagerBasedGetterUtils.*
 
-  def runCommandForWindow(
-      numWindow: Int,
-      confFile: Option[String]
+  def runCommandForConsole(
+      numWindow: Int
   ): Unit = {
-    val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
+    given io: PlatformContext = RiddlPluginPlatformContext(numWindow)
 
-    if !windowState.getCommand.isBlank ||
-      (windowState.getCommand == "from" && confFile.isDefined && windowState.getFromOption.isDefined)
+    val windowState: RiddlIdeaSettings.State = getRiddlIdeaState(numWindow)
+    windowState.clearRunOutput()
+    windowState.setMessagesForConsole(mutable.Seq())
+
+    if windowState.getCommand.nonEmpty && (
+        (windowState.getCommand != "from" &&
+          Seq("about", "info").contains(
+            windowState.getCommand
+          )) || (
+          windowState.getCommand == "from" &&
+            windowState.getConfPath.isDefined &&
+            windowState.getFromOption.isDefined
+        )
+      )
     then
-      pc.withLogger(RiddlIdeaPluginLogger(numWindow)) { _ =>
-        pc.withOptions(getRiddlIdeaState(numWindow).getCommonOptions) { _ =>
-          Commands.runCommandWithArgs(
-            Array(
-              windowState.getCommand,
-              confFile.getOrElse(""),
-              windowState.getFromOption.getOrElse("")
-            ).filter(_.nonEmpty)
-          ) match {
-            case Right(_) if windowState.getCommand == "from" =>
-              windowState.prependRunOutput(
-                "Success!! There were no errors found\n"
+      io.withOptions(windowState.getCommonOptions) { _ =>
+        Commands.runCommandWithArgs(
+          Array(
+            windowState.getCommand,
+            windowState.getConfPath.getOrElse(""),
+            windowState.getFromOption
+              .map(fromOption =>
+                if windowState.getCommand == "from" then fromOption
+                else ""
               )
-            case Left(_) =>
-              windowState.prependRunOutput("The following errors were found:\n")
-            case _ => ()
-          }
+              .getOrElse("")
+          ).filter(_.nonEmpty)
+        ) match {
+          case Right(result) =>
+            windowState.setMessagesForConsole(mutable.Seq.from(result.messages))
+          case Left(msgs) =>
+            windowState.setMessagesForConsole(mutable.Seq.from(msgs))
         }
       }
+    Thread.sleep(100)
+    updateToolWindowRunPane(numWindow, fromReload = true)
   }
 
   def runCommandForEditor(
       numWindow: Int,
-      editorTextOpt: Option[String] = None
+      editorTextWithFilePathOpt: Option[(String, String)] = None
   ): Unit = {
     val state = getRiddlIdeaState(numWindow)
 
-    val rpi: RiddlParserInput = editorTextOpt match {
-      case Some(editorText) => RiddlParserInput(editorText, "")
+    val rpi: RiddlParserInput = editorTextWithFilePathOpt match {
+      case Some((editorText, _)) => RiddlParserInput(editorText, "")
       case None if state.getTopLevelPath.isDefined =>
         Await.result(
           RiddlParserInput.fromPath(state.getTopLevelPath.get),
@@ -81,11 +102,28 @@ object ParsingUtils {
     pc.withLogger(StringLogger()) { _ =>
       pc.withOptions(state.getCommonOptions) { _ =>
         TopLevelParser.parseNebula(rpi) match {
-          case Right(_) => ()
+          case Right(_) =>
+            editorTextWithFilePathOpt.foreach((_, filePath) =>
+              clearHighlightersForFile(filePath, state)
+              state.setMessagesForFileForEditor(filePath, mutable.Seq())
+            )
+            ()
           case Left(msgs) =>
-            state.setMessagesForEditor(msgs)
+            editorTextWithFilePathOpt match {
+              case Some((_, filePath)) =>
+                state.setMessagesForFileForEditor(
+                  filePath,
+                  mutable.Seq.from(msgs)
+                )
+              case None =>
+                msgs
+                  .groupBy(_.loc.source.origin)
+                  .map(tup => (tup._1, mutable.Seq.from(tup._2)))
+                  .foreach(state.setMessagesForFileForEditor.tupled)
+            }
         }
       }
     }
+    Thread.sleep(200)
   }
 }

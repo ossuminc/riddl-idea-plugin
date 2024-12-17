@@ -28,11 +28,11 @@ lazy val riddlIdeaPlugin: Project = Root(
     buildInfoPackage := "com.ossuminc.riddl.plugins.idea",
     buildInfoObject := "RiddlIDEAPluginBuildInfo",
     description := "The plugin for supporting RIDDL in IntelliJ",
-    libraryDependencies ++= Dep.testing ++ Dep.basic ++ Seq(
-      Dep.kotlin,
-      Dep.riddlCommands,
-      Dep.pureconfig
-    ),
+    libraryDependencies ++= Dep.testing ++ Dep.basic ++ Dep.jetbrains ++
+      Seq(
+        Dep.riddlCommands,
+        Dep.pureconfig
+      ),
     Test / parallelExecution := false,
     scalaVersion := "3.4.3",
     ThisBuild / intellijPluginName := "RIDDL4IDEA",

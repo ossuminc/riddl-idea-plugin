@@ -9,7 +9,9 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.ossuminc.riddl.language.AST.{
   CommentTKN,
   KeywordTKN,
+  MarkdownLineTKN,
   OtherTKN,
+  PredefinedTKN,
   PunctuationTKN,
   QuotedStringTKN,
   ReadabilityTKN,
@@ -32,6 +34,7 @@ object utils {
         .zip(tokens.map {
           case _: CommentTKN      => Seq(false, true)
           case _: QuotedStringTKN => Seq(true, false)
+          case _: MarkdownLineTKN => Seq(true, false)
           case _                  => Seq(false, false)
         })
         .map((offsetTup, tokSeq) =>
@@ -73,6 +76,12 @@ object utils {
       case _: ReadabilityTKN =>
         applyColourKey(editor)(
           CUSTOM_KEYWORD_READABILITY,
+          offset,
+          endOffset - offset
+        )
+      case _: PredefinedTKN =>
+        applyColourKey(editor)(
+          DefaultLanguageHighlighterColors.DOC_COMMENT_MARKUP,
           offset,
           endOffset - offset
         )

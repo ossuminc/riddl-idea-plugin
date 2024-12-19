@@ -132,10 +132,11 @@ package object utils {
 
         allHighlighters
           .filter(hl =>
-            hl.getTextAttributes(colorScheme)
-              .getEffectType == EffectType.WAVE_UNDERSCORE ||
-              hl.getTextAttributes(colorScheme)
-                .getEffectType == EffectType.
+            hl.getLayer != HighlighterLayer.FIRST &&
+              (hl.getTextAttributes(colorScheme) != null &&
+                hl.getTextAttributes(colorScheme)
+                  .getEffectType == EffectType.WAVE_UNDERSCORE
+                || hl.getErrorStripeTooltip != null)
           )
           .foreach(removeHighlighter(editor))
       }
@@ -158,7 +159,6 @@ package object utils {
       }
 
     editorOpt.foreach { editor =>
-      // break up first function using other two
       clearHighlightersForFile(filePath, state)
       state.clearLineHighlightersForFile(filePath)
       state.clearSquigglyHighlightersForFile(filePath)
@@ -174,13 +174,13 @@ package object utils {
               val squigglyAttributes = new TextAttributes()
               squigglyAttributes.setEffectType(EffectType.WAVE_UNDERSCORE)
               val squigglyStart = msg.loc.offset
-              val squigglyEnd = squigglyStart + msg.loc.endOffset
+              val squigglyEnd = msg.loc.endOffset
 
               val highlighter: RangeHighlighter =
                 if msg.kind.severity == Error.severity
                 then {
                   squigglyAttributes.setEffectColor(UIUtil.getErrorForeground)
-                  state.saveLineHighlighterForFile(
+                  state.saveSquigglyHighlighterForFile(
                     filePath,
                     editor.getMarkupModel.addRangeHighlighter(
                       squigglyStart,
@@ -206,7 +206,7 @@ package object utils {
                   hl
                 } else if msg.kind.severity == Warning.severity then {
                   squigglyAttributes.setEffectColor(UIUtil.getToolTipForeground)
-                  state.saveLineHighlighterForFile(
+                  state.saveSquigglyHighlighterForFile(
                     filePath,
                     editor.getMarkupModel.addRangeHighlighter(
                       squigglyStart,

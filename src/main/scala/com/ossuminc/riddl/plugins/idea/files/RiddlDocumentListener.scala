@@ -16,9 +16,7 @@ class RiddlDocumentListener extends DocumentListener {
     val editors = EditorFactory.getInstance().getEditors(doc)
     if editors.nonEmpty && doc.getText.nonEmpty then
       editors.map { editor =>
-        if editor.getVirtualFile != null then
-          highlightKeywords(editor.getDocument.getText, editor)
-
+        if editor.getVirtualFile != null then {
           getRiddlIdeaStates.allStates.values.toSeq
             .find { state =>
               isFilePathBelowAnother(
@@ -34,6 +32,8 @@ class RiddlDocumentListener extends DocumentListener {
               if state.getMessagesForEditor.nonEmpty
               then highlightErrorMessagesForFile(state, Left(editor))
             }
+          highlightKeywords(editor.getDocument.getText, editor)
+        }
       }
   }
 }

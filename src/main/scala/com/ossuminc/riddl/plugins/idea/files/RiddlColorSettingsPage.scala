@@ -1,6 +1,5 @@
 package com.ossuminc.riddl.plugins.idea.files
 
-import com.intellij.ide.highlighter.custom.CustomFileHighlighter
 import com.intellij.openapi.options.colors.{
   AttributesDescriptor,
   ColorDescriptor,

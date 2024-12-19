@@ -26,7 +26,7 @@ object Dep {
   val jbKotlin = "org.jetbrains.kotlin" % "kotlin-stdlib" % "2.0.20"
   val jbAnnotations = "org.jetbrains" % "annotations" % "24.1.0"
 
-  val riddlCommands = "com.ossuminc" % "riddl-commands_3" % "0.56.0"
+  val riddlCommands = "com.ossuminc" % "riddl-commands_3" % "0.56.0-20-18b4853b"
 
   val basic: Seq[ModuleID] = Seq(minimalJson, scalactic, scalatest, scalacheck)
   val jetbrains: Seq[ModuleID] = Seq(jbKotlin, jbAnnotations)

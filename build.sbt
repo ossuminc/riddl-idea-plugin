@@ -18,7 +18,7 @@ lazy val riddlIdeaPlugin: Project = Root(
     With.build_info,
     With.coverage(90),
     With.aliases,
-    With.riddl("0.56.0")
+    With.riddl(V.riddl)
   )
   .enablePlugins(KotlinPlugin, JavaAppPackaging)
   .settings(

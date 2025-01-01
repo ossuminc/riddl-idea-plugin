@@ -107,11 +107,10 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
       .withFileFilter(ConfCondition())
 
   topLevelFileTextField.addBrowseFolderListener(
-    "Browse for Top Level Path",
-    null,
     getProject,
-    riddlFileDescriptor
+    riddlFileDescriptor.withTitle("Browse for Top Level Path")
   )
+
   topLevelFileTextField.addPropertyChangeListener(_ =>
     areAnyComponentsModified = true
   )
@@ -130,10 +129,8 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   )
 
   confFileTextField.addBrowseFolderListener(
-    "Browse for Configuration Path",
-    null,
     getProject,
-    confFileDescriptor
+    confFileDescriptor.withTitle("Browse for Configuration Path")
   )
   confFileTextField.addPropertyChangeListener(_ =>
     areAnyComponentsModified = true
@@ -294,10 +291,8 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
         .createSingleFileDescriptor()
         .withFileFilter(ConfCondition())
     confFileTextField.addBrowseFolderListener(
-      "Browse for Path",
-      null,
       getProject,
-      fileDescriptor,
+      fileDescriptor.withTitle("Browse for Path"),
       new TextComponentAccessor[JTextField]:
         override def getText(component: JTextField): String = component.getText
 

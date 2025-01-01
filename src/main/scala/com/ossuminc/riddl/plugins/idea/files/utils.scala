@@ -6,15 +6,7 @@ import com.intellij.openapi.editor.markup.{
   HighlighterTargetArea
 }
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.ossuminc.riddl.language.AST.{
-  CommentTKN,
-  KeywordTKN,
-  OtherTKN,
-  PunctuationTKN,
-  QuotedStringTKN,
-  ReadabilityTKN,
-  Token
-}
+import com.ossuminc.riddl.language.AST.Token
 import com.ossuminc.riddl.language.{At, Messages}
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
@@ -29,13 +21,13 @@ object utils {
       ast: Either[Messages.Messages, List[Token]]
   ): Seq[(Token, Int, Int, Seq[Boolean])] = ast match {
     case Left(_) =>
-      Seq((OtherTKN(At()), 0, 0, Seq(false, false)))
+      Seq((Token.Other(At()), 0, 0, Seq(false, false)))
     case Right(tokens) =>
       tokens
         .map(tok => (tok, tok.at.offset, tok.at.endOffset))
         .zip(tokens.map {
-          case _: CommentTKN      => Seq(false, true)
-          case _: QuotedStringTKN => Seq(true, false)
+          case _: Token.Comment      => Seq(false, true)
+          case _: Token.QuotedString => Seq(true, false)
           case _                  => Seq(false, false)
         })
         .map((offsetTup, tokSeq) =>
@@ -62,19 +54,19 @@ object utils {
       editor: Editor
   )(token: Token, offset: Int, endOffset: Int, flags: Seq[Boolean]): Unit =
     token match
-      case _: KeywordTKN =>
+      case _: Token.Keyword =>
         applyColourKey(editor)(
           CUSTOM_KEYWORD_KEYWORD,
           offset,
           endOffset - offset
         )
-      case _: PunctuationTKN =>
+      case _: Token.Punctuation =>
         applyColourKey(editor)(
           CUSTOM_KEYWORD_PUNCTUATION,
           offset,
           endOffset - offset
         )
-      case _: ReadabilityTKN =>
+      case _: Token.Readability =>
         applyColourKey(editor)(
           CUSTOM_KEYWORD_READABILITY,
           offset,

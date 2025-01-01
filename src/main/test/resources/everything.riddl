@@ -35,7 +35,7 @@ domain Everything is {
     type url is URL
 
     type PeachType is { a: Integer }
-    type enum is any of { Apple Pear Peach(23)  Persimmon(24) }
+    type enum is any of { Apple, Pear,  Peach(23),  Persimmon(24) }
 
     type alt is one of { enum or stamp or url }
 
@@ -73,14 +73,14 @@ domain Everything is {
         requires {n: Nothing}
         returns {b: Boolean}
         body {
-          ```scala 
+          ```scala
             // Simulate a creative state
             val randomFactor = Math.random() // A random value between 0 and 1
             val threshold = 0.7 // Threshold for creativity
-        
+
             // If the random factor exceeds the threshold, consider it a creative state
             b = randomFactor > threshold
-          ``` 
+          ```
         }
       }
     }

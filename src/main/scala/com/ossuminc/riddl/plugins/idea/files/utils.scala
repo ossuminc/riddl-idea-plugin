@@ -6,15 +6,7 @@ import com.intellij.openapi.editor.markup.{
   HighlighterTargetArea
 }
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.ossuminc.riddl.language.AST.{
-  CommentTKN,
-  KeywordTKN,
-  OtherTKN,
-  PunctuationTKN,
-  QuotedStringTKN,
-  ReadabilityTKN,
-  Token
-}
+import com.ossuminc.riddl.language.AST.Token
 import com.ossuminc.riddl.language.{At, Messages}
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.plugins.idea.files.RiddlColorKeywords.*
@@ -23,10 +15,10 @@ import com.ossuminc.riddl.utils.StringLogger
 object utils {
   private def annotateTokensWithBooleans(
       ast: Either[Messages.Messages, List[Token]]
-  ): Seq[Token] = ast match {
-    case Left(_)       => Seq(OtherTKN(At()))
-    case Right(tokens) => tokens.map(tok => tok)
-  }
+  ): Seq[Token] = ast match
+    case Left(_) => Seq(Token.Other(At.empty)
+    case Right(tokens) => tokens
+  end match
 
   def highlightKeywords(docText: String, editor: Editor): Unit = {
     import com.ossuminc.riddl.utils.pc
@@ -50,31 +42,31 @@ object utils {
     val endOffset = token.at.endOffset
 
     token match
-      case _: CommentTKN =>
+      case _: Token.Keyword =>
         applyColourKey(editor)(
           DefaultLanguageHighlighterColors.LINE_COMMENT,
           offset,
           endOffset - offset
         )
-      case _: QuotedStringTKN =>
+      case _: Token.QuotedString =>
         applyColourKey(editor)(
           DefaultLanguageHighlighterColors.STRING,
           offset,
           endOffset - offset
         )
-      case _: KeywordTKN =>
+      case _: Token.Keyword =>
         applyColourKey(editor)(
           CUSTOM_KEYWORD_KEYWORD,
           offset,
           endOffset - offset
         )
-      case _: PunctuationTKN =>
+      case _: Token.Punctuation =>
         applyColourKey(editor)(
           CUSTOM_KEYWORD_PUNCTUATION,
           offset,
           endOffset - offset
         )
-      case _: ReadabilityTKN =>
+      case _: Token.Readability =>
         applyColourKey(editor)(
           CUSTOM_KEYWORD_READABILITY,
           offset,

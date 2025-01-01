@@ -18,12 +18,12 @@ lazy val riddlIdeaPlugin: Project = Root(
     With.build_info,
     With.coverage(90),
     With.aliases,
-    With.riddl("0.56.0")
+    With.riddl(V.riddl)
   )
   .enablePlugins(KotlinPlugin, JavaAppPackaging)
   .settings(
     kotlinVersion := "2.0.0",
-    kotlincJvmTarget := "22",
+    kotlincJvmTarget := "21",
     kotlinRuntimeProvided := true,
     buildInfoPackage := "com.ossuminc.riddl.plugins.idea",
     buildInfoObject := "RiddlIDEAPluginBuildInfo",
@@ -36,7 +36,7 @@ lazy val riddlIdeaPlugin: Project = Root(
     Test / parallelExecution := false,
     scalaVersion := "3.4.3",
     ThisBuild / intellijPluginName := "RIDDL4IDEA",
-    ThisBuild / intellijBuild := "242.23726.103",
+    ThisBuild / intellijBuild := "243.22562.218",
     ThisBuild / intellijPlatform := IntelliJPlatform.IdeaUltimate,
     ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
     intellijPlugins ++= Seq("com.intellij.properties".toPlugin),

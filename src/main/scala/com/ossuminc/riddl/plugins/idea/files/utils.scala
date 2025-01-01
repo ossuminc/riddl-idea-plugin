@@ -24,7 +24,7 @@ object utils {
       Seq((Token.Other(At()), 0, 0, Seq(false, false)))
     case Right(tokens) =>
       tokens
-        .map(tok => (tok, tok.loc.offset, tok.loc.endOffset))
+        .map(tok => (tok, tok.at.offset, tok.at.endOffset))
         .zip(tokens.map {
           case _: Token.Comment      => Seq(false, true)
           case _: Token.QuotedString => Seq(true, false)

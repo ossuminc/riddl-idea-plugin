@@ -9,31 +9,19 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.ossuminc.riddl.language.AST.Token
 import com.ossuminc.riddl.language.{At, Messages}
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
-import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
-import com.ossuminc.riddl.plugins.idea.utils.isFilePathBelowAnother
-import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaStates
+import com.ossuminc.riddl.plugins.idea.files.RiddlColorKeywords.*
+import com.ossuminc.riddl.plugins.idea.files.utils.annotateTokensWithBooleans
 import com.ossuminc.riddl.utils.StringLogger
-import com.ossuminc.riddl.plugins.idea.utils.ParsingUtils.*
 
 object utils {
   private def annotateTokensWithBooleans(
       ast: Either[Messages.Messages, List[Token]]
-  ): Seq[(Token, Int, Int, Seq[Boolean])] = ast match {
-    case Left(_) =>
-      Seq((Token.Other(At()), 0, 0, Seq(false, false)))
-    case Right(tokens) =>
-      tokens
-        .map(tok => (tok, tok.at.offset, tok.at.endOffset))
-        .zip(tokens.map {
-          case _: Token.Comment      => Seq(false, true)
-          case _: Token.QuotedString => Seq(true, false)
-          case _                  => Seq(false, false)
-        })
-        .map((offsetTup, tokSeq) =>
-          (offsetTup._1, offsetTup._2, offsetTup._3, tokSeq)
-        )
-  }
+  ): Seq[Token] =
+    ast match
+      case Left(_)       => Seq(Token.Other(At.empty))
+      case Right(tokens) => tokens
+    end match
+  end annotateTokensWithBooleans
 
   def highlightKeywords(docText: String, editor: Editor): Unit = {
     import com.ossuminc.riddl.utils.pc
@@ -52,11 +40,26 @@ object utils {
 
   private def applyColorToToken(
       editor: Editor
-  )(token: Token, offset: Int, endOffset: Int, flags: Seq[Boolean]): Unit =
+  )(token: Token): Unit = {
+    val offset = token.loc.offset
+    val endOffset = token.loc.endOffset
+
     token match
       case _: Token.Keyword =>
         applyColourKey(editor)(
           CUSTOM_KEYWORD_KEYWORD,
+          offset,
+          endOffset - offset
+        )
+      case _: Token.Comment =>
+        applyColourKey(editor)(
+          DefaultLanguageHighlighterColors.LINE_COMMENT,
+          offset,
+          endOffset - offset
+        )
+      case _: Token.QuotedString =>
+        applyColourKey(editor)(
+          DefaultLanguageHighlighterColors.STRING,
           offset,
           endOffset - offset
         )
@@ -78,22 +81,7 @@ object utils {
           offset,
           endOffset - offset
         )
-
-    flags match {
-      case Seq(isQuoted, _) if isQuoted =>
-        applyColourKey(editor)(
-          DefaultLanguageHighlighterColors.STRING,
-          offset,
-          endOffset - offset
-        )
-      case Seq(_, isComment) if isComment =>
-        applyColourKey(editor)(
-          DefaultLanguageHighlighterColors.LINE_COMMENT,
-          offset,
-          endOffset - offset
-        )
-      case Seq(_, _) => ()
-    }
+  }
 
   private def applyColourKey(editor: Editor)(
       colorKey: TextAttributesKey,

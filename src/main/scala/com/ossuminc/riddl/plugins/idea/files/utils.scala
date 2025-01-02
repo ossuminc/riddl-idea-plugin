@@ -10,15 +10,18 @@ import com.ossuminc.riddl.language.AST.Token
 import com.ossuminc.riddl.language.{At, Messages}
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.plugins.idea.files.RiddlColorKeywords.*
+import com.ossuminc.riddl.plugins.idea.files.utils.annotateTokensWithBooleans
 import com.ossuminc.riddl.utils.StringLogger
 
 object utils {
   private def annotateTokensWithBooleans(
       ast: Either[Messages.Messages, List[Token]]
-  ): Seq[Token] = ast match
-    case Left(_) => Seq(Token.Other(At.empty)
-    case Right(tokens) => tokens
-  end match
+  ): Seq[Token] =
+    ast match
+      case Left(_)       => Seq(Token.Other(At.empty))
+      case Right(tokens) => tokens
+    end match
+  end annotateTokensWithBooleans
 
   def highlightKeywords(docText: String, editor: Editor): Unit = {
     import com.ossuminc.riddl.utils.pc
@@ -38,11 +41,17 @@ object utils {
   private def applyColorToToken(
       editor: Editor
   )(token: Token): Unit = {
-    val offset = token.at.offset
-    val endOffset = token.at.endOffset
+    val offset = token.loc.offset
+    val endOffset = token.loc.endOffset
 
     token match
       case _: Token.Keyword =>
+        applyColourKey(editor)(
+          CUSTOM_KEYWORD_KEYWORD,
+          offset,
+          endOffset - offset
+        )
+      case _: Token.Comment =>
         applyColourKey(editor)(
           DefaultLanguageHighlighterColors.LINE_COMMENT,
           offset,
@@ -51,12 +60,6 @@ object utils {
       case _: Token.QuotedString =>
         applyColourKey(editor)(
           DefaultLanguageHighlighterColors.STRING,
-          offset,
-          endOffset - offset
-        )
-      case _: Token.Keyword =>
-        applyColourKey(editor)(
-          CUSTOM_KEYWORD_KEYWORD,
           offset,
           endOffset - offset
         )

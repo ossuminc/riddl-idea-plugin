@@ -4,8 +4,7 @@ import com.intellij.util.messages.MessageBusConnection
 import com.ossuminc.riddl.language.Messages.Message
 import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.components.{PersistentStateComponent, Storage, State => StateAnnotation}
 import com.ossuminc.riddl.utils.CommonOptions
 
 import scala.collection.mutable
@@ -19,13 +18,7 @@ import scala.collection.mutable.*
     )
   )
 )
-
-class RiddlIdeaSettings
-    extends PersistentStateComponent[RiddlIdeaSettings.States] {
-  private val disposable = Disposer.newDisposable()
-  def dispose(): Unit =
-    Disposer.dispose(disposable)
-    states.allStates.values.foreach(state => state.disconnectVFSListener())
+class RiddlIdeaSettings extends PersistentStateComponent[RiddlIdeaSettings.States] {
 
   private val states = new RiddlIdeaSettings.States()
 
@@ -61,12 +54,15 @@ object RiddlIdeaSettings {
     def length: Int = states.size
 
     def newState(): Int = {
-      val newWindowNum: Int =
-        if length == 0 then 1
+      val newWindowNum: Int = {
+        if length == 0 then
+          1
         else
           (1 to length + 1)
-            .find(num => !states.keys.iterator.toSeq.contains(num))
-            .getOrElse(length + 1)
+          .find(num => !states.keys.iterator.toSeq.contains(num))
+          .getOrElse(length + 1)
+        end if
+      }
 
       states = states.concat(
         scala.collection.mutable.Map(newWindowNum -> new State(newWindowNum))
@@ -97,14 +93,14 @@ object RiddlIdeaSettings {
         mutable.Seq
           .from(riddlConfPath.flatMap(readFromOptionsFromConf).toSeq)
       else mutable.Seq()
-    private var highlightersPerFile: mutable.Map[String, mutable.Seq[
+    private val highlightersPerFile: mutable.Map[String, mutable.Seq[
       HighlighterInfo
     ]] = mutable.Map.empty
 
     private var messagesForConsole: mutable.Map[String, mutable.Seq[
       Message
     ]] = mutable.Map()
-    private var messagesForEditor: mutable.Map[String, mutable.Seq[
+    private val messagesForEditor: mutable.Map[String, mutable.Seq[
       Message
     ]] = mutable.Map()
 
@@ -163,7 +159,7 @@ object RiddlIdeaSettings {
       )
     def clearHighlightersForFile(fileName: String): Unit =
       highlightersPerFile -= fileName
-    def clearAllHighlighters(): Unit = highlightersPerFile = mutable.Map()
+    def clearAllHighlighters(): Unit = highlightersPerFile.clear()
   }
 
   private val commands = mutable.Seq("from", "about", "info")

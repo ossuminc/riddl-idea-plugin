@@ -3,13 +3,9 @@ package com.ossuminc.riddl.plugins.idea.settings
 import com.intellij.util.messages.MessageBusConnection
 import com.ossuminc.riddl.language.Messages.Message
 import com.ossuminc.riddl.plugins.idea.utils.readFromOptionsFromConf
-
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.components.{
-  PersistentStateComponent,
-  Storage,
-  State as StateAnnotation
-}
+import com.intellij.openapi.components.{PersistentStateComponent, Storage, State as StateAnnotation}
+import com.intellij.openapi.util.Disposer
 import com.ossuminc.riddl.utils.CommonOptions
 
 import scala.collection.mutable
@@ -26,6 +22,11 @@ import scala.collection.mutable.*
 
 class RiddlIdeaSettings
     extends PersistentStateComponent[RiddlIdeaSettings.States] {
+  private val disposable = Disposer.newDisposable()
+  def dispose(): Unit =
+    Disposer.dispose(disposable)
+    states.allStates.values.foreach(state => state.disconnectVFSListener())
+
   private val states = new RiddlIdeaSettings.States()
 
   override def getState: RiddlIdeaSettings.States = states

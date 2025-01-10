@@ -75,6 +75,12 @@ object utils {
           offset,
           endOffset - offset
         )
+      case _: Token.Numeric =>
+        applyColourKey(editor)(
+          DefaultLanguageHighlighterColors.LINE_COMMENT,
+          offset,
+          endOffset - offset
+        )
       case _ =>
         applyColourKey(editor)(
           DefaultLanguageHighlighterColors.IDENTIFIER,

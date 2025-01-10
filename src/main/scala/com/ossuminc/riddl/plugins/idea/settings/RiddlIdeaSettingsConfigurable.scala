@@ -37,8 +37,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
 
     if component.getTopLevelFieldText.endsWith(".riddl") then
       val topLevelFile = File(component.getTopLevelFieldText)
-      if topLevelFile.exists() && topLevelFile.isFile
-      then
+      if topLevelFile.exists() && topLevelFile.isFile then
         windowState.setTopLevelPath(component.getTopLevelFieldText)
         runCommandForEditor(numWindow)
         highlightErrorMessagesForFile(
@@ -51,13 +50,14 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
         )
 
     val confPath = File(component.getConfFieldText)
-    if component.getPickedCommand == "from" &&
-      (confPath.exists() && confPath.isFile)
-    then
+    if component.getPickedCommand == "from" && (confPath.exists() && confPath.isFile) then
       windowState.setConfPath(Some(component.getConfFieldText))
       if windowState.getFromOptionsSeq.contains(component.getPickedFromOption)
       then windowState.setFromOption(component.getPickedFromOption)
       else windowState.setFromOptionsSeq(scala.collection.mutable.Seq())
+    else {
+
+    }
 
     component.getBooleanCommonOptions.foreach(option =>
       windowState.setCommonOptions(
@@ -67,10 +67,8 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
       )
     )
 
-    if component.getIntegerOptionTextField.getText.forall(Character.isDigit)
-    then
-      if component.getIntegerOptionTextField.getText.toInt < Runtime.getRuntime.availableProcessors * 2
-      then
+    if component.getIntegerOptionTextField.getText.forall(Character.isDigit) then
+      if component.getIntegerOptionTextField.getText.toInt < Runtime.getRuntime.availableProcessors * 2 then
         windowState.setCommonOptions(
           IntegerCommonOption.setCommonOptionValue(
             windowState.getCommonOptions
@@ -82,11 +80,10 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
         ConfigurationException(
           s"max-parallel-parsing must be less than ${Runtime.getRuntime.availableProcessors * 2}"
         )
-    else ConfigurationException("max-parallel-parsing must be an integer")
+    else
+      ConfigurationException("max-parallel-parsing must be an integer")
 
-    if component.getFiniteDurationOptionTextField.getText.forall(
-        Character.isDigit
-      )
+    if component.getFiniteDurationOptionTextField.getText.forall(Character.isDigit)
     then
       val finiteDuration = FiniteDuration(
         component.getFiniteDurationOptionTextField.getText.toLong,

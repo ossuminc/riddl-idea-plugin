@@ -9,15 +9,13 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 lazy val riddlIdeaPlugin: Project = Root(
   "riddl-idea-plugin",
-  "ossuminc",
   "com.ossuminc.riddl.plugins.idea",
   startYr = 2024
 )
   .configure(
     With.typical,
-    With.build_info,
+    With.scalaTest(),
     With.coverage(90),
-    With.aliases,
     With.riddl(V.riddl)
   )
   .enablePlugins(KotlinPlugin, JavaAppPackaging)
@@ -28,7 +26,8 @@ lazy val riddlIdeaPlugin: Project = Root(
     buildInfoPackage := "com.ossuminc.riddl.plugins.idea",
     buildInfoObject := "RiddlIDEAPluginBuildInfo",
     description := "The plugin for supporting RIDDL in IntelliJ",
-    libraryDependencies ++= Dep.testing ++ Dep.basic ++ Seq(
+    libraryDependencies ++= Seq(
+      Dep.minimalJson,
       Dep.kotlin,
       Dep.riddlCommands,
       Dep.pureconfig

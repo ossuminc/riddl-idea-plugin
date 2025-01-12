@@ -45,15 +45,33 @@ object utils {
     val endOffset = token.loc.endOffset
 
     token match
+      case _: Token.Identifier =>
+        applyColourKey(editor)(
+          DefaultLanguageHighlighterColors.IDENTIFIER,
+          offset,
+          endOffset - offset
+        )
       case _: Token.Keyword =>
         applyColourKey(editor)(
           CUSTOM_KEYWORD_KEYWORD,
           offset,
           endOffset - offset
         )
+      case _: Token.Readability =>
+        applyColourKey(editor)(
+          CUSTOM_KEYWORD_READABILITY,
+          offset,
+          endOffset - offset
+        )
       case _: Token.Comment =>
         applyColourKey(editor)(
-          DefaultLanguageHighlighterColors.LINE_COMMENT,
+          DefaultLanguageHighlighterColors.BLOCK_COMMENT,
+          offset,
+          endOffset - offset
+        )
+      case _: Token.MarkdownLine =>
+        applyColourKey(editor)(
+          DefaultLanguageHighlighterColors.STRING,
           offset,
           endOffset - offset
         )
@@ -63,15 +81,15 @@ object utils {
           offset,
           endOffset - offset
         )
-      case _: Token.Punctuation =>
+      case _: Token.LiteralCode =>
         applyColourKey(editor)(
-          CUSTOM_KEYWORD_PUNCTUATION,
+          DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR,
           offset,
           endOffset - offset
         )
-      case _: Token.Readability =>
+      case _: Token.Punctuation =>
         applyColourKey(editor)(
-          CUSTOM_KEYWORD_READABILITY,
+          CUSTOM_KEYWORD_PUNCTUATION,
           offset,
           endOffset - offset
         )
@@ -83,7 +101,7 @@ object utils {
         )
       case _ =>
         applyColourKey(editor)(
-          DefaultLanguageHighlighterColors.IDENTIFIER,
+          DefaultLanguageHighlighterColors.CLASS_NAME,
           offset,
           endOffset - offset
         )

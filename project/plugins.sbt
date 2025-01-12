@@ -1,5 +1,4 @@
-resolvers += "GitHub Package Registry" at "https://maven.pkg.github.com/ossuminc/_"
-addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.20.1")
+addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.20.4")
 addSbtPlugin("org.jetbrains" % "sbt-idea-plugin" % "3.26.2")
 addSbtPlugin("org.jetbrains.scala" % "sbt-kotlin-plugin" % "3.0.3")
 

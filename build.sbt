@@ -1,3 +1,4 @@
+import com.ossuminc.sbt.helpers.RootProjectInfo
 import kotlin.Keys.{kotlinRuntimeProvided, kotlinVersion, kotlincJvmTarget}
 import sbt.ThisBuild
 import org.jetbrains.sbtidea.Keys.*
@@ -6,6 +7,9 @@ enablePlugins(OssumIncPlugin)
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 (Global / excludeLintKeys) ++= Set(mainClass)
+
+resolvers += Resolver.githubPackages("ossuminc", "riddl")
+
 
 lazy val riddlIdeaPlugin: Project =
   Root("riddl-idea-plugin", "com.ossuminc.riddl.plugins.idea", startYr = 2024)

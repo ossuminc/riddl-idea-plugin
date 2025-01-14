@@ -10,7 +10,7 @@ object RiddlLanguage extends Language("RIDDL")
 
 class RiddlFileType extends LanguageFileType(RiddlLanguage) {
 
-  override def getName: String = "RIDDL"
+  override def getName: String = "RiddlFileType"
 
   override def getDescription: String =
     "Supports correct display of RIDDL (.riddl) files"

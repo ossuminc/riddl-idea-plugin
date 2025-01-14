@@ -2,7 +2,7 @@ package com.ossuminc.riddl.plugins.idea
 
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl.MockToolWindow
 import com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory
 import org.scalatest.BeforeAndAfterAll
@@ -11,7 +11,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 trait IdeaTestCase {
-  object LightFixture extends LightPlatformCodeInsightFixture4TestCase
+  object LightFixture extends BasePlatformTestCase
 
   def getTestRootDisposable: Disposable = LightFixture.getTestRootDisposable
 }

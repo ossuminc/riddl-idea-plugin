@@ -5,16 +5,15 @@ import sbt.librarymanagement.ModuleID
 
 object V {
   val lang3 = "3.14.0"
-  val pureconfig = "0.17.7"
-  val riddl = "1.0.0-RC4"
-  val scalacheck = "1.17.0"
+  val riddl = "1.0.0-RC5"
+  val scalatest = "3.2.19"
   val scopt = "4.1.0"
   val slf4j = "2.0.4"
 }
 
 object Dep {
+  val junit = "org.scalatestplus" %% "junit-4-13" % (V.scalatest + ".0") % Test
   val lang3 = "org.apache.commons" % "commons-lang3" % V.lang3
-  val pureconfig = "com.github.pureconfig" %% "pureconfig-core" % V.pureconfig
   val slf4j = "org.slf4j" % "slf4j-nop" % V.slf4j
   val minimalJson = {
     "com.eclipsesource.minimal-json" % "minimal-json" % "0.9.5" withSources ()

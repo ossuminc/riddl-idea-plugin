@@ -3,7 +3,7 @@
     <name>RIDDL</name>
     <version>1.0.0</version>
     <vendor url="https://github.com/ossuminc">ossuminc</vendor>
-    <idea-version since-build="241.8102.112" until-build="243.*"/>
+    <idea-version since-build="241.8102.112"/>
 
     <description>
         Provides support for RIDDL, an open-source system design language. The usual

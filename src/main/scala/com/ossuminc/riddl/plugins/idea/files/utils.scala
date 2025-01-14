@@ -1,53 +1,36 @@
 package com.ossuminc.riddl.plugins.idea.files
 
 import com.intellij.openapi.editor.{DefaultLanguageHighlighterColors, Editor}
-import com.intellij.openapi.editor.markup.{
-  HighlighterLayer,
-  HighlighterTargetArea
-}
+import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetArea}
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.ossuminc.riddl.language.AST.Token
-import com.ossuminc.riddl.language.{At, Messages}
+import com.ossuminc.riddl.language.At
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.plugins.idea.files.RiddlColorKeywords.*
-import com.ossuminc.riddl.plugins.idea.files.utils.annotateTokensWithBooleans
-import com.ossuminc.riddl.utils.StringLogger
+import com.ossuminc.riddl.utils.NullLogger
 
 object utils {
-  private def annotateTokensWithBooleans(
-      ast: Either[Messages.Messages, List[Token]]
-  ): Seq[Token] =
-    ast match
-      case Left(_)       => Seq(Token.Other(At.empty))
-      case Right(tokens) => tokens
-    end match
-  end annotateTokensWithBooleans
 
-  def highlightKeywords(docText: String, editor: Editor): Unit = {
+  def highlightKeywords(docText: String, editor: Editor): Unit =
     import com.ossuminc.riddl.utils.pc
 
-    annotateTokensWithBooleans(
-      pc.withLogger(StringLogger()) { _ =>
-        TopLevelParser.parseToTokens(
-          RiddlParserInput(
-            docText,
-            ""
-          )
-        )
-      }
-    ).foreach(applyColorToToken(editor))
-  }
+    pc.withLogger(NullLogger()) { _ =>
+      val rpi = RiddlParserInput(docText, "")
+      TopLevelParser.parseToTokens(rpi, withVerboseFailures = false) match
+        case Left(_)       => Seq(Token.Other(At(0, docText.length, rpi)))
+        case Right(tokens) => tokens.foreach(applyColorToToken(editor))
+      end match
+    }
+  end highlightKeywords
 
-  private def applyColorToToken(
-      editor: Editor
-  )(token: Token): Unit = {
+  private def applyColorToToken(editor: Editor)(token: Token): Unit = {
     val offset = token.loc.offset
     val endOffset = token.loc.endOffset
 
     token match
       case _: Token.Identifier =>
         applyColourKey(editor)(
-          DefaultLanguageHighlighterColors.IDENTIFIER,
+          DefaultLanguageHighlighterColors.CLASS_NAME,
           offset,
           endOffset - offset
         )
@@ -99,24 +82,22 @@ object utils {
           offset,
           endOffset - offset
         )
-      case _ =>
+      case _: Token.Other =>
         applyColourKey(editor)(
-          DefaultLanguageHighlighterColors.CLASS_NAME,
+          DefaultLanguageHighlighterColors.IDENTIFIER,
           offset,
           endOffset - offset
         )
   }
 
   private def applyColourKey(editor: Editor)(
-      colorKey: TextAttributesKey,
-      index: Int,
-      length: Int
+    colorKey: TextAttributesKey,
+    index: Int,
+    length: Int
   ): Unit = {
     editor.getMarkupModel.getAllHighlighters
       .find(_.getStartOffset == index)
-      .foreach(highlighter =>
-        editor.getMarkupModel.removeHighlighter(highlighter)
-      )
+      .foreach(highlighter => editor.getMarkupModel.removeHighlighter(highlighter))
 
     editor.getMarkupModel.addRangeHighlighter(
       colorKey,

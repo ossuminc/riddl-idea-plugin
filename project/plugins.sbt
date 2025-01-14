@@ -1,5 +1,7 @@
-addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.20.4")
+addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.20.4-1-2ad71b58")
+
 addSbtPlugin("org.jetbrains" % "sbt-idea-plugin" % "3.26.2")
+
 addSbtPlugin("org.jetbrains.scala" % "sbt-kotlin-plugin" % "3.0.3")
 
 // This enables sbt-bloop to create bloop config files for Metals editors

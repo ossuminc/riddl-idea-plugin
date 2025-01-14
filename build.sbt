@@ -1,7 +1,7 @@
-import com.ossuminc.sbt.helpers.RootProjectInfo
 import kotlin.Keys.{kotlinRuntimeProvided, kotlinVersion, kotlincJvmTarget}
 import sbt.ThisBuild
 import org.jetbrains.sbtidea.Keys.*
+import sbt.*
 
 enablePlugins(OssumIncPlugin)
 
@@ -10,14 +10,14 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 resolvers += Resolver.githubPackages("ossuminc", "riddl")
 
-
 lazy val riddlIdeaPlugin: Project =
   Root("riddl-idea-plugin", "com.ossuminc.riddl.plugins.idea", startYr = 2024)
     .configure(
       With.typical,
-      With.scalaTest(),
+      With.scalaTest(V.scalatest),
       With.coverage(90),
-      With.riddl(V.riddl)
+      With.riddl(V.riddl),
+      With.build_info
     )
     .enablePlugins(KotlinPlugin, JavaAppPackaging)
     .settings(
@@ -31,13 +31,13 @@ lazy val riddlIdeaPlugin: Project =
         Dep.minimalJson,
         Dep.kotlin,
         Dep.riddlCommands,
-        Dep.pureconfig
+        Dep.junit
       ),
       Test / parallelExecution := false,
       scalaVersion := "3.4.3",
       ThisBuild / intellijPluginName := "RIDDL4IDEA",
       ThisBuild / intellijBuild := "243.22562.218",
-      ThisBuild / intellijPlatform := IntelliJPlatform.IdeaUltimate,
+      ThisBuild / intellijPlatform := IntelliJPlatform.IdeaCommunity,
       ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
       intellijPlugins ++= Seq("com.intellij.properties".toPlugin),
       Global / intellijAttachSources := true,
@@ -45,6 +45,8 @@ lazy val riddlIdeaPlugin: Project =
       Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
       Test / unmanagedResourceDirectories += baseDirectory.value / "testResources",
       runIDE / javaOptions
-        .withRank(KeyRanks.Invisible) += "-Didea.http.proxy.port=5432,-DurlSchemes=http://localhost",
+        .withRank(
+          KeyRanks.Invisible
+        ) += "-Didea.http.proxy.port=5432,-DurlSchemes=http://localhost",
       unmanagedBase := baseDirectory.value / "lib"
     )

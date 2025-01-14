@@ -3,12 +3,7 @@ package com.ossuminc.riddl.plugins.idea
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
 import com.intellij.openapi.editor.{Editor, EditorFactory}
-import com.intellij.openapi.editor.markup.{
-  HighlighterLayer,
-  HighlighterTargetArea,
-  RangeHighlighter,
-  TextAttributes
-}
+import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetArea, RangeHighlighter, TextAttributes}
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
@@ -18,14 +13,15 @@ import com.ossuminc.riddl.language.Messages
 import com.ossuminc.riddl.language.Messages.{Error, Warning}
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getProject
-import com.typesafe.config.ConfigObject
-import pureconfig.ConfigSource
+import org.ekrich.config.*
 
 import scala.jdk.CollectionConverters.*
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.ossuminc.riddl.utils.StringHelpers
 
 import java.awt.GridBagConstraints
 import java.nio.file.Path
+import java.io.File 
 import javax.swing.Icon
 
 package object utils {
@@ -218,12 +214,17 @@ package object utils {
     )
   )
 
-  def readFromOptionsFromConf(path: String): Seq[String] = ConfigSource
-    .file(path)
-    .load[ConfigObject] match {
-    case Right(configObject) =>
-      configObject.keySet().iterator().asScala.toSeq
-    case Left(_) =>
-      Seq()
-  }
+  def readFromOptionsFromConf(path: String): Seq[String] =
+    try {
+      val file: File = File(path)
+      val options: ConfigParseOptions = ConfigParseOptions.defaults
+        .setAllowMissing(true)
+        .setOriginDescription(file.getAbsolutePath)
+      val config = ConfigFactory.parseFile(file, options)
+      val rootObj = config.getObject("from")
+      rootObj.keySet().iterator().asScala.toSeq
+    } catch {
+      case _: ConfigException.Missing => Seq()
+    }
+  end readFromOptionsFromConf
 }

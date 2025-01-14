@@ -5,23 +5,10 @@ import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetAr
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.ossuminc.riddl.language.AST.Token
 import com.ossuminc.riddl.language.At
-import com.ossuminc.riddl.language.AST.{
-  CommentTKN,
-  KeywordTKN,
-  MarkdownLineTKN,
-  OtherTKN,
-  PredefinedTKN,
-  PunctuationTKN,
-  QuotedStringTKN,
-  ReadabilityTKN,
-  Token
-}
 import com.ossuminc.riddl.language.{At, Messages}
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.plugins.idea.files.RiddlColorKeywords.*
 import com.ossuminc.riddl.utils.NullLogger
-import com.ossuminc.riddl.plugins.idea.files.RiddlTokenizer.*
-import com.ossuminc.riddl.utils.StringLogger
 
 object utils {
 

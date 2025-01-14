@@ -94,7 +94,6 @@ object RiddlIdeaSettings {
         mutable.Seq
           .from(riddlConfPath.flatMap(readFromOptionsFromConf).toSeq)
       else mutable.Seq()
-    private val highlightersPerFile: mutable.Map[String, mutable.Seq[
     private var lineHighlightersPerFile: mutable.Map[String, mutable.Seq[
       HighlighterInfo
     ]] = mutable.Map()

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull
 class RiddlToolWindowSettingsOpenAction(windowNum: Int)
     extends AnAction
     with DumbAware {
+
   override def actionPerformed(@NotNull anActionEvent: AnActionEvent): Unit =
     openToolWindowSettings(windowNum)
 

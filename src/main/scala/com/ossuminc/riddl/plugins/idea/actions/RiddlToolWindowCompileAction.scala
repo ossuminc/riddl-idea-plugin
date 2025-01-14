@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAware
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.updateToolWindowRunPane
 import org.jetbrains.annotations.NotNull
 
-class RiddlToolWindowParseAction(windowNum: Int)
+class RiddlToolWindowCompileAction(windowNum: Int)
     extends AnAction
     with DumbAware {
 

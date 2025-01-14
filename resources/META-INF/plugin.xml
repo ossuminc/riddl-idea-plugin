@@ -34,8 +34,8 @@
     </extensions>
 
     <actions>
-        <group id="com.ossuminc.riddl.plugins.idea.actions.RiddlActionsGroup"
-               class="com.ossuminc.riddl.plugins.idea.actions.RiddlActionsGroup" text="RiddlActionsGroup"
+        <group id="com.ossuminc.riddl.plugins.idea.actions.RiddlActionGroup"
+               class="com.ossuminc.riddl.plugins.idea.actions.RiddlActionGroup" text="RiddlActionsGroup"
                description="Actions for Riddl"/>
     </actions>
 

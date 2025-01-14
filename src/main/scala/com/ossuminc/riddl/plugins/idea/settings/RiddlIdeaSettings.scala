@@ -18,8 +18,9 @@ import scala.collection.mutable.*
     )
   )
 )
-class RiddlIdeaSettings extends PersistentStateComponent[RiddlIdeaSettings.States] {
 
+class RiddlIdeaSettings
+  extends PersistentStateComponent[RiddlIdeaSettings.States] {
   private val states = new RiddlIdeaSettings.States()
 
   override def getState: RiddlIdeaSettings.States = states
@@ -94,8 +95,12 @@ object RiddlIdeaSettings {
           .from(riddlConfPath.flatMap(readFromOptionsFromConf).toSeq)
       else mutable.Seq()
     private val highlightersPerFile: mutable.Map[String, mutable.Seq[
+    private var lineHighlightersPerFile: mutable.Map[String, mutable.Seq[
       HighlighterInfo
-    ]] = mutable.Map.empty
+    ]] = mutable.Map()
+    private var squigglyHighlightersPerFile: mutable.Map[String, mutable.Seq[
+      HighlighterInfo
+    ]] = mutable.Map()
 
     private var messagesForConsole: mutable.Map[String, mutable.Seq[
       Message
@@ -150,16 +155,28 @@ object RiddlIdeaSettings {
       fromOptionsSeq = newSeq
     def getFromOptionsSeq: scala.collection.mutable.Seq[String] = fromOptionsSeq
 
-    def saveHighlighterForFile(
-        fileName: String,
+    def saveLineHighlighterForFile(
+        filePath: String,
         highlighter: RangeHighlighter
     ): Unit =
-      highlightersPerFile.addOne(
-        fileName, mutable.Seq(HighlighterInfo.fromRangeHighlighter(highlighter))
+      lineHighlightersPerFile.addOne(
+        filePath, mutable.Seq(HighlighterInfo.fromRangeHighlighter(highlighter))
       )
-    def clearHighlightersForFile(fileName: String): Unit =
-      highlightersPerFile -= fileName
-    def clearAllHighlighters(): Unit = highlightersPerFile.clear()
+    def clearLineHighlightersForFile(filePath: String): Unit =
+      lineHighlightersPerFile -= filePath
+    def saveSquigglyHighlighterForFile(
+      filePath: String,
+      highlighter: RangeHighlighter
+    ): Unit =
+      squigglyHighlightersPerFile.addOne(
+        filePath, mutable.Seq(HighlighterInfo.fromRangeHighlighter(highlighter))
+      )
+    def clearSquigglyHighlightersForFile(filePath: String): Unit =
+      squigglyHighlightersPerFile -= filePath
+    def clearAllHighlighters(): Unit = {
+      lineHighlightersPerFile = mutable.Map()
+      squigglyHighlightersPerFile = mutable.Map()
+    }
   }
 
   private val commands = mutable.Seq("from", "about", "info")

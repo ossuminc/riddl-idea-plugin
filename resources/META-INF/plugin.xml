@@ -30,6 +30,7 @@
             <scheme path="../settings/colorSchemes/RIDDL.xml"/>
         </colorSchemes>
         <postStartupActivity implementation="com.ossuminc.riddl.plugins.idea.project.RiddlProject"/>
+        <annotator language="RIDDL" implementationClass="com.ossuminc.riddl.plugins.idea.ui.RiddlAnnotator"/>
     </extensions>
 
     <actions>

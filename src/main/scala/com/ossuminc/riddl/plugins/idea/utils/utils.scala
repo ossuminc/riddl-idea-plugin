@@ -2,8 +2,15 @@ package com.ossuminc.riddl.plugins.idea
 
 import com.intellij.notification.{Notification, NotificationType, Notifications}
 import com.intellij.openapi.application.{Application, ApplicationManager}
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.{Editor, EditorFactory}
-import com.intellij.openapi.editor.markup.{HighlighterLayer, HighlighterTargetArea, RangeHighlighter, TextAttributes}
+import com.intellij.openapi.editor.markup.{
+  EffectType,
+  HighlighterLayer,
+  HighlighterTargetArea,
+  RangeHighlighter,
+  TextAttributes
+}
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.{Project, ProjectManager}
 import com.intellij.openapi.util.IconLoader
@@ -21,7 +28,7 @@ import com.ossuminc.riddl.utils.StringHelpers
 
 import java.awt.GridBagConstraints
 import java.nio.file.Path
-import java.io.File 
+import java.io.File
 import javax.swing.Icon
 
 package object utils {
@@ -96,6 +103,14 @@ package object utils {
       filePath: String,
       state: RiddlIdeaSettings.State
   ): Unit = {
+    def removeHighlighter(
+        editor: Editor
+    )(rangeHighlighter: RangeHighlighter): Unit = {
+      rangeHighlighter.setErrorStripeMarkColor(null)
+      rangeHighlighter.setErrorStripeTooltip(null)
+      editor.getMarkupModel.removeHighlighter(rangeHighlighter)
+    }
+
     EditorFactory
       .getInstance()
       .getAllEditors
@@ -113,17 +128,19 @@ package object utils {
         )
       }
       .foreach { editor =>
-        editor.getMarkupModel.getAllHighlighters
+        val allHighlighters = editor.getMarkupModel.getAllHighlighters
+        val colorScheme = EditorColorsManager.getInstance().getGlobalScheme
+
+        allHighlighters
           .filter(hl =>
-            hl.getTargetArea == HighlighterTargetArea.LINES_IN_RANGE
+            hl.getLayer != HighlighterLayer.FIRST &&
+              (hl.getTextAttributes(colorScheme) != null &&
+                hl.getTextAttributes(colorScheme)
+                  .getEffectType == EffectType.WAVE_UNDERSCORE
+                || hl.getErrorStripeTooltip != null)
           )
-          .foreach(rangeHighlighter =>
-            rangeHighlighter.setErrorStripeMarkColor(null)
-            rangeHighlighter.setErrorStripeTooltip(null)
-            editor.getMarkupModel.removeHighlighter(rangeHighlighter)
-          )
+          .foreach(removeHighlighter(editor))
       }
-    state.clearHighlightersForFile(filePath)
   }
 
   def highlightErrorMessagesForFile(
@@ -144,7 +161,8 @@ package object utils {
 
     editorOpt.foreach { editor =>
       clearHighlightersForFile(filePath, state)
-      state.clearHighlightersForFile(filePath)
+      state.clearLineHighlightersForFile(filePath)
+      state.clearSquigglyHighlightersForFile(filePath)
 
       (if forConsole then state.getMessagesForConsole
        else state.getMessagesForEditor)
@@ -154,9 +172,26 @@ package object utils {
         .foreach { (_, msgs) =>
           msgs
             .foreach { msg =>
+              val squigglyAttributes = new TextAttributes()
+              squigglyAttributes.setEffectType(EffectType.WAVE_UNDERSCORE)
+              val squigglyStart = msg.loc.offset
+              val squigglyEnd = msg.loc.endOffset
+
               val highlighter: RangeHighlighter =
                 if msg.kind.severity == Error.severity
                 then {
+                  squigglyAttributes.setEffectColor(UIUtil.getErrorForeground)
+                  state.saveSquigglyHighlighterForFile(
+                    filePath,
+                    editor.getMarkupModel.addRangeHighlighter(
+                      squigglyStart,
+                      squigglyEnd,
+                      HighlighterLayer.ERROR,
+                      squigglyAttributes,
+                      HighlighterTargetArea.EXACT_RANGE
+                    )
+                  )
+
                   val hl: RangeHighlighter =
                     editor.getMarkupModel.addLineHighlighter(
                       msg.loc.line - 1,
@@ -171,6 +206,18 @@ package object utils {
                   )
                   hl
                 } else if msg.kind.severity == Warning.severity then {
+                  squigglyAttributes.setEffectColor(UIUtil.getToolTipForeground)
+                  state.saveSquigglyHighlighterForFile(
+                    filePath,
+                    editor.getMarkupModel.addRangeHighlighter(
+                      squigglyStart,
+                      squigglyEnd,
+                      HighlighterLayer.WARNING,
+                      squigglyAttributes,
+                      HighlighterTargetArea.EXACT_RANGE
+                    )
+                  )
+
                   val hl: RangeHighlighter =
                     editor.getMarkupModel.addLineHighlighter(
                       msg.loc.line - 1,
@@ -185,10 +232,24 @@ package object utils {
                   )
                   hl
                 } else {
+                  squigglyAttributes.setEffectColor(
+                    UIUtil.getTextAreaForeground
+                  )
+                  state.saveSquigglyHighlighterForFile(
+                    filePath,
+                    editor.getMarkupModel.addRangeHighlighter(
+                      squigglyStart,
+                      squigglyEnd,
+                      HighlighterLayer.WEAK_WARNING,
+                      squigglyAttributes,
+                      HighlighterTargetArea.EXACT_RANGE
+                    )
+                  )
+
                   val hl: RangeHighlighter =
                     editor.getMarkupModel.addLineHighlighter(
                       msg.loc.line - 1,
-                      HighlighterLayer.SYNTAX,
+                      HighlighterLayer.WEAK_WARNING,
                       new TextAttributes()
                     )
                   hl.setErrorStripeMarkColor(
@@ -199,7 +260,7 @@ package object utils {
                   )
                   hl
                 }
-              state.saveHighlighterForFile(filePath, highlighter)
+              state.saveLineHighlighterForFile(filePath, highlighter)
             }
         }
     }

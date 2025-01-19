@@ -1,4 +1,4 @@
-addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.20.4-1-2ad71b58")
+addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "0.21.0")
 
 addSbtPlugin("org.jetbrains" % "sbt-idea-plugin" % "3.26.2")
 

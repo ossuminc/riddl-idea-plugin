@@ -1,4 +1,4 @@
-import kotlin.Keys.{kotlinRuntimeProvided, kotlinVersion, kotlincJvmTarget}
+import kotlin.Keys.{kotlincJvmTarget, kotlinRuntimeProvided, kotlinVersion}
 import sbt.ThisBuild
 import org.jetbrains.sbtidea.Keys.*
 import sbt.*
@@ -8,23 +8,47 @@ enablePlugins(OssumIncPlugin)
 Global / onChangedBuildSource := ReloadOnSourceChanges
 (Global / excludeLintKeys) ++= Set(mainClass)
 
+lazy val developers: List[Developer] = List(
+  Developer(
+    "AlWein92",
+    "Alex Weinstein",
+    "alex.weinstein@improving.com",
+    url("https://github.com/AlWein92")
+  ),
+  Developer(
+    id = "reid-spencer",
+    "Reid Spencer",
+    "reid.spencer@ossuminc.com",
+    url("https://github.com/reid-spencer")
+  )
+)
+
 resolvers += Resolver.githubPackages("ossuminc", "riddl")
 
 lazy val riddlIdeaPlugin: Project =
-  Root("riddl-idea-plugin", "com.ossuminc.riddl.plugins.idea", startYr = 2024)
-    .configure(
+  Root(
+    ghRepoName = "riddl-idea-plugin",
+    ghOrgName = "ossuminc",
+    orgPackage = "com.ossuminc.riddl.plugins.idea",
+    orgName = "Ossum, Inc.",
+    orgPage = url("https://www.ossuminc.com/"),
+    startYr = 2024,
+    devs = developers,
+    spdx = "Apache-2.0"
+  ).configure(
       With.typical,
       With.scalaTest(V.scalatest),
       With.coverage(90),
       With.riddl(V.riddl),
-      With.build_info
+      With.build_info,
+      With.GithubPublishing
     )
     .enablePlugins(KotlinPlugin, JavaAppPackaging)
     .settings(
       kotlinVersion := "2.0.0",
       kotlincJvmTarget := "21",
       kotlinRuntimeProvided := true,
-      buildInfoPackage := "com.ossuminc.riddl.plugins.idea",
+      buildInfoPackage := (ThisBuild / organization).value,
       buildInfoObject := "RiddlIDEAPluginBuildInfo",
       description := "The plugin for supporting RIDDL in IntelliJ",
       libraryDependencies ++= Seq(
@@ -34,7 +58,6 @@ lazy val riddlIdeaPlugin: Project =
         Dep.junit
       ),
       Test / parallelExecution := false,
-      scalaVersion := "3.4.3",
       ThisBuild / intellijPluginName := "RIDDL4IDEA",
       ThisBuild / intellijBuild := "243.22562.218",
       ThisBuild / intellijPlatform := IntelliJPlatform.IdeaCommunity,

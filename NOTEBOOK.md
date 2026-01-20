@@ -2,15 +2,55 @@
 
 ## Current Status
 
-**Assessment Complete** - Comprehensive code review finished. The existing
-implementation is a prototype requiring significant modernization before
-open source release. Decision: **REWRITE** using prototype as reference.
+**Phase 1 In Progress** - Build configuration complete. Ready to begin
+language foundation implementation.
+
+**Branch**: `feature/rewrite` (created from `development`)
 
 **Target**: Marketplace release in **2 months** (mid-March 2026)
 
 **Primary Goal**: Create a fully functional RIDDL development assistant that
 helps developers write, validate, and understand RIDDL models with AI
 assistance via riddl-mcp-server integration.
+
+---
+
+## Session Log: 2026-01-19
+
+### Completed This Session
+
+1. **Build Configuration Updated**
+   - sbt-ossuminc: 0.21.0 → 1.2.0
+   - sbt: 1.10.x → 1.12.0
+   - RIDDL: 1.0.0-RC6 → 1.0.0 (stable release)
+   - Scala: 3.3.7 → 3.4.3 (to match RIDDL dependencies)
+
+2. **Fixed Version Mismatch**
+   - Identified scala3-library eviction conflict (3.3.7 → 3.4.3)
+   - Solution: Use `With.Scala3.configure(version = Some("3.4.3"))`
+   - Build now compiles successfully
+
+3. **Removed Kotlin Plugin**
+   - Plugin was commented out in plugins.sbt
+   - Removed kotlin settings from build.sbt
+   - Not needed for pure Scala plugin
+
+4. **Created Documentation**
+   - CLAUDE.md - Project guide for Claude Code
+   - NOTEBOOK.md - Engineering notebook with rewrite plan
+
+### Known Issues
+
+- Test suite aborts due to missing `opentest4j` dependency (JUnit 5 required
+  by IntelliJ test framework)
+- Source files have copyright header changes from sbt-ossuminc (not committed)
+
+### Next Steps
+
+1. Configure CI/CD with test execution
+2. Create language foundation: RiddlLanguage, RiddlFileType, RiddlIcons
+3. Implement RiddlTokenTypes and RiddlLexerAdapter
+4. Implement RiddlSyntaxHighlighter
 
 ---
 
@@ -574,6 +614,7 @@ riddl-idea-plugin/
 | Native plugin (not LSP) | Best UX for JetBrains, LSP future option | 2026-01-19 |
 | AI via riddl-mcp-server | Leverages existing validation tools | 2026-01-19 |
 | 8-week timeline | Aggressive but achievable for marketplace | 2026-01-19 |
+| Scala 3.4.3 | Match RIDDL 1.0.0 dependencies, avoid version conflict | 2026-01-19 |
 
 ---
 

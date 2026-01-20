@@ -1,10 +1,9 @@
-import jdk.incubator.vector.VectorOperators.Test
 import sbt.*
 /** V - Dependency Versions object */
 
 object V {
   val lang3 = "3.14.0"
-  val riddl = "1.0.0-RC6"
+  val riddl = "1.0.0"
   val scalatest = "3.2.19"
   val scopt = "4.1.0"
   val slf4j = "2.0.4"

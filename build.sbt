@@ -1,4 +1,3 @@
-import kotlin.Keys.{kotlincJvmTarget, kotlinRuntimeProvided, kotlinVersion}
 import sbt.ThisBuild
 import org.jetbrains.sbtidea.Keys.*
 import sbt.*
@@ -36,24 +35,20 @@ lazy val riddlIdeaPlugin: Project =
     devs = developers,
     spdx = "Apache-2.0"
   ).configure(
-      With.typical,
-      With.scalaTest(V.scalatest),
+      With.basic,
+      With.Scala3.configure(version = Some("3.4.3")),
+      With.Scalatest(V.scalatest),
       With.coverage(90),
-      With.riddl(V.riddl),
       With.build_info,
       With.GithubPublishing
     )
-    .enablePlugins(KotlinPlugin, JavaAppPackaging)
+    .enablePlugins(JavaAppPackaging)
     .settings(
-      kotlinVersion := "2.0.0",
-      kotlincJvmTarget := "21",
-      kotlinRuntimeProvided := true,
       buildInfoPackage := (ThisBuild / organization).value,
       buildInfoObject := "RiddlIDEAPluginBuildInfo",
       description := "The plugin for supporting RIDDL in IntelliJ",
       libraryDependencies ++= Seq(
         Dep.minimalJson,
-        Dep.kotlin,
         Dep.riddlCommands,
         Dep.junit
       ),

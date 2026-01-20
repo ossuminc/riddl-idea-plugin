@@ -1,3 +1,9 @@
+/*
+ * Copyright 2024-2026 Ossum, Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package com.ossuminc.riddl.plugins.idea.ui
 
 import com.intellij.openapi.actionSystem.{ActionManager, ActionPlaces, ActionToolbar}

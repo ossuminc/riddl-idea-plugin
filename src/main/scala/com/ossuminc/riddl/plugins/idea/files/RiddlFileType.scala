@@ -1,21 +1,32 @@
+/*
+ * Copyright 2024-2026 Ossum, Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package com.ossuminc.riddl.plugins.idea.files
 
-import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.LanguageFileType
-import com.ossuminc.riddl.plugins.idea.utils.RiddlIcon
+import com.ossuminc.riddl.plugins.idea.{RiddlIcons, RiddlLanguage}
 
 import javax.swing.Icon
 
-object RiddlLanguage extends Language("RIDDL")
-
+/** The RIDDL file type definition.
+  *
+  * Registered in plugin.xml to associate .riddl files with RIDDL language support.
+  */
 class RiddlFileType extends LanguageFileType(RiddlLanguage) {
 
-  override def getName: String = "RiddlFileType"
+  override def getName: String = "RIDDL"
 
   override def getDescription: String =
-    "Supports correct display of RIDDL (.riddl) files"
+    "RIDDL (Reactive Interface to Domain Definition Language) file"
 
   override def getDefaultExtension: String = "riddl"
 
-  override def getIcon: Icon = RiddlIcon(getClass)
+  override def getIcon: Icon = RiddlIcons.FILE
+}
+
+object RiddlFileType {
+  val INSTANCE = new RiddlFileType()
 }

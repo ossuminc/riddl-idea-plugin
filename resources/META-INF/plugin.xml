@@ -5,38 +5,152 @@
     <vendor url="https://github.com/ossuminc">ossuminc</vendor>
     <idea-version since-build="241.8102.112"/>
 
-    <description>
-        Provides support for RIDDL, an open-source system design language. The usual
-        language support is provided: coloring, syntax checking and highlighting, validation, etc.
-    </description>
+    <description><![CDATA[
+        <h2>RIDDL Language Support for IntelliJ IDEA</h2>
+        <p>
+            Comprehensive IDE support for <b>RIDDL</b> (Reactive Interface to Domain Definition Language),
+            an open-source language for designing reactive, event-driven systems using Domain-Driven Design principles.
+        </p>
+
+        <h3>Features</h3>
+        <ul>
+            <li><b>Syntax Highlighting</b> - Full token-based coloring for keywords, identifiers, types, comments, and strings</li>
+            <li><b>Error Annotation</b> - Real-time syntax validation with error/warning underlines</li>
+            <li><b>Code Folding</b> - Collapse domain, context, entity, handler, and other definitions</li>
+            <li><b>Brace Matching</b> - Automatic matching of braces, brackets, and parentheses</li>
+            <li><b>Comment Toggle</b> - Cmd+/ to toggle line comments</li>
+            <li><b>Structure View</b> - Navigate definition hierarchy in the Structure tool window</li>
+            <li><b>Code Completion</b> - Context-aware keyword and predefined type completion</li>
+            <li><b>Go to Definition</b> - Cmd+Click to navigate to type and entity definitions</li>
+            <li><b>AI Integration</b> - Connect to RIDDL MCP server for AI-assisted modeling</li>
+        </ul>
+
+        <h3>AI-Assisted Features (via MCP Server)</h3>
+        <ul>
+            <li><b>Generate RIDDL from Description</b> - Alt+Enter to generate RIDDL from natural language</li>
+            <li><b>Validate with MCP</b> - Advanced validation for incomplete models</li>
+            <li><b>Check Completeness</b> - Identify missing elements in your model</li>
+        </ul>
+
+        <h3>Getting Started</h3>
+        <ol>
+            <li>Create or open a <code>.riddl</code> file</li>
+            <li>Start typing - completion and validation are automatic</li>
+            <li>Use Structure view (Cmd+7) to navigate definitions</li>
+            <li>For AI features, configure MCP server URL in Settings > Tools > RIDDL</li>
+        </ol>
+
+        <p>
+            <a href="https://github.com/ossuminc/riddl">RIDDL Language</a> |
+            <a href="https://github.com/ossuminc/riddl-idea-plugin">Plugin Source</a> |
+            <a href="https://riddl.tech">Documentation</a>
+        </p>
+    ]]></description>
 
     <depends>com.intellij.modules.java</depends>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.properties</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <!-- Services -->
         <applicationService serviceImplementation="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings"/>
-        <projectConfigurable parentId="tools" instance="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable"
-                                 id="riddl settings"
-                                 displayName="riddl Project Settings"/>
+
+        <!-- Settings -->
+        <projectConfigurable parentId="tools"
+                             instance="com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettingsConfigurable"
+                             id="riddl settings"
+                             displayName="RIDDL Project Settings"/>
+
+        <!-- Notifications -->
         <notificationGroup displayType="BALLOON" id="Riddl Plugin Notification" />
+
+        <!-- Tool Window -->
         <toolWindow factoryClass="com.ossuminc.riddl.plugins.idea.ui.RiddlToolWindowFactory"
-                    id="riddl" anchor="left" icon="/images/RIDDL-logo.jpg" canCloseContents="true"
-                    />
-        <fileType name="RiddlFileType" language="RIDDL"
-                  implementationClass="com.ossuminc.riddl.plugins.idea.files.RiddlFileType" extensions="riddl"/>
-        <colorSettingsPage implementation="com.ossuminc.riddl.plugins.idea.files.RiddlColorSettingsPage" />
-        <colorSchemes>
-            <scheme path="../settings/colorSchemes/RIDDL.xml"/>
-        </colorSchemes>
+                    id="RIDDL" anchor="left" icon="/images/RIDDL-icon.jpg" canCloseContents="true"/>
+
+        <!-- File Type -->
+        <fileType name="RIDDL" language="RIDDL"
+                  implementationClass="com.ossuminc.riddl.plugins.idea.files.RiddlFileType"
+                  extensions="riddl"/>
+
+        <!-- Syntax Highlighting -->
+        <lang.syntaxHighlighterFactory language="RIDDL"
+                                       implementationClass="com.ossuminc.riddl.plugins.idea.highlighting.RiddlSyntaxHighlighterFactory"/>
+
+        <!-- Color Settings -->
+        <colorSettingsPage implementation="com.ossuminc.riddl.plugins.idea.files.RiddlColorSettingsPage"/>
+
+        <!-- External Annotator for async error/warning highlighting -->
+        <externalAnnotator language="RIDDL"
+                           implementationClass="com.ossuminc.riddl.plugins.idea.annotator.RiddlExternalAnnotator"/>
+
+        <!-- Code Folding -->
+        <lang.foldingBuilder language="RIDDL"
+                             implementationClass="com.ossuminc.riddl.plugins.idea.folding.RiddlFoldingBuilder"/>
+
+        <!-- Brace Matching -->
+        <lang.braceMatcher language="RIDDL"
+                           implementationClass="com.ossuminc.riddl.plugins.idea.editor.RiddlBraceMatcher"/>
+
+        <!-- Comment Toggle (Cmd+/) -->
+        <lang.commenter language="RIDDL"
+                        implementationClass="com.ossuminc.riddl.plugins.idea.editor.RiddlCommenter"/>
+
+        <!-- Structure View -->
+        <lang.psiStructureViewFactory language="RIDDL"
+                                      implementationClass="com.ossuminc.riddl.plugins.idea.structure.RiddlStructureViewFactory"/>
+
+        <!-- Code Completion -->
+        <completion.contributor language="RIDDL"
+                                implementationClass="com.ossuminc.riddl.plugins.idea.completion.RiddlCompletionContributor"/>
+
+        <!-- Go to Declaration -->
+        <gotoDeclarationHandler
+                implementation="com.ossuminc.riddl.plugins.idea.navigation.RiddlGotoDeclarationHandler"/>
+
+        <!-- MCP Service (project-level) -->
+        <projectService serviceImplementation="com.ossuminc.riddl.plugins.idea.mcp.RiddlMcpService"/>
+
+        <!-- Intention Actions -->
+        <intentionAction>
+            <language>RIDDL</language>
+            <className>com.ossuminc.riddl.plugins.idea.intentions.GenerateFromDescriptionIntention</className>
+            <category>RIDDL AI Assistance</category>
+        </intentionAction>
+
+        <!-- Startup -->
         <postStartupActivity implementation="com.ossuminc.riddl.plugins.idea.project.RiddlProject"/>
-        <annotator language="RIDDL" implementationClass="com.ossuminc.riddl.plugins.idea.ui.RiddlAnnotator"/>
     </extensions>
 
     <actions>
         <group id="com.ossuminc.riddl.plugins.idea.actions.RiddlActionGroup"
                class="com.ossuminc.riddl.plugins.idea.actions.RiddlActionGroup" text="RiddlActionsGroup"
                description="Actions for Riddl"/>
+
+        <!-- MCP Actions Group -->
+        <group id="com.ossuminc.riddl.plugins.idea.mcp.McpActionGroup"
+               text="RIDDL MCP"
+               description="RIDDL MCP Server Actions"
+               popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="com.ossuminc.riddl.plugins.idea.mcp.McpConnectAction"
+                    class="com.ossuminc.riddl.plugins.idea.mcp.McpConnectAction"
+                    text="Connect to MCP Server"
+                    description="Connect to the RIDDL MCP server"/>
+            <action id="com.ossuminc.riddl.plugins.idea.mcp.McpDisconnectAction"
+                    class="com.ossuminc.riddl.plugins.idea.mcp.McpDisconnectAction"
+                    text="Disconnect from MCP Server"
+                    description="Disconnect from the RIDDL MCP server"/>
+            <separator/>
+            <action id="com.ossuminc.riddl.plugins.idea.mcp.McpValidateAction"
+                    class="com.ossuminc.riddl.plugins.idea.mcp.McpValidateAction"
+                    text="Validate with MCP"
+                    description="Validate current file using MCP server"/>
+            <action id="com.ossuminc.riddl.plugins.idea.mcp.McpCheckCompletenessAction"
+                    class="com.ossuminc.riddl.plugins.idea.mcp.McpCheckCompletenessAction"
+                    text="Check Completeness"
+                    description="Check model completeness using MCP server"/>
+        </group>
     </actions>
 
     <projectListeners>

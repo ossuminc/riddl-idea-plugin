@@ -1,3 +1,9 @@
+/*
+ * Copyright 2024-2026 Ossum, Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.openapi.fileChooser.{

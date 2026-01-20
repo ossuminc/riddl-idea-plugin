@@ -1,3 +1,9 @@
+/*
+ * Copyright 2024-2026 Ossum, Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package com.ossuminc.riddl.plugins.idea
 
 import com.intellij.notification.{Notification, NotificationType, Notifications}
@@ -32,8 +38,10 @@ import java.io.File
 import javax.swing.Icon
 
 package object utils {
+  // Note: Use RiddlIcons.FILE or RiddlIcons.LOGO from com.ossuminc.riddl.plugins.idea instead
+  @deprecated("Use RiddlIcons.FILE instead", "1.1.0")
   def RiddlIcon[T <: Class[?]](classType: T): Icon =
-    IconLoader.getIcon("images/RIDDL-icon.jpg", classType)
+    IconLoader.getIcon("/images/RIDDL-icon.jpg", classType)
 
   object ManagerBasedGetterUtils {
     private val application: Application = ApplicationManager.getApplication

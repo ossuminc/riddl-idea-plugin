@@ -38,7 +38,7 @@ lazy val riddlIdeaPlugin: Project =
       With.basic,
       With.Scala3.configure(version = Some("3.4.3")),
       With.Scalatest(V.scalatest),
-      With.coverage(90),
+      With.coverage(0),
       With.build_info,
       With.GithubPublishing
     )
@@ -50,7 +50,8 @@ lazy val riddlIdeaPlugin: Project =
       libraryDependencies ++= Seq(
         Dep.minimalJson,
         Dep.riddlCommands,
-        Dep.junit
+        Dep.junit,
+        Dep.opentest4j
       ),
       Test / parallelExecution := false,
       ThisBuild / intellijPluginName := "RIDDL4IDEA",

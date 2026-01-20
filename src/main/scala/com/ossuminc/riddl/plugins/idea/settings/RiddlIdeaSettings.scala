@@ -1,3 +1,9 @@
+/*
+ * Copyright 2024-2026 Ossum, Inc.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package com.ossuminc.riddl.plugins.idea.settings
 
 import com.intellij.util.messages.MessageBusConnection
@@ -23,11 +29,26 @@ class RiddlIdeaSettings
   extends PersistentStateComponent[RiddlIdeaSettings.States] {
   private val states = new RiddlIdeaSettings.States()
 
+  // MCP Settings (application-level)
+  private var mcpServerUrl: String = "http://localhost:8080"
+  private var mcpAutoConnect: Boolean = false
+  private var mcpEnabled: Boolean = true
+
   override def getState: RiddlIdeaSettings.States = states
 
   override def loadState(newStates: RiddlIdeaSettings.States): Unit = {
     states.load(newStates)
   }
+
+  // MCP Settings accessors
+  def getMcpServerUrl: String = mcpServerUrl
+  def setMcpServerUrl(url: String): Unit = mcpServerUrl = url
+
+  def getMcpAutoConnect: Boolean = mcpAutoConnect
+  def setMcpAutoConnect(value: Boolean): Unit = mcpAutoConnect = value
+
+  def getMcpEnabled: Boolean = mcpEnabled
+  def setMcpEnabled(value: Boolean): Unit = mcpEnabled = value
 }
 
 case class HighlighterInfo(startOffset: Int, endOffset: Int, layer: Int)
@@ -180,4 +201,9 @@ object RiddlIdeaSettings {
 
   private val commands = mutable.Seq("from", "about", "info")
   def allCommands: mutable.Seq[String] = commands
+
+  def getInstance(): RiddlIdeaSettings =
+    com.intellij.openapi.application.ApplicationManager
+      .getApplication
+      .getService(classOf[RiddlIdeaSettings])
 }

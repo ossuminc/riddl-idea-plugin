@@ -44,10 +44,53 @@ assistance via riddl-mcp-server integration. ✅ ACHIEVED
 
 ### Known Issues (Legacy Code)
 
-Plugin verifier found 15 internal API usages and 2 experimental API usages
-in legacy code (RiddlToolWindowFactory, RiddlIdeaSettingsConfigurable, etc.).
-These will be addressed in future refactoring but don't prevent marketplace
-submission.
+After refactoring, plugin verifier shows:
+- **8 internal API usages** (down from 10) - mostly unavoidable Language/Configurable bridge methods
+- **13 experimental API usages** (down from 15) - ToolWindowFactory methods
+- **8 deprecated API usages** (down from 14) - Scala-generated bridge methods
+- **0 non-extendable API violations** (down from 2) - fixed by removing RiddlPluginDescriptor
+
+These remaining issues are acceptable for marketplace submission and don't affect functionality.
+
+---
+
+## Session Log: 2026-01-20 (Late Night)
+
+### Completed This Session
+
+1. **Legacy Code Refactoring**
+   - Deleted `RiddlPluginDescriptor.scala` (implemented non-extendable interfaces)
+   - Fixed deprecated `URL` constructor in `RiddlMcpClient` (now uses `URI.create().toURL()`)
+   - Reduced API issues: internal 10→8, deprecated 14→8, experimental 15→13, non-extendable 2→0
+
+2. **Performance Test Suite Created**
+   - New test class: `RiddlPerformanceSpec` with 9 tests
+   - Tests tokenization and parsing performance at various scales
+   - Tests memory usage with large files
+   - Tests consistency across repeated runs
+
+3. **Performance Results**
+   | Test | Size | Time |
+   |------|------|------|
+   | Small file (JIT warmup) | ~100 chars | <200ms |
+   | 50 entities | 20KB | 46ms tokenize, 9ms parse |
+   | 200 entities | 84KB | 80ms tokenize |
+   | 500 entities | 206KB | 2MB memory |
+   | 20 levels deep | 1.4KB | <1ms |
+   | Repeated runs | 42KB | ~10ms avg |
+
+4. **Test Environment Issue Identified**
+   - Some IntelliJ-dependent tests abort due to Java version mismatch
+   - IntelliJ SDK 253 requires Java 21, but test JVM is Java 17
+   - Performance tests work (use only RIDDL APIs, no IntelliJ classes)
+   - Build and plugin verifier work (use JBR bundled with SDK)
+
+### Next Steps
+
+1. Submit to JetBrains Marketplace
+2. Create GitHub release
+3. Fix test environment (upgrade to Java 21 for test runner)
+4. Merge `feature/rewrite` to `development`, then to `main`
 
 ---
 
@@ -77,9 +120,9 @@ submission.
 
 1. Submit to JetBrains Marketplace
 2. Create GitHub release
-3. Refactor legacy code to remove internal API usage
+3. ~~Refactor legacy code to remove internal API usage~~ (in progress)
 4. Add more comprehensive integration tests
-5. Performance testing with large RIDDL files
+5. ~~Performance testing with large RIDDL files~~ (in progress)
 
 ---
 

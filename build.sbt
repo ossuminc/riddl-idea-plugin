@@ -55,7 +55,7 @@ lazy val riddlIdeaPlugin: Project =
       ),
       Test / parallelExecution := false,
       ThisBuild / intellijPluginName := "RIDDL4IDEA",
-      ThisBuild / intellijBuild := "243.22562.218",
+      ThisBuild / intellijBuild := "253.29346.240",
       ThisBuild / intellijPlatform := IntelliJPlatform.IdeaCommunity,
       ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
       intellijPlugins ++= Seq("com.intellij.properties".toPlugin),

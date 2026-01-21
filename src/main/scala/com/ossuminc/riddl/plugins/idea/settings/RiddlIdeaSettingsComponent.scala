@@ -104,12 +104,10 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val topLevelFileTextField = new TextFieldWithBrowseButton()
   private val confFileTextField = new TextFieldWithBrowseButton()
   private val riddlFileDescriptor: FileChooserDescriptor =
-    FileChooserDescriptorFactory
-      .createSingleFileDescriptor()
+    new FileChooserDescriptor(true, false, false, false, false, false)
       .withFileFilter(RiddlCondition())
   private val confFileDescriptor: FileChooserDescriptor =
-    FileChooserDescriptorFactory
-      .createSingleFileDescriptor()
+    new FileChooserDescriptor(true, false, false, false, false, false)
       .withFileFilter(ConfCondition())
 
   topLevelFileTextField.addBrowseFolderListener(
@@ -293,8 +291,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
     if state.getFromOptionsSeq.nonEmpty then reloadAndResetFromOptions()
 
     val fileDescriptor: FileChooserDescriptor =
-      FileChooserDescriptorFactory
-        .createSingleFileDescriptor()
+      new FileChooserDescriptor(true, false, false, false, false, false)
         .withFileFilter(ConfCondition())
     confFileTextField.addBrowseFolderListener(
       getProject,

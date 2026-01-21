@@ -8,7 +8,7 @@ package com.ossuminc.riddl.plugins.idea.mcp
 
 import com.eclipsesource.json.{Json, JsonObject, JsonValue}
 
-import java.net.{HttpURLConnection, URL}
+import java.net.{HttpURLConnection, URI}
 import java.io.{BufferedReader, InputStreamReader, OutputStreamWriter}
 import java.util.concurrent.atomic.AtomicInteger
 import scala.util.{Failure, Success, Try}
@@ -25,7 +25,7 @@ class RiddlMcpClient(baseUrl: String) {
   /** Check if the MCP server is healthy. */
   def healthCheck(): Boolean =
     Try {
-      val url = new URL(s"$baseUrl/health")
+      val url = URI.create(s"$baseUrl/health").toURL
       val connection = url.openConnection().asInstanceOf[HttpURLConnection]
       connection.setRequestMethod("GET")
       connection.setConnectTimeout(5000)
@@ -164,7 +164,7 @@ class RiddlMcpClient(baseUrl: String) {
   /** Send an HTTP request to the MCP server. */
   private def sendRequest(request: JsonObject, sessionId: String): Either[McpError, JsonObject] =
     Try {
-      val url = new URL(s"$baseUrl/mcp")
+      val url = URI.create(s"$baseUrl/mcp").toURL
       val connection = url.openConnection().asInstanceOf[HttpURLConnection]
       connection.setRequestMethod("POST")
       connection.setRequestProperty("Content-Type", "application/json")

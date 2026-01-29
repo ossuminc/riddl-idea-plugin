@@ -1,7 +1,7 @@
 // GitHub Packages resolver for sbt-ossuminc
 resolvers += "GitHub Packages" at "https://maven.pkg.github.com/ossuminc/sbt-ossuminc"
 
-addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "1.2.0")
+addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "1.2.5")
 
 // Note: sbt-idea-plugin is included in sbt-ossuminc 1.2.0 (version 5.0.4)
 

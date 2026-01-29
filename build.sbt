@@ -39,7 +39,7 @@ lazy val riddlIdeaPlugin: Project =
       With.Scala3.configure(version = Some("3.4.3")),
       With.Scalatest(V.scalatest),
       With.coverage(0),
-      With.build_info,
+      With.BuildInfo,
       With.GithubPublishing
     )
     .enablePlugins(JavaAppPackaging)

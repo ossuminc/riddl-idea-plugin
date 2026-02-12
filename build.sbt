@@ -36,7 +36,7 @@ lazy val riddlIdeaPlugin: Project =
     spdx = "Apache-2.0"
   ).configure(
       With.basic,
-      With.Scala3.configure(version = Some("3.4.3")),
+      With.Scala3.configure(version = Some("3.7.4")),
       With.Scalatest(V.scalatest),
       With.coverage(0),
       With.BuildInfo,
@@ -50,6 +50,7 @@ lazy val riddlIdeaPlugin: Project =
       libraryDependencies ++= Seq(
         Dep.minimalJson,
         Dep.riddlCommands,
+        Dep.riddlLib,
         Dep.junit,
         Dep.opentest4j
       ),

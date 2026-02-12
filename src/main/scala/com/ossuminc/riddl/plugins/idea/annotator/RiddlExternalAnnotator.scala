@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.ossuminc.riddl.language.Messages.{Message, Error, Warning, Info, SevereError, MissingWarning, StyleWarning, UsageWarning}
-import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
+import com.ossuminc.riddl.RiddlLib
 import com.ossuminc.riddl.utils.{NullLogger, pc}
 
 /** External annotator for RIDDL files.
@@ -36,19 +36,32 @@ class RiddlExternalAnnotator
       hasErrors: Boolean
   ): RiddlAnnotationInfo = collectInformation(file)
 
-  /** Perform the actual annotation work (runs on background thread). */
+  /** Perform the actual annotation work (runs on background thread).
+    *
+    * Uses RiddlLib.validateString() for full semantic validation (parse +
+    * resolution + validation passes). If the document fails to parse as a
+    * complete Root (e.g. it's an include fragment), falls back to
+    * RiddlLib.parseNebula() which tolerates partial definitions.
+    */
   override def doAnnotate(info: RiddlAnnotationInfo): RiddlAnnotationResult =
     if info.text.isEmpty then RiddlAnnotationResult(Seq.empty)
     else
       pc.withLogger(NullLogger()) { _ =>
-        val rpi = RiddlParserInput(info.text, info.filePath)
-        TopLevelParser.parseNebula(rpi) match
-          case Right(_) =>
-            // Parse succeeded, no syntax errors
-            RiddlAnnotationResult(Seq.empty)
-          case Left(messages) =>
-            // Collect error messages
-            RiddlAnnotationResult(messages.toSeq)
+        val vr = RiddlLib.validateString(
+          info.text, info.filePath
+        )(using pc)
+        if vr.parseErrors.isEmpty then
+          // Full validation succeeded — return all messages
+          RiddlAnnotationResult(vr.all)
+        else
+          // Parse as Root failed — try fragment parsing via nebula
+          RiddlLib.parseNebula(
+            info.text, info.filePath
+          )(using pc) match
+            case Right(_) =>
+              RiddlAnnotationResult(Seq.empty)
+            case Left(messages) =>
+              RiddlAnnotationResult(messages.toSeq)
       }
 
   /** Apply the annotations to the editor (runs on UI thread). */

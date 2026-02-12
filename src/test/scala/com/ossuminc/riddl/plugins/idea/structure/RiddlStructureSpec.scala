@@ -171,6 +171,44 @@ class RiddlStructureSpec extends AnyWordSpec with Matchers {
       // Should not throw exception
       result mustBe empty
     }
+
+    "parse deep hierarchy via getTree" in {
+      val text =
+        """domain DeepTest is {
+          |  context Outer is {
+          |    entity Inner is {
+          |      handler DeepHandler is { ??? }
+          |    }
+          |  }
+          |}""".stripMargin
+      val result = RiddlStructureParser.parseDefinitions(text)
+
+      result.size mustBe 1
+      val domain = result.head
+      domain.kind mustBe "domain"
+      domain.name mustBe "DeepTest"
+      domain.children.size mustBe 1
+      val context = domain.children.head
+      context.kind mustBe "context"
+      context.name mustBe "Outer"
+      context.children.size mustBe 1
+      val entity = context.children.head
+      entity.kind mustBe "entity"
+      entity.name mustBe "Inner"
+      entity.children.size mustBe 1
+      entity.children.head.kind mustBe "handler"
+      entity.children.head.name mustBe "DeepHandler"
+    }
+
+    "fall back to regex for non-Root fragments" in {
+      // Bare keyword not a valid Root — falls back to regex
+      val text = "context Fragment is { }"
+      val result = RiddlStructureParser.parseDefinitions(text)
+
+      result.nonEmpty mustBe true
+      result.head.kind mustBe "context"
+      result.head.name mustBe "Fragment"
+    }
   }
 
   "RiddlStructureIcons" must {

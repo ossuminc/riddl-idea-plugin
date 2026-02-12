@@ -10,9 +10,9 @@ import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.util.treeView.smartTree.{SortableTreeElement, TreeElement}
 import com.intellij.navigation.{ItemPresentation, NavigationItem}
 import com.intellij.psi.PsiFile
-import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
-import com.ossuminc.riddl.language.At
-import com.ossuminc.riddl.utils.{NullLogger, PlatformContext, pc}
+import com.ossuminc.riddl.RiddlLib
+import com.ossuminc.riddl.passes.TreeNode
+import com.ossuminc.riddl.utils.{NullLogger, pc}
 
 import javax.swing.Icon
 import scala.collection.mutable.ArrayBuffer
@@ -94,12 +94,68 @@ class RiddlDefinitionElement(definition: RiddlDefinition, psiFile: PsiFile)
   override def canNavigateToSource: Boolean = true
 }
 
-/** Parser for extracting RIDDL definitions from source text. */
+/** Parser for extracting RIDDL definitions from source text.
+  *
+  * Tries RiddlLib.getTree() first for AST-accurate structure with full
+  * hierarchy. Falls back to regex-based parsing for fragment files that
+  * can't parse as a complete Root document.
+  */
 object RiddlStructureParser {
 
-  /** Regex patterns for extracting definitions.
-    * Each pattern captures: optional description, keyword, name
+  /** Parse definitions from RIDDL source text.
+    *
+    * Uses RiddlLib.getTree() for accurate, recursive structure when the
+    * text is a valid Root document. Falls back to regex for fragments.
     */
+  def parseDefinitions(text: String): Seq[RiddlDefinition] = {
+    pc.withLogger(NullLogger()) { _ =>
+      RiddlLib.getTree(text, "structure")(using pc) match
+        case Right(treeNodes) =>
+          val mapped = treeNodes.map(node => mapTreeNode(text, node))
+          // Unwrap Root nodes — structure view starts at domain level
+          mapped.flatMap { defn =>
+            if defn.kind == "root" then defn.children
+            else Seq(defn)
+          }
+        case Left(_) =>
+          parseDefinitionsRegex(text)
+    }
+  }
+
+  /** Map a RiddlLib TreeNode to a RiddlDefinition. */
+  private def mapTreeNode(text: String, node: TreeNode): RiddlDefinition = {
+    val endOff = findClosingBrace(text, node.offset)
+    RiddlDefinition(
+      kind = node.kind.toLowerCase,
+      name = node.id,
+      offset = node.offset,
+      endOffset = endOff,
+      children = node.children.map(child => mapTreeNode(text, child))
+    )
+  }
+
+  /** Find the matching closing brace starting from the given position. */
+  private def findClosingBrace(text: String, startPos: Int): Int = {
+    var level = 0
+    var foundOpenBrace = false
+    var i = startPos
+    while i < text.length do {
+      val c = text.charAt(i)
+      if c == '{' then {
+        level += 1
+        foundOpenBrace = true
+      } else if c == '}' then {
+        level -= 1
+        if foundOpenBrace && level == 0 then return i + 1
+      }
+      i += 1
+    }
+    text.length
+  }
+
+  // --- Regex fallback for fragment files ---
+
+  /** Regex patterns for extracting definitions. */
   private val DEFINITION_PATTERNS: Seq[(String, scala.util.matching.Regex)] = Seq(
     ("domain", """(?m)^\s*(domain)\s+(\w+)""".r),
     ("context", """(?m)^\s*(context)\s+(\w+)""".r),
@@ -126,15 +182,10 @@ object RiddlStructureParser {
     ("record", """(?m)^\s*(record)\s+(\w+)""".r)
   )
 
-  /** Parse definitions from RIDDL source text.
-    *
-    * This uses a simplified regex-based approach for structure view.
-    * It extracts top-level and nested definitions without full parsing.
-    */
-  def parseDefinitions(text: String): Seq[RiddlDefinition] = {
+  /** Regex-based fallback for parsing definitions from fragment files. */
+  private[structure] def parseDefinitionsRegex(text: String): Seq[RiddlDefinition] = {
     val allMatches = ArrayBuffer[(String, String, Int, Int)]()
 
-    // Find all definition matches
     DEFINITION_PATTERNS.foreach { case (kind, pattern) =>
       pattern.findAllMatchIn(text).foreach { m =>
         val name = m.group(2)
@@ -144,10 +195,7 @@ object RiddlStructureParser {
       }
     }
 
-    // Sort by position
     val sorted = allMatches.sortBy(_._3).toSeq
-
-    // Build hierarchy based on brace nesting
     buildHierarchy(text, sorted)
   }
 
@@ -158,7 +206,6 @@ object RiddlStructureParser {
   ): Seq[RiddlDefinition] = {
     if definitions.isEmpty then return Seq.empty
 
-    // Calculate nesting level at each definition's position
     def nestingLevel(position: Int): Int = {
       var level = 0
       var i = 0
@@ -170,31 +217,10 @@ object RiddlStructureParser {
       level
     }
 
-    // Find the end of a definition (matching closing brace)
-    def findDefinitionEnd(startPos: Int): Int = {
-      var level = 0
-      var foundOpenBrace = false
-      var i = startPos
-      while i < text.length do {
-        val c = text.charAt(i)
-        if c == '{' then {
-          level += 1
-          foundOpenBrace = true
-        } else if c == '}' then {
-          level -= 1
-          if foundOpenBrace && level == 0 then return i + 1
-        }
-        i += 1
-      }
-      text.length
-    }
-
-    // Build tree structure
     val withLevels = definitions.map { case (kind, name, start, end) =>
-      (kind, name, start, findDefinitionEnd(start), nestingLevel(start))
+      (kind, name, start, findClosingBrace(text, start), nestingLevel(start))
     }
 
-    // Get top-level definitions (level 0)
     val topLevel = withLevels.filter(_._5 == 0)
 
     topLevel.map { case (kind, name, start, end, _) =>
@@ -202,7 +228,7 @@ object RiddlStructureParser {
         .filter { case (_, _, childStart, childEnd, level) =>
           level > 0 && childStart > start && childEnd <= end
         }
-        .filter(_._5 == 1) // Only direct children (level 1)
+        .filter(_._5 == 1)
         .map { case (ck, cn, cs, ce, _) =>
           RiddlDefinition(ck, cn, cs, ce)
         }

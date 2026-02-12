@@ -6,6 +6,7 @@
 
 package com.ossuminc.riddl.plugins.idea.annotator
 
+import com.ossuminc.riddl.language.Messages.{Error, SevereError}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -29,14 +30,19 @@ class RiddlExternalAnnotatorSpec extends AnyWordSpec with Matchers {
       info.filePath mustBe filePath
     }
 
-    "return empty result for valid RIDDL" in {
+    "return no errors for valid RIDDL" in {
       val annotator = new RiddlExternalAnnotator()
       // RIDDL requires at least a ???  placeholder or actual content
       val info = RiddlAnnotationInfo("domain Test is { ??? }", "/test/example.riddl")
 
       val result = annotator.doAnnotate(info)
 
-      result.messages mustBe empty
+      // Full validation may produce MissingWarning/StyleWarning for
+      // minimal models, but should have no Error-level messages
+      val errors = result.messages.filter(m =>
+        m.kind == Error || m.kind == SevereError
+      )
+      errors mustBe empty
     }
 
     "return empty result for empty text" in {
@@ -79,6 +85,43 @@ class RiddlExternalAnnotatorSpec extends AnyWordSpec with Matchers {
 
       val result = annotator.doAnnotate(info)
 
+      // Full validation may produce warnings for minimal models
+      // (missing descriptions, empty metadata, unused types) but
+      // should have no Error-level messages
+      val errors = result.messages.filter(m =>
+        m.kind == Error || m.kind == SevereError
+      )
+      errors mustBe empty
+    }
+
+    "detect semantic errors via full validation" in {
+      val annotator = new RiddlExternalAnnotator()
+      val text =
+        """domain Test is {
+          |  context C is {
+          |    type Ref is reference to UndefinedEntity
+          |  }
+          |}""".stripMargin
+      val info = RiddlAnnotationInfo(text, "/test/example.riddl")
+
+      val result = annotator.doAnnotate(info)
+
+      // Full validation should find unresolvable reference
+      result.messages.nonEmpty mustBe true
+    }
+
+    "handle RIDDL fragments via nebula fallback" in {
+      val annotator = new RiddlExternalAnnotator()
+      // This is a fragment (not a complete Root document)
+      val text =
+        """context TestContext is {
+          |  type UserId is String
+          |}""".stripMargin
+      val info = RiddlAnnotationInfo(text, "/test/fragment.riddl")
+
+      val result = annotator.doAnnotate(info)
+
+      // Fragment should parse OK via nebula fallback
       result.messages mustBe empty
     }
   }

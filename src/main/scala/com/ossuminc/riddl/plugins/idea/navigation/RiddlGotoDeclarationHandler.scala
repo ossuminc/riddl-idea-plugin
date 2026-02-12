@@ -10,6 +10,8 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.{PsiElement, PsiFile}
+import com.ossuminc.riddl.RiddlLib
+import com.ossuminc.riddl.utils.{NullLogger, pc}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.matching.Regex
@@ -72,11 +74,27 @@ class RiddlGotoDeclarationHandler extends GotoDeclarationHandler {
   private def isIdentifierChar(c: Char): Boolean =
     c.isLetterOrDigit || c == '_'
 
-  /** Find all definitions of the given identifier. */
+  /** Find all definitions of the given identifier.
+    *
+    * Tries RiddlLib.getOutline() first for AST-accurate results.
+    * Falls back to regex for fragment files that can't parse as Root.
+    */
   private def findDefinitions(text: String, identifier: String): Seq[(Int, String)] = {
+    pc.withLogger(NullLogger()) { _ =>
+      RiddlLib.getOutline(text, "navigation")(using pc) match
+        case Right(entries) =>
+          entries
+            .filter(_.id == identifier)
+            .map(e => (e.offset, e.kind.toLowerCase))
+        case Left(_) =>
+          findDefinitionsRegex(text, identifier)
+    }
+  }
+
+  /** Regex-based fallback for finding definitions in fragment files. */
+  private def findDefinitionsRegex(text: String, identifier: String): Seq[(Int, String)] = {
     val results = ArrayBuffer[(Int, String)]()
 
-    // Patterns for different definition types
     val patterns: Seq[(String, Regex)] = Seq(
       ("domain", s"""(?m)^\\s*(domain)\\s+($identifier)\\s""".r),
       ("context", s"""(?m)^\\s*(context)\\s+($identifier)\\s""".r),

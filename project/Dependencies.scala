@@ -4,7 +4,7 @@ import sbt.*
 object V {
   val lang3 = "3.14.0"
   val opentest4j = "1.3.0"
-  val riddl = "1.0.0"
+  val riddl = "1.8.0"
   val scalatest = "3.2.19"
   val scopt = "4.1.0"
   val slf4j = "2.0.4"
@@ -20,6 +20,7 @@ object Dep {
   }
   val kotlin = "org.jetbrains.kotlin" % "kotlin-stdlib" % "2.0.20"
   val riddlCommands = "com.ossuminc" %% "riddl-commands" % V.riddl
+  val riddlLib = "com.ossuminc" %% "riddl-lib" % V.riddl
   val jbKotlin = "org.jetbrains.kotlin" % "kotlin-stdlib" % "2.0.20"
   val jbAnnotations = "org.jetbrains" % "annotations" % "24.1.0"
 

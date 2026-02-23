@@ -1,5 +1,16 @@
 # Engineering Notebook: RIDDL IntelliJ IDEA Plugin
 
+## Incoming Tasks
+
+**At session start**, check the `task/` directory for pending
+work requests from other projects. Each `.md` file describes a
+task (e.g., dependency upgrade). Treat unresolved tasks as to-do
+items unless already completed (verifiable from this notebook,
+CLAUDE.md, or git log). After completing a task, append results
+to the task file and note completion in this notebook.
+
+---
+
 ## Current Status
 
 **Version**: 0.9.0-beta (released 2026-01-21)

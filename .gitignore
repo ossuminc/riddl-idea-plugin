@@ -9,3 +9,8 @@ hs_err_pid*
 .scalafmt.conf
 .scalafmt.conf.etag
 /task/
+
+# Claude Code transient files
+.claude/*
+!.claude/skills/
+!.claude/skills/**

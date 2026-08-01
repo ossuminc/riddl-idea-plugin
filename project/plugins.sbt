@@ -3,7 +3,10 @@ resolvers += "GitHub Packages" at "https://maven.pkg.github.com/ossuminc/sbt-oss
 
 addSbtPlugin("com.ossuminc" % "sbt-ossuminc" % "1.4.0")
 
-// Note: sbt-idea-plugin is included in sbt-ossuminc 1.2.0 (version 5.0.4)
+// sbt-ossuminc 1.4.0 re-exports sbt-idea-plugin 5.1.0. Declaring it directly
+// here evicts that in favour of the 6.x line. Keep this until sbt-ossuminc
+// re-exports 6.x itself, at which point this override can be dropped.
+addSbtPlugin("org.jetbrains.scala" % "sbt-idea-plugin" % "6.0.0-RC3")
 
 // Note: addSbtPlugin("org.jetbrains.scala" % "sbt-kotlin-plugin" % "3.0.3")
 

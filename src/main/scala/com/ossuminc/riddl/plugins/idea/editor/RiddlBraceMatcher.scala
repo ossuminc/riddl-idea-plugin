@@ -14,23 +14,23 @@ import com.ossuminc.riddl.plugins.idea.lexer.RiddlTokenTypes
 /** Brace matcher for RIDDL files.
   *
   * Provides brace matching and highlighting for:
-  * - Curly braces: { }
-  * - Parentheses: ( )
-  * - Square brackets: [ ]
-  * - Angle brackets: < >
+  *   - Curly braces: { }
+  *   - Parentheses: ( )
+  *   - Square brackets: [ ]
+  *   - Angle brackets: < >
   */
 class RiddlBraceMatcher extends PairedBraceMatcher {
 
   override def getPairs: Array[BracePair] = RiddlBraceMatcher.PAIRS
 
   override def isPairedBracesAllowedBeforeType(
-      lbraceType: IElementType,
-      contextType: IElementType
+    lbraceType: IElementType,
+    contextType: IElementType
   ): Boolean = true
 
   override def getCodeConstructStart(
-      file: PsiFile,
-      openingBraceOffset: Int
+    file: PsiFile,
+    openingBraceOffset: Int
   ): Int = openingBraceOffset
 }
 
@@ -38,19 +38,19 @@ object RiddlBraceMatcher {
 
   /** Brace pairs for RIDDL.
     *
-    * Note: Since we use a single PUNCTUATION token type for all punctuation,
-    * IntelliJ's default brace matching will work. This class is provided for
-    * future expansion if we add more specific token types.
+    * Note: Since we use a single PUNCTUATION token type for all punctuation, IntelliJ's default
+    * brace matching will work. This class is provided for future expansion if we add more specific
+    * token types.
     *
-    * The structural flag indicates whether this brace pair defines a code block
-    * (like { } for definitions) vs a non-structural pair (like < > for generics).
+    * The structural flag indicates whether this brace pair defines a code block (like { } for
+    * definitions) vs a non-structural pair (like < > for generics).
     */
   val PAIRS: Array[BracePair] = Array(
     // Structural braces (code blocks)
     new BracePair(
       RiddlTokenTypes.PUNCTUATION, // {
       RiddlTokenTypes.PUNCTUATION, // }
-      true                         // structural
+      true // structural
     )
   )
 

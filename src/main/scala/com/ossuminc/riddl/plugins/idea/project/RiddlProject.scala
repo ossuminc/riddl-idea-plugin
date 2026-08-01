@@ -13,8 +13,12 @@ import kotlin.coroutines.Continuation
 
 class RiddlProject extends ProjectActivity {
   override def execute(project: Project, continuation: Continuation[? >: kotlin.Unit]): Unit = {
-    com.intellij.openapi.editor.EditorFactory.getInstance().getEventMulticaster.addDocumentListener(
-      RiddlDocumentListener(), () => ()
-    )
+    com.intellij.openapi.editor.EditorFactory
+      .getInstance()
+      .getEventMulticaster
+      .addDocumentListener(
+        RiddlDocumentListener(),
+        () => ()
+      )
   }
 }

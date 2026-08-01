@@ -9,7 +9,13 @@ package com.ossuminc.riddl.plugins.idea.utils
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowManager}
-import com.intellij.ui.content.{Content, ContentFactory, ContentManager, ContentManagerEvent, ContentManagerListener}
+import com.intellij.ui.content.{
+  Content,
+  ContentFactory,
+  ContentManager,
+  ContentManagerEvent,
+  ContentManagerListener
+}
 import com.ossuminc.riddl.plugins.idea.settings.{RiddlIdeaSettings, RiddlIdeaSettingsConfigurable}
 import com.ossuminc.riddl.plugins.idea.ui.{RiddlTerminalConsole, RiddlToolWindowContent}
 import ParsingUtils.*
@@ -20,7 +26,13 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.openapi.actionSystem.{ActionManager, ActionPlaces, ActionPopupMenu, AnAction, DefaultActionGroup}
+import com.intellij.openapi.actionSystem.{
+  ActionManager,
+  ActionPlaces,
+  ActionPopupMenu,
+  AnAction,
+  DefaultActionGroup
+}
 import com.intellij.terminal.TerminalExecutionConsole
 import com.ossuminc.riddl.plugins.idea.actions.{EditTabNameAction, RiddlActionGroup}
 
@@ -37,9 +49,9 @@ object ToolWindowUtils {
 
   implicit class ToolWindowExt(toolWindow: ToolWindow) {
     def createAndAddContentToTW(
-        project: Project,
-        windowNumber: Int,
-        isLockable: Boolean = false
+      project: Project,
+      windowNumber: Int,
+      isLockable: Boolean = false
     ): Unit = {
       val windowName: String = genWindowName(windowNumber)
 
@@ -61,9 +73,9 @@ object ToolWindowUtils {
     }
 
     private def listenForContentRemoval(
-        project: Project,
-        windowDisplayName: String,
-        windowNum: Int
+      project: Project,
+      windowDisplayName: String,
+      windowNum: Int
     ): Unit = {
       val riddlContentManager = ToolWindowManager
         .getInstance(project)
@@ -94,10 +106,10 @@ object ToolWindowUtils {
   }
 
   def createRunConsole(
-      toolWindow: ToolWindow,
-      contentPanel: JBPanel[?],
-      numWindow: Int,
-      project: Project
+    toolWindow: ToolWindow,
+    contentPanel: JBPanel[?],
+    numWindow: Int,
+    project: Project
   ): Unit = {
     def setConsoleProps(console: TerminalExecutionConsole): Unit = {
       val terminalWidget = console.getTerminalWidget
@@ -114,15 +126,13 @@ object ToolWindowUtils {
       "project's configuration file not configured in settings"
     val processHandler = new OSProcessHandler(new GeneralCommandLine("echo"))
     val console: TerminalExecutionConsole =
-      new TerminalExecutionConsole(project,processHandler)
+      new TerminalExecutionConsole(project, processHandler)
     setConsoleProps(console)
 
     def putUpdateRunPaneAsClientProperty(): Unit =
       contentPanel.putClientProperty(
         genUpdateRunPaneLabelName(numWindow),
-        (fromReload: Boolean, fromLogger: Boolean) => 
-          updateRunPaneLabel(fromReload)
-        
+        (fromReload: Boolean, fromLogger: Boolean) => updateRunPaneLabel(fromReload)
       )
 
     if contentPanel.getClientProperty(genUpdateRunPaneLabelName) != null
@@ -142,8 +152,8 @@ object ToolWindowUtils {
       )
 
     def updateRunPaneLabel(
-        fromReload: Boolean = false,
-        fromLogger: Boolean = false
+      fromReload: Boolean = false,
+      fromLogger: Boolean = false
     ): Unit = {
       def writeToConsole(s: String, clear: Boolean = true): Unit = {
         console.getTerminalWidget.getTerminal.reset(true)
@@ -167,8 +177,7 @@ object ToolWindowUtils {
       val confFile = File(statePath)
 
       val tabContent: Content = getToolWindowContent(numWindow)
-      if tabContent.getTabName.isBlank then
-        tabContent.setDisplayName(genWindowName(numWindow))
+      if tabContent.getTabName.isBlank then tabContent.setDisplayName(genWindowName(numWindow))
       tabContent.getComponent.addMouseListener(new MouseAdapter {
         override def mousePressed(e: MouseEvent): Unit = {
           if e.isPopupTrigger then showPopup(e)
@@ -199,17 +208,14 @@ object ToolWindowUtils {
 
       if state.getRunOutput.nonEmpty then writeStateOutputToConsole()
       else if state.getCommand == "from" then
-        if confFile.exists() && confFile.isFile then
-          runCommandForConsole(numWindow)
+        if confFile.exists() && confFile.isFile then runCommandForConsole(numWindow)
       if state != null && state.getCommand == "from" then
-        if statePath == null || statePath.isBlank then
-          writeToConsole(notConfiguredMessage)
+        if statePath == null || statePath.isBlank then writeToConsole(notConfiguredMessage)
         else if state.getFromOption.isEmpty then
           writeToConsole("From command chosen, but no option has been chosen")
         else if confFile.exists() && confFile.isFile then
           if state.getMessagesForConsole.nonEmpty
-          then
-            writeStateOutputToConsole()
+          then writeStateOutputToConsole()
           else runCommandForConsole(numWindow)
         else
           writeToConsole(
@@ -266,15 +272,15 @@ object ToolWindowUtils {
       )
 
   def updateToolWindowPanes(
-      numWindow: Int,
-      fromReload: Boolean = false,
-      fromLogger: Boolean = false
+    numWindow: Int,
+    fromReload: Boolean = false,
+    fromLogger: Boolean = false
   ): Unit = updateToolWindowRunPane(numWindow, fromReload, fromLogger)
 
   def updateToolWindowRunPane(
-      numWindow: Int,
-      fromReload: Boolean = false,
-      fromLogger: Boolean = false
+    numWindow: Int,
+    fromReload: Boolean = false,
+    fromLogger: Boolean = false
   ): Unit = getToolWindowContent(numWindow).getComponent
     .getClientProperty(genUpdateRunPaneLabelName(numWindow))
     .asInstanceOf[(fromReload: Boolean, fromLogger: Boolean) => Unit](
@@ -298,8 +304,7 @@ object ToolWindowUtils {
       if windowNumber > 1 then s" - (Window #$windowNumber)" else ""
 
     val windowState = getRiddlIdeaState(windowNumber)
-    if windowState != null then
-      s"RIDDL ${windowState.getCommand}$windowNumInName"
+    if windowState != null then s"RIDDL ${windowState.getCommand}$windowNumInName"
     else s"RIDDL ?$windowNumInName"
   }
 

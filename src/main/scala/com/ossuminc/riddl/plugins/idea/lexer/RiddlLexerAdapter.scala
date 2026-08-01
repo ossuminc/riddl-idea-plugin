@@ -14,17 +14,16 @@ import com.ossuminc.riddl.utils.{NullLogger, pc}
 
 /** A Lexer adapter that wraps RIDDL's token parser for IntelliJ.
   *
-  * This lexer uses RIDDL's `TopLevelParser.parseToTokens()` to tokenize
-  * the input, then presents those tokens through IntelliJ's Lexer interface.
+  * This lexer uses RIDDL's `TopLevelParser.parseToTokens()` to tokenize the input, then presents
+  * those tokens through IntelliJ's Lexer interface.
   *
-  * Design decision: We wrap RIDDL's tokenization rather than implementing
-  * a separate lexer to:
-  * - Maintain a single source of truth for RIDDL tokenization
-  * - Ensure consistency with other RIDDL tools (VS Code, etc.)
-  * - Automatically benefit from RIDDL grammar updates
+  * Design decision: We wrap RIDDL's tokenization rather than implementing a separate lexer to:
+  *   - Maintain a single source of truth for RIDDL tokenization
+  *   - Ensure consistency with other RIDDL tools (VS Code, etc.)
+  *   - Automatically benefit from RIDDL grammar updates
   *
-  * Trade-off: We lose IntelliJ's mid-document restart optimization, but
-  * RIDDL's structural dependencies prevent partial parsing anyway.
+  * Trade-off: We lose IntelliJ's mid-document restart optimization, but RIDDL's structural
+  * dependencies prevent partial parsing anyway.
   */
 class RiddlLexerAdapter extends LexerBase {
 
@@ -34,10 +33,10 @@ class RiddlLexerAdapter extends LexerBase {
   private var tokenIndex: Int = 0
 
   override def start(
-      buffer: CharSequence,
-      startOffset: Int,
-      endOffset: Int,
-      initialState: Int
+    buffer: CharSequence,
+    startOffset: Int,
+    endOffset: Int,
+    initialState: Int
   ): Unit = {
     this.buffer = buffer
     this.bufferEnd = endOffset
@@ -55,7 +54,7 @@ class RiddlLexerAdapter extends LexerBase {
         val rpi = RiddlParserInput(text, "editor")
         TopLevelParser.parseToTokens(rpi, withVerboseFailures = false) match
           case Right(tokenSeq) => tokenSeq.toArray
-          case Left(_) =>
+          case Left(_)         =>
             // On parse failure, return a single "Other" token for the whole text
             Array(Token.Other(com.ossuminc.riddl.language.At(0, text.length, rpi)))
       }

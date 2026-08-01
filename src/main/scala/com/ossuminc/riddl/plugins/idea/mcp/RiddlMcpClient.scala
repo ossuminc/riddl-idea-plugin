@@ -118,9 +118,9 @@ class RiddlMcpClient(baseUrl: String) {
 
   /** Call a specific MCP tool. */
   private def callTool(
-      toolName: String,
-      arguments: JsonObject,
-      sessionId: String
+    toolName: String,
+    arguments: JsonObject,
+    sessionId: String
   ): Either[McpError, JsonObject] =
     callMethod(
       "tools/call",
@@ -130,9 +130,9 @@ class RiddlMcpClient(baseUrl: String) {
 
   /** Make a JSON-RPC method call. */
   private def callMethod(
-      method: String,
-      params: JsonObject,
-      sessionId: String
+    method: String,
+    params: JsonObject,
+    sessionId: String
   ): Either[McpError, JsonObject] = {
     val requestId = requestIdCounter.getAndIncrement()
     val request = Json

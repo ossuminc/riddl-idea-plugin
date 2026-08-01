@@ -17,9 +17,10 @@ import com.ossuminc.riddl.utils.NullLogger
 
 /** Legacy manual highlighting utilities.
   *
-  * @deprecated Use RiddlSyntaxHighlighter with RiddlLexerAdapter instead.
-  *             The IntelliJ lexer-based highlighting is now the primary mechanism.
-  *             This code is kept for backward compatibility with RiddlFileListenerHighlighter.
+  * @deprecated
+  *   Use RiddlSyntaxHighlighter with RiddlLexerAdapter instead. The IntelliJ lexer-based
+  *   highlighting is now the primary mechanism. This code is kept for backward compatibility with
+  *   RiddlFileListenerHighlighter.
   */
 object utils {
 
@@ -65,9 +66,9 @@ object utils {
         applyColourKey(editor)(RiddlColors.OTHER, offset, endOffset - offset)
 
   private def applyColourKey(editor: Editor)(
-      colorKey: TextAttributesKey,
-      index: Int,
-      length: Int
+    colorKey: TextAttributesKey,
+    index: Int,
+    length: Int
   ): Unit =
     editor.getMarkupModel.getAllHighlighters
       .find(_.getStartOffset == index)

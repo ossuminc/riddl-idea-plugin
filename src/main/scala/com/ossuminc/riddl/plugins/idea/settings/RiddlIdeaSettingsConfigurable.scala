@@ -61,9 +61,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
       if windowState.getFromOptionsSeq.contains(component.getPickedFromOption)
       then windowState.setFromOption(component.getPickedFromOption)
       else windowState.setFromOptionsSeq(scala.collection.mutable.Seq())
-    else {
-
-    }
+    else {}
 
     component.getBooleanCommonOptions.foreach(option =>
       windowState.setCommonOptions(
@@ -74,7 +72,8 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
     )
 
     if component.getIntegerOptionTextField.getText.forall(Character.isDigit) then
-      if component.getIntegerOptionTextField.getText.toInt < Runtime.getRuntime.availableProcessors * 2 then
+      if component.getIntegerOptionTextField.getText.toInt < Runtime.getRuntime.availableProcessors * 2
+      then
         windowState.setCommonOptions(
           IntegerCommonOption.setCommonOptionValue(
             windowState.getCommonOptions
@@ -86,8 +85,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
         ConfigurationException(
           s"max-parallel-parsing must be less than ${Runtime.getRuntime.availableProcessors * 2}"
         )
-    else
-      ConfigurationException("max-parallel-parsing must be an integer")
+    else ConfigurationException("max-parallel-parsing must be an integer")
 
     if component.getFiniteDurationOptionTextField.getText.forall(Character.isDigit)
     then
@@ -104,8 +102,7 @@ class RiddlIdeaSettingsConfigurable(numWindow: Int) extends Configurable {
       else ConfigurationException("max-include-wait must be less than 1 minute")
     else ConfigurationException("max-include-wait must be an integer")
 
-    if component.getTopLevelFieldText.endsWith(".riddl") then
-      windowState.clearAllHighlighters()
+    if component.getTopLevelFieldText.endsWith(".riddl") then windowState.clearAllHighlighters()
     else if component.getPickedCommand == "from" &&
       (confPath.exists() && confPath.isFile)
     then windowState.clearAllHighlighters()

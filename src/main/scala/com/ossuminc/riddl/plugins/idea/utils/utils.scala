@@ -61,11 +61,11 @@ package object utils {
 
   object CreationUtils {
     def createGBCs(
-        gridX: Int,
-        gridY: Int,
-        weightX: Int,
-        wightY: Int,
-        fill: Int
+      gridX: Int,
+      gridY: Int,
+      weightX: Int,
+      wightY: Int,
+      fill: Int
     ): GridBagConstraints = {
       val newGBCs = new GridBagConstraints()
       newGBCs.gridx = gridX
@@ -86,7 +86,7 @@ package object utils {
   )
 
   def getCurrentEditorForFile(
-      filePath: String
+    filePath: String
   ): Option[Editor] = {
     val file: VirtualFile =
       LocalFileSystem.getInstance.findFileByPath(
@@ -97,8 +97,7 @@ package object utils {
     if editor != null && file != null then
       val editorFile =
         FileDocumentManager.getInstance().getFile(editor.getDocument)
-      if editorFile != null && file.getName == editorFile.getName then
-        Some(editor)
+      if editorFile != null && file.getName == editorFile.getName then Some(editor)
       else None
     else None
   }
@@ -108,11 +107,11 @@ package object utils {
     .getSelectedTextEditor
 
   def clearHighlightersForFile(
-      filePath: String,
-      state: RiddlIdeaSettings.State
+    filePath: String,
+    state: RiddlIdeaSettings.State
   ): Unit = {
     def removeHighlighter(
-        editor: Editor
+      editor: Editor
     )(rangeHighlighter: RangeHighlighter): Unit = {
       rangeHighlighter.setErrorStripeMarkColor(null)
       rangeHighlighter.setErrorStripeTooltip(null)
@@ -143,8 +142,7 @@ package object utils {
           .filter(hl =>
             hl.getLayer != HighlighterLayer.FIRST &&
               (hl.getTextAttributes(colorScheme) != null &&
-                hl.getTextAttributes(colorScheme)
-                  .getEffectType == EffectType.WAVE_UNDERSCORE
+                hl.getTextAttributes(colorScheme).getEffectType == EffectType.WAVE_UNDERSCORE
                 || hl.getErrorStripeTooltip != null)
           )
           .foreach(removeHighlighter(editor))
@@ -152,9 +150,9 @@ package object utils {
   }
 
   def highlightErrorMessagesForFile(
-      state: RiddlIdeaSettings.State,
-      filePathOrEditor: Either[Editor, String],
-      forConsole: Boolean = false
+    state: RiddlIdeaSettings.State,
+    filePathOrEditor: Either[Editor, String],
+    forConsole: Boolean = false
   ): Unit = {
     val (filePath, editorOpt) =
       filePathOrEditor match {
@@ -174,9 +172,7 @@ package object utils {
 
       (if forConsole then state.getMessagesForConsole
        else state.getMessagesForEditor)
-        .find((msgFileName, _) =>
-          editor.getVirtualFile.getPath.endsWith(msgFileName)
-        )
+        .find((msgFileName, _) => editor.getVirtualFile.getPath.endsWith(msgFileName))
         .foreach { (_, msgs) =>
           msgs
             .foreach { msg =>
@@ -275,8 +271,8 @@ package object utils {
   }
 
   def isFilePathBelowAnother(
-      filePath: String,
-      otherPath: Option[String]
+    filePath: String,
+    otherPath: Option[String]
   ): Boolean = otherPath.exists(path =>
     filePath.startsWith(
       Path.of(path).getParent.toString

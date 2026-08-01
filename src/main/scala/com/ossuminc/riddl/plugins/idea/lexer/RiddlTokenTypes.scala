@@ -12,8 +12,8 @@ import com.ossuminc.riddl.language.AST.Token
 
 /** Token types for the RIDDL language.
   *
-  * These IElementType instances map RIDDL parser tokens to IntelliJ token types
-  * for use in syntax highlighting and lexical analysis.
+  * These IElementType instances map RIDDL parser tokens to IntelliJ token types for use in syntax
+  * highlighting and lexical analysis.
   */
 object RiddlTokenTypes {
 

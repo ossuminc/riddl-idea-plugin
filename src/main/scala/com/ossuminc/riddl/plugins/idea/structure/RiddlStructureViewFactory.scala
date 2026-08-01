@@ -6,15 +6,19 @@
 
 package com.ossuminc.riddl.plugins.idea.structure
 
-import com.intellij.ide.structureView.{StructureViewBuilder, StructureViewModel, TreeBasedStructureViewBuilder}
+import com.intellij.ide.structureView.{
+  StructureViewBuilder,
+  StructureViewModel,
+  TreeBasedStructureViewBuilder
+}
 import com.intellij.lang.PsiStructureViewFactory
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 
 /** Factory for creating RIDDL structure views.
   *
-  * The structure view shows a hierarchical outline of RIDDL definitions
-  * in the current file, allowing quick navigation to definitions.
+  * The structure view shows a hierarchical outline of RIDDL definitions in the current file,
+  * allowing quick navigation to definitions.
   */
 class RiddlStructureViewFactory extends PsiStructureViewFactory {
 

@@ -17,16 +17,16 @@ import scala.util.matching.Regex
 
 /** Folding builder for RIDDL files.
   *
-  * Provides code folding for RIDDL definitions like domain, context, entity,
-  * handler, type, etc. Users can collapse these to see the overall structure.
+  * Provides code folding for RIDDL definitions like domain, context, entity, handler, type, etc.
+  * Users can collapse these to see the overall structure.
   */
 class RiddlFoldingBuilder extends FoldingBuilderEx {
 
   /** Build fold regions for the given element. */
   override def buildFoldRegions(
-      root: PsiElement,
-      document: Document,
-      quick: Boolean
+    root: PsiElement,
+    document: Document,
+    quick: Boolean
   ): Array[FoldingDescriptor] =
     val descriptors = ArrayBuffer.empty[FoldingDescriptor]
     val text = document.getText
@@ -93,8 +93,7 @@ class RiddlFoldingBuilder extends FoldingBuilderEx {
     val pattern = """/\*[\s\S]*?\*/""".r
 
     pattern.findAllMatchIn(text).foreach { m =>
-      if m.matched.contains('\n') then
-        blocks += TextRange.create(m.start, m.end)
+      if m.matched.contains('\n') then blocks += TextRange.create(m.start, m.end)
     }
     blocks.toSeq
 
@@ -110,8 +109,8 @@ object RiddlFoldingBuilder {
   /** Patterns for foldable RIDDL definitions.
     *
     * Each tuple contains:
-    * - Regex pattern to match the definition start
-    * - Placeholder text to show when folded
+    *   - Regex pattern to match the definition start
+    *   - Placeholder text to show when folded
     */
   val FOLDABLE_PATTERNS: Seq[(Regex, String)] = Seq(
     ("""(?m)^\s*(domain)\s+(\w+)""".r, " {...}"),

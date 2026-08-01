@@ -27,8 +27,8 @@ import org.scalatest.wordspec.AnyWordSpec
 
 /** Tests for the RIDDL external annotator.
   *
-  * These tests verify annotation collection and result processing.
-  * Full integration testing requires IntelliJ platform test fixtures.
+  * These tests verify annotation collection and result processing. Full integration testing
+  * requires IntelliJ platform test fixtures.
   */
 class RiddlExternalAnnotatorSpec extends AnyWordSpec with Matchers {
 
@@ -54,9 +54,7 @@ class RiddlExternalAnnotatorSpec extends AnyWordSpec with Matchers {
 
       // Full validation may produce MissingWarning/StyleWarning for
       // minimal models, but should have no Error-level messages
-      val errors = result.messages.filter(m =>
-        m.kind == Error || m.kind == SevereError
-      )
+      val errors = result.messages.filter(m => m.kind == Error || m.kind == SevereError)
       errors mustBe empty
     }
 
@@ -106,9 +104,7 @@ class RiddlExternalAnnotatorSpec extends AnyWordSpec with Matchers {
       // Full validation may produce warnings for minimal models
       // (missing descriptions, empty metadata, unused types) but
       // should have no Error-level messages
-      val errors = result.messages.filter(m =>
-        m.kind == Error || m.kind == SevereError
-      )
+      val errors = result.messages.filter(m => m.kind == Error || m.kind == SevereError)
       errors mustBe empty
     }
 

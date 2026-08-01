@@ -11,9 +11,8 @@ import org.scalatest.wordspec.AnyWordSpec
 
 /** Placeholder test spec.
   *
-  * Note: IntelliJ platform tests require proper test infrastructure setup.
-  * The old test was incorrectly configured. Real integration tests will be
-  * added as part of the Phase 1 rewrite.
+  * Note: IntelliJ platform tests require proper test infrastructure setup. The old test was
+  * incorrectly configured. Real integration tests will be added as part of the Phase 1 rewrite.
   */
 class RiddlToolWindowFactorySpec extends AnyWordSpec with Matchers {
 

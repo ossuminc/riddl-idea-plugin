@@ -13,16 +13,16 @@ import com.ossuminc.riddl.utils.pc
 
 /** Performance tests for RIDDL parsing with large files.
   *
-  * These tests verify that the lexer and parser can handle large RIDDL files
-  * within acceptable time limits. They use only RIDDL APIs (not IntelliJ)
-  * to avoid the Java 21 requirement.
+  * These tests verify that the lexer and parser can handle large RIDDL files within acceptable time
+  * limits. They use only RIDDL APIs (not IntelliJ) to avoid the Java 21 requirement.
   */
 class RiddlPerformanceSpec extends AnyWordSpec with Matchers {
 
   /** Generate a large RIDDL domain with many entities. */
   private def generateLargeDomain(entityCount: Int): String = {
-    val entities = (1 to entityCount).map { i =>
-      s"""  entity Entity$i is {
+    val entities = (1 to entityCount)
+      .map { i =>
+        s"""  entity Entity$i is {
          |    state EntityState$i of Entity${i}State
          |    handler Entity${i}Handler is {
          |      on command Create$i {
@@ -42,7 +42,8 @@ class RiddlPerformanceSpec extends AnyWordSpec with Matchers {
          |    status: String
          |  }
          |""".stripMargin
-    }.mkString("\n")
+      }
+      .mkString("\n")
 
     s"""domain LargeDomain is {
        |  context MainContext is {
@@ -55,8 +56,7 @@ class RiddlPerformanceSpec extends AnyWordSpec with Matchers {
   /** Generate a deeply nested RIDDL structure. */
   private def generateNestedDomain(depth: Int): String = {
     def generateNested(level: Int): String =
-      if level >= depth then
-        s"""${"  " * level}entity DeepEntity is {
+      if level >= depth then s"""${"  " * level}entity DeepEntity is {
            |${"  " * level}  state DeepState of DeepStateType
            |${"  " * level}}
            |""".stripMargin

@@ -6,10 +6,7 @@
 
 package com.ossuminc.riddl.plugins.idea.settings
 
-import com.intellij.openapi.fileChooser.{
-  FileChooserDescriptor,
-  FileChooserDescriptorFactory
-}
+import com.intellij.openapi.fileChooser.{FileChooserDescriptor, FileChooserDescriptorFactory}
 import com.intellij.openapi.ui.{
   JBMenuItem,
   JBPopupMenu,
@@ -38,13 +35,7 @@ import java.awt.event.{
   MouseEvent
 }
 import java.text.NumberFormat
-import javax.swing.{
-  BorderFactory,
-  JFormattedTextField,
-  JPanel,
-  JTextField,
-  SwingUtilities
-}
+import javax.swing.{BorderFactory, JFormattedTextField, JPanel, JTextField, SwingUtilities}
 
 class ConfCondition extends Condition[VirtualFile] {
   def value(virtualFile: VirtualFile): Boolean = {
@@ -67,14 +58,13 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private var booleanCommonOptions: Seq[(JBCheckBox, CommonOption[Boolean])] =
     Seq()
   private def createBooleanParamButton(
-      commonOption: CommonOption[Boolean]
+    commonOption: CommonOption[Boolean]
   ): JBPanel[?] = {
     val row = new JBPanel(new FlowLayout(java.awt.FlowLayout.LEFT))
     row.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT)
 
     val checkBox = JBCheckBox()
-    if commonOption.getCommonOptionValue(state.getCommonOptions) then
-      checkBox.doClick()
+    if commonOption.getCommonOptionValue(state.getCommonOptions) then checkBox.doClick()
     row.add(checkBox)
     booleanCommonOptions = booleanCommonOptions :+ (checkBox, commonOption)
     checkBox.addItemListener(_ => areAnyComponentsModified = true)
@@ -115,9 +105,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
     riddlFileDescriptor.withTitle("Browse for Top Level Path")
   )
 
-  topLevelFileTextField.addPropertyChangeListener(_ =>
-    areAnyComponentsModified = true
-  )
+  topLevelFileTextField.addPropertyChangeListener(_ => areAnyComponentsModified = true)
   if state != null && state.getTopLevelPath.isDefined then
     state.getTopLevelPath.foreach(path =>
       topLevelFileTextField.setText(
@@ -136,13 +124,10 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
     getProject,
     confFileDescriptor.withTitle("Browse for Configuration Path")
   )
-  confFileTextField.addPropertyChangeListener(_ =>
-    areAnyComponentsModified = true
-  )
+  confFileTextField.addPropertyChangeListener(_ => areAnyComponentsModified = true)
   confFileTextField.setEditable(false)
   confFileTextField.setText(
-    if state != null && state.getConfPath.isDefined then
-      state.getConfPath.getOrElse("")
+    if state != null && state.getConfPath.isDefined then state.getConfPath.getOrElse("")
     else getProject.getBasePath
   )
   confFileTextField.setBorder(
@@ -166,9 +151,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val integerOptionTextField = new JFormattedTextField(
     NumberFormat.getIntegerInstance()
   )
-  integerOptionTextField.addPropertyChangeListener(_ =>
-    areAnyComponentsModified = true
-  )
+  integerOptionTextField.addPropertyChangeListener(_ => areAnyComponentsModified = true)
   integerOptionTextField.setText(
     state.getCommonOptions.maxParallelParsing.toString
   )
@@ -185,9 +168,7 @@ class RiddlIdeaSettingsComponent(private val numToolWindow: Int) {
   private val finiteDurationTextField = new JFormattedTextField(
     NumberFormat.getIntegerInstance().setGroupingUsed(false)
   )
-  finiteDurationTextField.addPropertyChangeListener(_ =>
-    areAnyComponentsModified = true
-  )
+  finiteDurationTextField.addPropertyChangeListener(_ => areAnyComponentsModified = true)
   finiteDurationTextField.setText(
     state.getCommonOptions.maxIncludeWait.toMillis.toString
   )

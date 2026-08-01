@@ -77,9 +77,12 @@ final class RiddlMcpService(project: Project) {
 
   /** Validate RIDDL text using the MCP server.
     *
-    * @param text     The RIDDL source text to validate
-    * @param partial  If true, uses validate-partial (filters resolution errors)
-    * @return Validation result or error
+    * @param text
+    *   The RIDDL source text to validate
+    * @param partial
+    *   If true, uses validate-partial (filters resolution errors)
+    * @return
+    *   Validation result or error
     */
   def validate(text: String, partial: Boolean = false): Either[McpError, McpValidationResult] =
     withClient { c =>
@@ -89,8 +92,10 @@ final class RiddlMcpService(project: Project) {
 
   /** Check model completeness using the MCP server.
     *
-    * @param text The RIDDL source text to check
-    * @return Completeness result or error
+    * @param text
+    *   The RIDDL source text to check
+    * @return
+    *   Completeness result or error
     */
   def checkCompleteness(text: String): Either[McpError, McpCompletenessResult] =
     withClient { c =>
@@ -99,8 +104,10 @@ final class RiddlMcpService(project: Project) {
 
   /** Generate RIDDL from a natural language description.
     *
-    * @param description Natural language description of the domain
-    * @return Generated RIDDL or error
+    * @param description
+    *   Natural language description of the domain
+    * @return
+    *   Generated RIDDL or error
     */
   def generateFromDescription(description: String): Either[McpError, McpMappingResult] =
     withClient { c =>
@@ -117,7 +124,7 @@ final class RiddlMcpService(project: Project) {
   private def withClient[T](operation: RiddlMcpClient => Either[McpError, T]): Either[McpError, T] =
     client.get() match {
       case Some(c) => operation(c)
-      case None =>
+      case None    =>
         // Try to auto-connect
         connect() match {
           case Right(_) =>

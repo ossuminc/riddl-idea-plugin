@@ -11,8 +11,8 @@ import org.scalatest.wordspec.AnyWordSpec
 
 /** Tests for RIDDL editor components (brace matcher and commenter).
   *
-  * These tests verify basic functionality.
-  * Full integration testing requires IntelliJ platform test fixtures.
+  * These tests verify basic functionality. Full integration testing requires IntelliJ platform test
+  * fixtures.
   */
 class RiddlEditorSpec extends AnyWordSpec with Matchers {
 

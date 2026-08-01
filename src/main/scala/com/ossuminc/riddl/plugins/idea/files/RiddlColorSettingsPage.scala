@@ -22,8 +22,7 @@ import javax.swing.Icon
 
 /** Color settings page for RIDDL syntax highlighting.
   *
-  * Allows users to customize RIDDL syntax colors in
-  * Settings > Editor > Color Scheme > RIDDL.
+  * Allows users to customize RIDDL syntax colors in Settings > Editor > Color Scheme > RIDDL.
   */
 class RiddlColorSettingsPage extends ColorSettingsPage {
 

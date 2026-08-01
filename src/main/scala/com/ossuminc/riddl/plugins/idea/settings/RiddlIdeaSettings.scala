@@ -25,8 +25,7 @@ import scala.collection.mutable.*
   )
 )
 
-class RiddlIdeaSettings
-  extends PersistentStateComponent[RiddlIdeaSettings.States] {
+class RiddlIdeaSettings extends PersistentStateComponent[RiddlIdeaSettings.States] {
   private val states = new RiddlIdeaSettings.States()
 
   // MCP Settings (application-level)
@@ -77,12 +76,11 @@ object RiddlIdeaSettings {
 
     def newState(): Int = {
       val newWindowNum: Int = {
-        if length == 0 then
-          1
+        if length == 0 then 1
         else
           (1 to length + 1)
-          .find(num => !states.keys.iterator.toSeq.contains(num))
-          .getOrElse(length + 1)
+            .find(num => !states.keys.iterator.toSeq.contains(num))
+            .getOrElse(length + 1)
         end if
       }
 
@@ -176,11 +174,12 @@ object RiddlIdeaSettings {
     def getFromOptionsSeq: scala.collection.mutable.Seq[String] = fromOptionsSeq
 
     def saveLineHighlighterForFile(
-        filePath: String,
-        highlighter: RangeHighlighter
+      filePath: String,
+      highlighter: RangeHighlighter
     ): Unit =
       lineHighlightersPerFile.addOne(
-        filePath, mutable.Seq(HighlighterInfo.fromRangeHighlighter(highlighter))
+        filePath,
+        mutable.Seq(HighlighterInfo.fromRangeHighlighter(highlighter))
       )
     def clearLineHighlightersForFile(filePath: String): Unit =
       lineHighlightersPerFile -= filePath
@@ -189,7 +188,8 @@ object RiddlIdeaSettings {
       highlighter: RangeHighlighter
     ): Unit =
       squigglyHighlightersPerFile.addOne(
-        filePath, mutable.Seq(HighlighterInfo.fromRangeHighlighter(highlighter))
+        filePath,
+        mutable.Seq(HighlighterInfo.fromRangeHighlighter(highlighter))
       )
     def clearSquigglyHighlightersForFile(filePath: String): Unit =
       squigglyHighlightersPerFile -= filePath
@@ -203,7 +203,6 @@ object RiddlIdeaSettings {
   def allCommands: mutable.Seq[String] = commands
 
   def getInstance(): RiddlIdeaSettings =
-    com.intellij.openapi.application.ApplicationManager
-      .getApplication
+    com.intellij.openapi.application.ApplicationManager.getApplication
       .getService(classOf[RiddlIdeaSettings])
 }

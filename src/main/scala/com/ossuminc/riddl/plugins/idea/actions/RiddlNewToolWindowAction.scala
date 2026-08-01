@@ -7,11 +7,7 @@
 package com.ossuminc.riddl.plugins.idea.actions
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.{
-  ActionUpdateThread,
-  AnAction,
-  AnActionEvent
-}
+import com.intellij.openapi.actionSystem.{ActionUpdateThread, AnAction, AnActionEvent}
 import com.intellij.openapi.project.DumbAware
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.createNewToolWindow
 import org.jetbrains.annotations.NotNull

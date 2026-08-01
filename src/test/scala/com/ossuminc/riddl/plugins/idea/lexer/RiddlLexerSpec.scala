@@ -11,8 +11,8 @@ import org.scalatest.wordspec.AnyWordSpec
 
 /** Tests for the RIDDL lexer adapter.
   *
-  * These tests verify that the RiddlLexerAdapter correctly wraps RIDDL's
-  * tokenization and produces the expected IntelliJ token types.
+  * These tests verify that the RiddlLexerAdapter correctly wraps RIDDL's tokenization and produces
+  * the expected IntelliJ token types.
   */
 class RiddlLexerSpec extends AnyWordSpec with Matchers {
 
@@ -142,7 +142,7 @@ class RiddlLexerSpec extends AnyWordSpec with Matchers {
 
   /** Helper method to collect all tokens from a lexer. */
   private def collectTokens(
-      lexer: RiddlLexerAdapter
+    lexer: RiddlLexerAdapter
   ): List[(com.intellij.psi.tree.IElementType, String)] =
     val tokens = scala.collection.mutable.ListBuffer
       .empty[(com.intellij.psi.tree.IElementType, String)]

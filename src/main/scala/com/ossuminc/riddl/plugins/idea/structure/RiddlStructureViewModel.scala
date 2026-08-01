@@ -6,7 +6,11 @@
 
 package com.ossuminc.riddl.plugins.idea.structure
 
-import com.intellij.ide.structureView.{StructureViewModel, StructureViewModelBase, StructureViewTreeElement}
+import com.intellij.ide.structureView.{
+  StructureViewModel,
+  StructureViewModelBase,
+  StructureViewTreeElement
+}
 import com.intellij.ide.util.treeView.smartTree.Sorter
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile

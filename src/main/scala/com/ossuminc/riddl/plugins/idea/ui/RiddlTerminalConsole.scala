@@ -21,8 +21,8 @@ import com.ossuminc.riddl.plugins.idea.utils.selectedEditor
 import java.nio.file.Path
 
 class RiddlTerminalConsole(
-    numWindow: Int,
-    project: Project
+  numWindow: Int,
+  project: Project
 ) extends ConsoleViewImpl(project, true) {
   def printMessages(): Unit = {
     val state = getRiddlIdeaState(numWindow)
@@ -43,8 +43,8 @@ class RiddlTerminalConsole(
   }
 
   private def linkToEditor(
-      confFolder: String,
-      msg: Message
+    confFolder: String,
+    msg: Message
   ): Unit = {
     val filePath = confFolder + "/" + msg.loc.source.origin
     val file: VirtualFile = LocalFileSystem.getInstance.findFileByPath(
@@ -53,8 +53,8 @@ class RiddlTerminalConsole(
 
     val hyperlinkInfo = new HyperlinkInfoBase {
       override def navigate(
-          project: Project,
-          relativePoint: RelativePoint
+        project: Project,
+        relativePoint: RelativePoint
       ): Unit = {
         val editor: Editor =
           if filePath == selectedEditor.getVirtualFile.getPath

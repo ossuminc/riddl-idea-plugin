@@ -25,26 +25,26 @@ class RiddlSyntaxHighlighter extends SyntaxHighlighterBase {
     import RiddlTokenTypes.*
 
     tokenType match {
-      case KEYWORD      => Array(RiddlColors.KEYWORD)
-      case IDENTIFIER   => Array(RiddlColors.IDENTIFIER)
-      case READABILITY  => Array(RiddlColors.READABILITY)
-      case PUNCTUATION  => Array(RiddlColors.PUNCTUATION)
-      case PREDEFINED   => Array(RiddlColors.PREDEFINED)
-      case COMMENT      => Array(RiddlColors.COMMENT)
+      case KEYWORD       => Array(RiddlColors.KEYWORD)
+      case IDENTIFIER    => Array(RiddlColors.IDENTIFIER)
+      case READABILITY   => Array(RiddlColors.READABILITY)
+      case PUNCTUATION   => Array(RiddlColors.PUNCTUATION)
+      case PREDEFINED    => Array(RiddlColors.PREDEFINED)
+      case COMMENT       => Array(RiddlColors.COMMENT)
       case QUOTED_STRING => Array(RiddlColors.STRING)
       case MARKDOWN_LINE => Array(RiddlColors.MARKDOWN)
-      case LITERAL_CODE => Array(RiddlColors.LITERAL_CODE)
-      case NUMERIC      => Array(RiddlColors.NUMERIC)
-      case OTHER        => Array(RiddlColors.OTHER)
-      case _            => Array.empty
+      case LITERAL_CODE  => Array(RiddlColors.LITERAL_CODE)
+      case NUMERIC       => Array(RiddlColors.NUMERIC)
+      case OTHER         => Array(RiddlColors.OTHER)
+      case _             => Array.empty
     }
   }
 }
 
 /** Color attribute keys for RIDDL syntax highlighting.
   *
-  * These keys define the actual colors used, with fallback to standard IDE colors.
-  * Users can customize these in Settings > Editor > Color Scheme > RIDDL.
+  * These keys define the actual colors used, with fallback to standard IDE colors. Users can
+  * customize these in Settings > Editor > Color Scheme > RIDDL.
   */
 object RiddlColors {
   import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey
@@ -74,7 +74,10 @@ object RiddlColors {
     createTextAttributesKey("RIDDL_MARKDOWN", DefaultLanguageHighlighterColors.DOC_COMMENT)
 
   val LITERAL_CODE: TextAttributesKey =
-    createTextAttributesKey("RIDDL_LITERAL_CODE", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
+    createTextAttributesKey(
+      "RIDDL_LITERAL_CODE",
+      DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR
+    )
 
   val NUMERIC: TextAttributesKey =
     createTextAttributesKey("RIDDL_NUMERIC", DefaultLanguageHighlighterColors.NUMBER)

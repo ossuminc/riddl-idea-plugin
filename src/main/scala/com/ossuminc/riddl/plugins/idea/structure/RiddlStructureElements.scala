@@ -19,11 +19,11 @@ import scala.collection.mutable.ArrayBuffer
 
 /** Represents a RIDDL definition in the structure view. */
 case class RiddlDefinition(
-    kind: String,
-    name: String,
-    offset: Int,
-    endOffset: Int,
-    children: Seq[RiddlDefinition] = Seq.empty
+  kind: String,
+  name: String,
+  offset: Int,
+  endOffset: Int,
+  children: Seq[RiddlDefinition] = Seq.empty
 )
 
 /** Root structure element for a RIDDL file. */
@@ -96,16 +96,15 @@ class RiddlDefinitionElement(definition: RiddlDefinition, psiFile: PsiFile)
 
 /** Parser for extracting RIDDL definitions from source text.
   *
-  * Tries RiddlLib.getTree() first for AST-accurate structure with full
-  * hierarchy. Falls back to regex-based parsing for fragment files that
-  * can't parse as a complete Root document.
+  * Tries RiddlLib.getTree() first for AST-accurate structure with full hierarchy. Falls back to
+  * regex-based parsing for fragment files that can't parse as a complete Root document.
   */
 object RiddlStructureParser {
 
   /** Parse definitions from RIDDL source text.
     *
-    * Uses RiddlLib.getTree() for accurate, recursive structure when the
-    * text is a valid Root document. Falls back to regex for fragments.
+    * Uses RiddlLib.getTree() for accurate, recursive structure when the text is a valid Root
+    * document. Falls back to regex for fragments.
     */
   def parseDefinitions(text: String): Seq[RiddlDefinition] = {
     pc.withLogger(NullLogger()) { _ =>
@@ -201,8 +200,8 @@ object RiddlStructureParser {
 
   /** Build a hierarchical structure based on brace nesting levels. */
   private def buildHierarchy(
-      text: String,
-      definitions: Seq[(String, String, Int, Int)]
+    text: String,
+    definitions: Seq[(String, String, Int, Int)]
   ): Seq[RiddlDefinition] = {
     if definitions.isEmpty then return Seq.empty
 

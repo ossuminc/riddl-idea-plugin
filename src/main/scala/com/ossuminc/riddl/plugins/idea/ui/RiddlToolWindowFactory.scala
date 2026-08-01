@@ -11,7 +11,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.{ToolWindow, ToolWindowFactory}
 import com.intellij.ui.components.JBPanel
-import com.ossuminc.riddl.plugins.idea.actions.{RiddlActionGroup, RiddlNewToolWindowAction, RiddlToolWindowCompileAction, RiddlToolWindowSettingsOpenAction}
+import com.ossuminc.riddl.plugins.idea.actions.{
+  RiddlActionGroup,
+  RiddlNewToolWindowAction,
+  RiddlToolWindowCompileAction,
+  RiddlToolWindowSettingsOpenAction
+}
 import com.ossuminc.riddl.plugins.idea.utils.ToolWindowUtils.*
 import com.ossuminc.riddl.plugins.idea.utils.*
 import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.*
@@ -22,8 +27,8 @@ import java.awt.{GridBagConstraints, GridBagLayout}
 
 class RiddlToolWindowFactory extends ToolWindowFactory {
   override def createToolWindowContent(
-      project: Project,
-      toolWindow: ToolWindow
+    project: Project,
+    toolWindow: ToolWindow
   ): Unit =
     toolWindow.createAndAddContentToTW(
       project,
@@ -33,9 +38,9 @@ class RiddlToolWindowFactory extends ToolWindowFactory {
 }
 
 class RiddlToolWindowContent(
-    toolWindow: ToolWindow,
-    project: Project,
-    numWindow: Int
+  toolWindow: ToolWindow,
+  project: Project,
+  numWindow: Int
 ) {
   private val sideBar: SimpleToolWindowPanel =
     new SimpleToolWindowPanel(false, false)

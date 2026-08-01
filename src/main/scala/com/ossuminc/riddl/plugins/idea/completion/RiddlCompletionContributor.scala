@@ -18,9 +18,9 @@ import javax.swing.Icon
 /** Completion contributor for RIDDL language.
   *
   * Provides code completion for:
-  * - RIDDL keywords (domain, context, entity, etc.)
-  * - Predefined types (String, Integer, Boolean, etc.)
-  * - Readability words (is, of, for, etc.)
+  *   - RIDDL keywords (domain, context, entity, etc.)
+  *   - Predefined types (String, Integer, Boolean, etc.)
+  *   - Readability words (is, of, for, etc.)
   */
 class RiddlCompletionContributor extends CompletionContributor {
 
@@ -36,9 +36,9 @@ class RiddlCompletionContributor extends CompletionContributor {
 class RiddlKeywordCompletionProvider extends CompletionProvider[CompletionParameters] {
 
   override def addCompletions(
-      parameters: CompletionParameters,
-      context: ProcessingContext,
-      result: CompletionResultSet
+    parameters: CompletionParameters,
+    context: ProcessingContext,
+    result: CompletionResultSet
   ): Unit = {
     val position = parameters.getPosition
     val text = parameters.getOriginalFile.getText
@@ -101,8 +101,8 @@ class RiddlKeywordCompletionProvider extends CompletionProvider[CompletionParame
       CompletionContext.InHandler
     else if before.contains("entity") && before.lastIndexOf("entity") > before.lastIndexOf("}") then
       CompletionContext.InEntity
-    else if before.contains("context") && before.lastIndexOf("context") > before.lastIndexOf("}") then
-      CompletionContext.InContext
+    else if before.contains("context") && before.lastIndexOf("context") > before.lastIndexOf("}")
+    then CompletionContext.InContext
     else if before.contains("domain") && before.lastIndexOf("domain") > before.lastIndexOf("}") then
       CompletionContext.InDomain
     else CompletionContext.TopLevel

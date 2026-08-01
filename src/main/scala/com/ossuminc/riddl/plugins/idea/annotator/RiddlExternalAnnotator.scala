@@ -10,20 +10,31 @@ import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, Highli
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import com.ossuminc.riddl.language.Messages.{Message, Error, Warning, Info, SevereError, MissingWarning, StyleWarning, UsageWarning, Tip, CompletenessWarning, Deprecation}
+import com.ossuminc.riddl.language.Messages.{
+  Message,
+  Error,
+  Warning,
+  Info,
+  SevereError,
+  MissingWarning,
+  StyleWarning,
+  UsageWarning,
+  Tip,
+  CompletenessWarning,
+  Deprecation
+}
 import com.ossuminc.riddl.{RiddlLib, RiddlResult}
 import com.ossuminc.riddl.utils.{NullLogger, pc}
 
 /** External annotator for RIDDL files.
   *
-  * This annotator runs asynchronously in the background to validate RIDDL
-  * syntax and semantics, then applies error/warning annotations to the editor.
+  * This annotator runs asynchronously in the background to validate RIDDL syntax and semantics,
+  * then applies error/warning annotations to the editor.
   *
-  * The ExternalAnnotator pattern is preferred for potentially slow operations
-  * like parsing, as it doesn't block the UI thread.
+  * The ExternalAnnotator pattern is preferred for potentially slow operations like parsing, as it
+  * doesn't block the UI thread.
   */
-class RiddlExternalAnnotator
-    extends ExternalAnnotator[RiddlAnnotationInfo, RiddlAnnotationResult] {
+class RiddlExternalAnnotator extends ExternalAnnotator[RiddlAnnotationInfo, RiddlAnnotationResult] {
 
   /** Collect information needed for annotation (runs on UI thread, should be fast). */
   override def collectInformation(file: PsiFile): RiddlAnnotationInfo =
@@ -31,24 +42,24 @@ class RiddlExternalAnnotator
 
   /** Collect additional information from editor (optional). */
   override def collectInformation(
-      file: PsiFile,
-      editor: Editor,
-      hasErrors: Boolean
+    file: PsiFile,
+    editor: Editor,
+    hasErrors: Boolean
   ): RiddlAnnotationInfo = collectInformation(file)
 
   /** Perform the actual annotation work (runs on background thread).
     *
-    * Uses RiddlLib.validateString() for full semantic validation (parse +
-    * resolution + validation passes). If the document fails to parse as a
-    * complete Root (e.g. it's an include fragment), falls back to
-    * RiddlLib.parseNebula() which tolerates partial definitions.
+    * Uses RiddlLib.validateString() for full semantic validation (parse + resolution + validation
+    * passes). If the document fails to parse as a complete Root (e.g. it's an include fragment),
+    * falls back to RiddlLib.parseNebula() which tolerates partial definitions.
     */
   override def doAnnotate(info: RiddlAnnotationInfo): RiddlAnnotationResult =
     if info.text.isEmpty then RiddlAnnotationResult(Seq.empty)
     else
       pc.withLogger(NullLogger()) { _ =>
         val vr = RiddlLib.validateString(
-          info.text, info.filePath
+          info.text,
+          info.filePath
         )(using pc)
         if vr.parseErrors.isEmpty then
           // Full validation succeeded — return all messages
@@ -56,7 +67,8 @@ class RiddlExternalAnnotator
         else
           // Parse as Root failed — try fragment parsing via nebula
           RiddlLib.parseNebula(
-            info.text, info.filePath
+            info.text,
+            info.filePath
           )(using pc) match
             case RiddlResult.Success(_) =>
               RiddlAnnotationResult(Seq.empty)
@@ -66,9 +78,9 @@ class RiddlExternalAnnotator
 
   /** Apply the annotations to the editor (runs on UI thread). */
   override def apply(
-      file: PsiFile,
-      result: RiddlAnnotationResult,
-      holder: AnnotationHolder
+    file: PsiFile,
+    result: RiddlAnnotationResult,
+    holder: AnnotationHolder
   ): Unit =
     result.messages.foreach { msg =>
       val severity = mapSeverity(msg)
@@ -83,14 +95,14 @@ class RiddlExternalAnnotator
 
   /** Map RIDDL message severity to IntelliJ highlight severity.
     *
-    * Package-private rather than private so RiddlExternalAnnotatorSpec can
-    * pin the mapping; it is not part of the annotator's public surface.
+    * Package-private rather than private so RiddlExternalAnnotatorSpec can pin the mapping; it is
+    * not part of the annotator's public surface.
     */
   private[annotator] def mapSeverity(msg: Message): HighlightSeverity =
     msg.kind match
-      case SevereError         => HighlightSeverity.ERROR
-      case Error               => HighlightSeverity.ERROR
-      case Warning             => HighlightSeverity.WARNING
+      case SevereError => HighlightSeverity.ERROR
+      case Error       => HighlightSeverity.ERROR
+      case Warning     => HighlightSeverity.WARNING
       // CompletenessWarning is riddl's isActionable threshold, so it earns a
       // full WARNING rather than the weak treatment given the advisory kinds.
       case CompletenessWarning => HighlightSeverity.WARNING

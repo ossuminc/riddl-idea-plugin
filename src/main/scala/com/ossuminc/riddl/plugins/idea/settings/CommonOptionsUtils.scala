@@ -37,8 +37,7 @@ object CommonOptionsUtils {
     def getShowWarnings: Boolean = commonOptions.showWarnings
 
     def setShowMissingWarnings(showMissingWarnings: Boolean): CommonOptions = {
-      commonOptions =
-        commonOptions.copy(showMissingWarnings = showMissingWarnings)
+      commonOptions = commonOptions.copy(showMissingWarnings = showMissingWarnings)
       commonOptions
     }
     def getShowMissingWarnings: Boolean = commonOptions.showMissingWarnings
@@ -80,18 +79,16 @@ object CommonOptionsUtils {
     def getDebug: Boolean = commonOptions.debug
 
     def setSortMessagesByLocation(
-        sortMessagesByLocation: Boolean
+      sortMessagesByLocation: Boolean
     ): CommonOptions = {
-      commonOptions =
-        commonOptions.copy(sortMessagesByLocation = sortMessagesByLocation)
+      commonOptions = commonOptions.copy(sortMessagesByLocation = sortMessagesByLocation)
       commonOptions
     }
     def getSortMessagesByLocation: Boolean =
       commonOptions.sortMessagesByLocation
 
     def setMaxParallelParsing(maxParallelParsing: Int): CommonOptions = {
-      commonOptions =
-        commonOptions.copy(maxParallelParsing = maxParallelParsing)
+      commonOptions = commonOptions.copy(maxParallelParsing = maxParallelParsing)
       commonOptions
     }
     def getMaxParallelParsing: Int = commonOptions.maxParallelParsing
@@ -110,9 +107,9 @@ object CommonOptionsUtils {
   }
 
   case class CommonOption[T](
-      name: String,
-      getCommonOptionValue: CommonOptions => ? <: T,
-      setCommonOptionValue: CommonOptions => ? <: T => CommonOptions
+    name: String,
+    getCommonOptionValue: CommonOptions => ? <: T,
+    setCommonOptionValue: CommonOptions => ? <: T => CommonOptions
   )
 
   val BooleanCommonOptions: Seq[Option[CommonOption[Boolean]]] = Seq(

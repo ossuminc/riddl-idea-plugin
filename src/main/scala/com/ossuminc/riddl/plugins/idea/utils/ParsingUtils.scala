@@ -10,12 +10,7 @@ import com.ossuminc.riddl.commands.Commands
 import com.ossuminc.riddl.language.parsing.{RiddlParserInput, TopLevelParser}
 import com.ossuminc.riddl.passes.PassesResult
 import com.ossuminc.riddl.plugins.idea.settings.RiddlIdeaSettings
-import com.ossuminc.riddl.utils.{
-  JVMPlatformContext,
-  Logger,
-  Logging,
-  PlatformContext
-}
+import com.ossuminc.riddl.utils.{JVMPlatformContext, Logger, Logging, PlatformContext}
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
@@ -25,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 
 case class RiddlIdeaPluginLogger(
-    numWindow: Int
+  numWindow: Int
 )(using io: PlatformContext)
     extends Logger(using io: PlatformContext) {
   import com.ossuminc.riddl.plugins.idea.utils.ManagerBasedGetterUtils.getRiddlIdeaState
@@ -47,7 +42,7 @@ object ParsingUtils {
   import ManagerBasedGetterUtils.*
 
   def runCommandForConsole(
-      numWindow: Int
+    numWindow: Int
   ): Unit = {
     given io: PlatformContext = RiddlPluginPlatformContext(numWindow)
 
@@ -90,8 +85,8 @@ object ParsingUtils {
   }
 
   def runCommandForEditor(
-      numWindow: Int,
-      editorTextWithFilePathOpt: Option[(String, String)] = None
+    numWindow: Int,
+    editorTextWithFilePathOpt: Option[(String, String)] = None
   ): Unit = {
     val state = getRiddlIdeaState(numWindow)
 

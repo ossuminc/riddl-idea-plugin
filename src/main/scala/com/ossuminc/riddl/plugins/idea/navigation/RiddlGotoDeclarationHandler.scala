@@ -23,9 +23,9 @@ import scala.util.matching.Regex
 class RiddlGotoDeclarationHandler extends GotoDeclarationHandler {
 
   override def getGotoDeclarationTargets(
-      sourceElement: PsiElement,
-      offset: Int,
-      editor: Editor
+    sourceElement: PsiElement,
+    offset: Int,
+    editor: Editor
   ): Array[PsiElement] = {
     if sourceElement == null then return null
 
@@ -76,8 +76,8 @@ class RiddlGotoDeclarationHandler extends GotoDeclarationHandler {
 
   /** Find all definitions of the given identifier.
     *
-    * Tries RiddlLib.getOutline() first for AST-accurate results.
-    * Falls back to regex for fragment files that can't parse as Root.
+    * Tries RiddlLib.getOutline() first for AST-accurate results. Falls back to regex for fragment
+    * files that can't parse as Root.
     */
   private def findDefinitions(text: String, identifier: String): Seq[(Int, String)] = {
     pc.withLogger(NullLogger()) { _ =>

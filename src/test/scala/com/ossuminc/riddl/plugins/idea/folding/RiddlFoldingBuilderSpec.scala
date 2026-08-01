@@ -11,8 +11,8 @@ import org.scalatest.wordspec.AnyWordSpec
 
 /** Tests for the RIDDL folding builder.
   *
-  * These tests verify fold region detection patterns.
-  * Full integration testing requires IntelliJ platform test fixtures.
+  * These tests verify fold region detection patterns. Full integration testing requires IntelliJ
+  * platform test fixtures.
   */
 class RiddlFoldingBuilderSpec extends AnyWordSpec with Matchers {
 

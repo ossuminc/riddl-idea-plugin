@@ -44,7 +44,7 @@ understand RIDDL models with AI assistance via riddl-mcp-server.
 
 ```bash
 sbt compile            # Compile the plugin
-sbt test               # Run tests (162 tests, 11 suites)
+sbt test               # Run tests (174 tests, 11 suites)
 sbt packageArtifactZip # Package ZIP for local install
 sbt runIDE             # Launch sandboxed IntelliJ with plugin
 sbt publishPlugin      # Publish to IntelliJ Marketplace
@@ -249,7 +249,7 @@ From `com.ossuminc.riddl.language.AST.Token`:
 
 ### Testing Strategy
 
-- **162 tests** across 11 suites, all passing
+- **174 tests** across 11 suites, all passing
 - Unit tests cover lexer, completion, navigation, structure,
   folding, annotation, brace matching, MCP data classes,
   performance

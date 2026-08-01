@@ -18,7 +18,7 @@ to the task file and note completion in this notebook.
 **RIDDL**: 2.0.0-rc.7 | **Scala**: 3.9.0-RC4 | **sbt-ossuminc**: 1.4.0
 **sbt**: 1.12.3 | **sbt-idea-plugin**: 6.0.0-RC3
 **IntelliJ Platform**: 253.29346.240 (2025.3)
-**Tests**: 162 passing across 11 suites
+**Tests**: 174 passing across 11 suites
 
 All core features implemented. Plugin is functional and ready
 for beta testing. RiddlLib integration complete (2026-02-11).
@@ -105,24 +105,49 @@ This matters because the entire build depends on that plugin for
 
 ---
 
-## Open Decision: IdeaCommunity -> Idea
+## Resolved: now targeting ideaIU (2026-08-01)
 
 `IntelliJPlatform.IdeaCommunity` is deprecated in sbt-idea-plugin
-6.x, but the replacement is **not a rename**:
+6.x, and the replacement is **not a rename**:
 
 | Setting | SDK artifact | platformPrefix |
 |---------|--------------|----------------|
 | `IdeaCommunity` (deprecated) | `ideaIC` | `Idea` |
-| `Idea` (replacement) | `ideaIU` | (empty) |
+| `Idea` (adopted) | `ideaIU` | (empty) |
 
-Switching targets IntelliJ **Ultimate** instead of Community, which
-means a fresh multi-GB SDK download, `runIDE` launching Ultimate,
-and the risk of compiling against Ultimate-only APIs unnoticed.
+We now use `Idea`, following JetBrains' unified distribution.
+Consequences to keep in mind:
 
-Not urgent: `ideaIC` is still published for 253.x and for builds
-newer than the pinned 253.29346.240. The build stays on
-`IdeaCommunity` and emits one deprecation warning, which is not
-fatal (the sbt 1.x metabuild does not use `-Werror`).
+- The SDK lives in `~/.RIDDL4IDEAPluginIU`, not `...IC`. The old IC
+  tree is still on disk and can be deleted to reclaim ~5 GB.
+- `runIDE` launches **Ultimate**.
+- Building against IU no longer fails on Ultimate-only APIs the way
+  IC did. Nothing enforces that the plugin stays Community-safe, so
+  new platform API use needs a manual check.
+
+---
+
+## Trap: stale `target/` can silently fake a green build
+
+Hit on 2026-08-01 and worth recognising again. Symptom: tests fail
+with `NoSuchMethodError` on a riddl class, or -- worse -- PASS while
+exercising the wrong riddl version.
+
+`target/streams` and `target/sbtidea.cache` persist a resolved
+classpath. After a dependency bump they can keep serving the old one
+to **Test** scope while **Compile** correctly uses the new one. In
+this case Test resolved riddl 1.13.3 -- a version never declared in
+`Dependencies.scala` at all, left over from a transient edit in an
+earlier session -- alongside 2.0.0-rc.7, with 1.13.3 winning for
+`Messages` classes.
+
+It also inflated the packaged artifact: `packageArtifactZip` bundled
+duplicate riddl jars, 41 files / 35 MB instead of 27 files / 20 MB.
+
+**Diagnosis**: compare `export Compile/fullClasspath` with
+`export Test/fullClasspath` and look for two versions of the same
+jar. **Fix**: `rm -rf target`. Deleting `target/sbtidea.cache` alone
+is not enough.
 
 ---
 

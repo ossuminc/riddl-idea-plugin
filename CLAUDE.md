@@ -66,12 +66,18 @@ After packaging with `sbt packageArtifactZip`:
 
 | Component | Technology | Version |
 |-----------|------------|---------|
-| Language | Scala 3 (JVM only) | 3.7.4 |
-| Build | sbt + sbt-ossuminc | 1.3.2 |
+| Language | Scala 3 (JVM only) | 3.9.0-RC4 |
+| Build | sbt | 1.12.3 |
+| Build | sbt-ossuminc | 1.4.0 |
+| Build | sbt-idea-plugin | 6.0.0-RC3 |
 | IDE SDK | IntelliJ Platform | 253.29346.240 |
-| RIDDL | riddl-commands + riddl-lib | 1.8.0 |
+| RIDDL | riddl-commands + riddl-lib | 2.0.0-rc.7 |
 | Kotlin | stdlib (IntelliJ interop) | 2.0.20 |
 | Tests | ScalaTest | 3.2.19 |
+
+**The build cannot move to sbt 2.0** — `sbt-idea-plugin` has no sbt 2
+artifact, and sbt-ossuminc 3.x is sbt 2 only. See NOTEBOOK.md
+"Blocker: sbt 2.0 / sbt-ossuminc 3.x".
 
 ## Project Structure
 
@@ -146,10 +152,15 @@ The plugin uses two RIDDL libraries: `riddl-language` for
 tokenization and `riddl-lib` for high-level validation, structure,
 and navigation.
 
-### RiddlLib (riddl-lib 1.8.0) — High-Level API
+### RiddlLib (riddl-lib 2.0.0-rc.7) — High-Level API
+
+As of riddl 2.0 these return a `RiddlResult` ADT rather than
+`Either[Messages, T]`. Match on `RiddlResult.Success(value)` and
+`RiddlResult.Failure`, whose `errors` replaces the old `Left`
+payload.
 
 ```scala
-import com.ossuminc.riddl.RiddlLib
+import com.ossuminc.riddl.{RiddlLib, RiddlResult}
 import com.ossuminc.riddl.utils.{NullLogger, pc}
 
 // Full semantic validation (parse + resolution + validation)
@@ -161,18 +172,26 @@ pc.withLogger(NullLogger()) { _ =>
 
 // Fragment parsing (tolerates partial definitions)
 RiddlLib.parseNebula(source, origin)(using pc)
-// Returns Either[Messages, Nebula]
+// Returns RiddlResult[Nebula]
 
 // Recursive definition tree for structure view
 RiddlLib.getTree(source, origin)(using pc)
-// Returns Either[Messages, Seq[TreeNode]]
+// Returns RiddlResult[Seq[TreeNode]]
 // TreeNode(kind, id, line, col, offset, children)
 
 // Flat outline for navigation
 RiddlLib.getOutline(source, origin)(using pc)
-// Returns Either[Messages, Seq[OutlineEntry]]
+// Returns RiddlResult[Seq[OutlineEntry]]
 // OutlineEntry(kind, id, depth, line, col, offset)
 ```
+
+Note that `TopLevelParser.parseNebula` (riddl-language) still
+returns `Either` — only the `RiddlLib` facade changed.
+
+`RiddlParserInput.fromPath` is deprecated in 2.0; use
+`fromPathSafe`, which returns
+`Future[Either[Messages, RiddlParserInput]]` and reports load
+failures as messages instead of throwing.
 
 **Fallback pattern**: All features that use RiddlLib try the
 AST-based API first. If parsing fails (e.g., include-fragment
@@ -287,9 +306,9 @@ RIDDL is a reactive system design language with:
 ## Version Compatibility
 
 - **IntelliJ IDEA**: 2025.3+ (build 253+)
-- **RIDDL**: 1.8.0
+- **RIDDL**: 2.0.0-rc.7
 - **JDK**: 21+ (Temurin recommended)
-- **Scala**: 3.7.4
+- **Scala**: 3.9.0-RC4
 
 ## Debugging Tips
 

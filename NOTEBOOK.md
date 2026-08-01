@@ -15,7 +15,8 @@ to the task file and note completion in this notebook.
 
 **Version**: 0.9.0-beta (released 2026-01-21)
 **Branch**: `main`
-**RIDDL**: 1.8.0 | **Scala**: 3.7.4 | **sbt-ossuminc**: 1.3.2
+**RIDDL**: 2.0.0-rc.7 | **Scala**: 3.9.0-RC4 | **sbt-ossuminc**: 1.4.0
+**sbt**: 1.12.3 | **sbt-idea-plugin**: 6.0.0-RC3
 **IntelliJ Platform**: 253.29346.240 (2025.3)
 **Tests**: 162 passing across 11 suites
 
@@ -56,8 +57,72 @@ included in the next version bump.
      MissingWarning for minimal models; tests now check for
      no Error-level messages rather than empty messages
 
+4. **Dependency Upgrades for RIDDL 2.0** (2026-08-01)
+   - RIDDL: 1.13.1 -> 2.0.0-rc.7
+   - Scala: 3.7.4 -> 3.9.0-RC4
+   - sbt-ossuminc: 1.3.5 -> 1.4.0
+   - sbt-idea-plugin: 5.1.0 -> 6.0.0-RC3 (overridden in
+     `project/plugins.sbt`; sbt-ossuminc 1.4.0 re-exports 5.1.0)
+   - Source changes forced by the upgrades:
+     - `RiddlLib` returns a `RiddlResult` ADT instead of
+       `Either[Messages, T]` (annotator, navigation, structure)
+     - Scala 3.9 rejects type ascriptions after tuple patterns
+       (`utils.scala`)
+     - New `KindOfMessage` cases -- `Tip`, `Deprecation`,
+       `CompletenessWarning` -- made the annotator's severity
+       mapping non-exhaustive
+     - `RiddlParserInput.fromPath` deprecated for `fromPathSafe`,
+       which reports load failures as `Messages` instead of
+       throwing (`ParsingUtils.scala`)
+
 **Recommended version**: 0.10.0 (new features, no breaking
 changes to user-facing behavior).
+
+---
+
+## Blocker: sbt 2.0 / sbt-ossuminc 3.x
+
+**This project cannot move to sbt 2.0 yet.** Verified 2026-08-01.
+
+`sbt-idea-plugin` publishes only for sbt 1.x -- the sole coordinate
+on Maven Central is `org.jetbrains.scala:sbt-idea-plugin_2.12_1.0`.
+There is no `_sbt2_3` variant, and 6.0.0-RC3 (released 2026-07-31)
+is still sbt 1.x only. sbt-ossuminc's own `build.sbt` lists this
+plugin under "Blocked: no sbt 2.0 artifact yet" and names this repo
+as the affected consumer.
+
+Because sbt-ossuminc 3.x publishes as `sbt-ossuminc_sbt2_3` (sbt 2
+only), the two requirements are mutually exclusive. The build must
+stay on sbt 1.12.3 + sbt-ossuminc 1.4.0 until JetBrains ships an
+sbt 2 build of sbt-idea-plugin.
+
+This matters because the entire build depends on that plugin for
+`intellijBuild`, `intellijPlatform`, `intellijPlugins`, `runIDE`,
+`packageArtifactZip`, `publishPlugin` and IntelliJ SDK resolution.
+
+**Recheck** by looking for an `_sbt2_3` artifact at
+`https://repo1.maven.org/maven2/org/jetbrains/scala/`.
+
+---
+
+## Open Decision: IdeaCommunity -> Idea
+
+`IntelliJPlatform.IdeaCommunity` is deprecated in sbt-idea-plugin
+6.x, but the replacement is **not a rename**:
+
+| Setting | SDK artifact | platformPrefix |
+|---------|--------------|----------------|
+| `IdeaCommunity` (deprecated) | `ideaIC` | `Idea` |
+| `Idea` (replacement) | `ideaIU` | (empty) |
+
+Switching targets IntelliJ **Ultimate** instead of Community, which
+means a fresh multi-GB SDK download, `runIDE` launching Ultimate,
+and the risk of compiling against Ultimate-only APIs unnoticed.
+
+Not urgent: `ideaIC` is still published for 253.x and for builds
+newer than the pinned 253.29346.240. The build stays on
+`IdeaCommunity` and emits one deprecation warning, which is not
+fatal (the sbt 1.x metabuild does not use `-Werror`).
 
 ---
 

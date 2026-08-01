@@ -10,7 +10,7 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.{PsiElement, PsiFile}
-import com.ossuminc.riddl.RiddlLib
+import com.ossuminc.riddl.{RiddlLib, RiddlResult}
 import com.ossuminc.riddl.utils.{NullLogger, pc}
 
 import scala.collection.mutable.ArrayBuffer
@@ -82,11 +82,11 @@ class RiddlGotoDeclarationHandler extends GotoDeclarationHandler {
   private def findDefinitions(text: String, identifier: String): Seq[(Int, String)] = {
     pc.withLogger(NullLogger()) { _ =>
       RiddlLib.getOutline(text, "navigation")(using pc) match
-        case Right(entries) =>
+        case RiddlResult.Success(entries) =>
           entries
             .filter(_.id == identifier)
             .map(e => (e.offset, e.kind.toLowerCase))
-        case Left(_) =>
+        case _: RiddlResult.Failure =>
           findDefinitionsRegex(text, identifier)
     }
   }

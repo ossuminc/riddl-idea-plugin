@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.ossuminc.riddl.language.Messages.{Message, Error, Warning, Info, SevereError, MissingWarning, StyleWarning, UsageWarning}
-import com.ossuminc.riddl.RiddlLib
+import com.ossuminc.riddl.{RiddlLib, RiddlResult}
 import com.ossuminc.riddl.utils.{NullLogger, pc}
 
 /** External annotator for RIDDL files.
@@ -58,10 +58,10 @@ class RiddlExternalAnnotator
           RiddlLib.parseNebula(
             info.text, info.filePath
           )(using pc) match
-            case Right(_) =>
+            case RiddlResult.Success(_) =>
               RiddlAnnotationResult(Seq.empty)
-            case Left(messages) =>
-              RiddlAnnotationResult(messages.toSeq)
+            case f: RiddlResult.Failure =>
+              RiddlAnnotationResult(f.errors.toSeq)
       }
 
   /** Apply the annotations to the editor (runs on UI thread). */

@@ -10,7 +10,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.util.treeView.smartTree.{SortableTreeElement, TreeElement}
 import com.intellij.navigation.{ItemPresentation, NavigationItem}
 import com.intellij.psi.PsiFile
-import com.ossuminc.riddl.RiddlLib
+import com.ossuminc.riddl.{RiddlLib, RiddlResult}
 import com.ossuminc.riddl.passes.TreeNode
 import com.ossuminc.riddl.utils.{NullLogger, pc}
 
@@ -110,14 +110,14 @@ object RiddlStructureParser {
   def parseDefinitions(text: String): Seq[RiddlDefinition] = {
     pc.withLogger(NullLogger()) { _ =>
       RiddlLib.getTree(text, "structure")(using pc) match
-        case Right(treeNodes) =>
+        case RiddlResult.Success(treeNodes) =>
           val mapped = treeNodes.map(node => mapTreeNode(text, node))
           // Unwrap Root nodes — structure view starts at domain level
           mapped.flatMap { defn =>
             if defn.kind == "root" then defn.children
             else Seq(defn)
           }
-        case Left(_) =>
+        case _: RiddlResult.Failure =>
           parseDefinitionsRegex(text)
     }
   }

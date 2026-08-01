@@ -98,10 +98,22 @@ object ParsingUtils {
     val rpi: RiddlParserInput = editorTextWithFilePathOpt match {
       case Some((editorText, _)) => RiddlParserInput(editorText, "")
       case None if state.getTopLevelPath.isDefined =>
+        val topLevelPath = state.getTopLevelPath.get
+        // fromPathSafe reports load failures as Messages instead of throwing,
+        // so an unreadable or missing top-level file surfaces in the tool
+        // window like any other diagnostic rather than killing the run.
         Await.result(
-          RiddlParserInput.fromPath(state.getTopLevelPath.get),
+          RiddlParserInput.fromPathSafe(topLevelPath),
           FiniteDuration(5, TimeUnit.SECONDS)
-        )
+        ) match {
+          case Right(input) => input
+          case Left(msgs) =>
+            state.setMessagesForFileForEditor(
+              topLevelPath,
+              mutable.Seq.from(msgs)
+            )
+            return
+        }
       case None => return
     }
 

@@ -10,7 +10,7 @@ import com.intellij.lang.annotation.{AnnotationHolder, ExternalAnnotator, Highli
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import com.ossuminc.riddl.language.Messages.{Message, Error, Warning, Info, SevereError, MissingWarning, StyleWarning, UsageWarning}
+import com.ossuminc.riddl.language.Messages.{Message, Error, Warning, Info, SevereError, MissingWarning, StyleWarning, UsageWarning, Tip, CompletenessWarning, Deprecation}
 import com.ossuminc.riddl.{RiddlLib, RiddlResult}
 import com.ossuminc.riddl.utils.{NullLogger, pc}
 
@@ -84,13 +84,18 @@ class RiddlExternalAnnotator
   /** Map RIDDL message severity to IntelliJ highlight severity. */
   private def mapSeverity(msg: Message): HighlightSeverity =
     msg.kind match
-      case SevereError     => HighlightSeverity.ERROR
-      case Error           => HighlightSeverity.ERROR
-      case Warning         => HighlightSeverity.WARNING
-      case MissingWarning  => HighlightSeverity.WARNING
-      case UsageWarning    => HighlightSeverity.WEAK_WARNING
-      case StyleWarning    => HighlightSeverity.WEAK_WARNING
-      case Info            => HighlightSeverity.INFORMATION
+      case SevereError         => HighlightSeverity.ERROR
+      case Error               => HighlightSeverity.ERROR
+      case Warning             => HighlightSeverity.WARNING
+      // CompletenessWarning is riddl's isActionable threshold, so it earns a
+      // full WARNING rather than the weak treatment given the advisory kinds.
+      case CompletenessWarning => HighlightSeverity.WARNING
+      case MissingWarning      => HighlightSeverity.WARNING
+      case UsageWarning        => HighlightSeverity.WEAK_WARNING
+      case Deprecation         => HighlightSeverity.WEAK_WARNING
+      case StyleWarning        => HighlightSeverity.WEAK_WARNING
+      case Info                => HighlightSeverity.INFORMATION
+      case Tip                 => HighlightSeverity.INFORMATION
 
   /** Calculate the text range for the annotation. */
   private def calculateRange(file: PsiFile, msg: Message): TextRange =

@@ -4,7 +4,7 @@ import sbt.*
 object V {
   val lang3 = "3.14.0"
   val opentest4j = "1.3.0"
-  val riddl = "1.18.0"
+  val riddl = "2.0.0-rc.7"
   val scalatest = "3.2.19"
   val scopt = "4.1.0"
   val slf4j = "2.0.4"

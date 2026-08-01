@@ -38,6 +38,10 @@ lazy val riddlIdeaPlugin: Project =
       With.basic,
       With.Scala3.configure(version = Some("3.9.0-RC4")),
       With.Scalatest(V.scalatest),
+      // Fetches and maintains .scalafmt.conf from the sbt-ossuminc repo on
+      // `update`; the file itself is gitignored. Without this, scalafmtCheck
+      // fails with "File does not exist: .scalafmt.conf".
+      With.Scalafmt,
       With.coverage(0),
       With.BuildInfo,
       With.GithubPublishing

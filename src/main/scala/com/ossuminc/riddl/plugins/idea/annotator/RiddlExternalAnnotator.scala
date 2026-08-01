@@ -81,8 +81,12 @@ class RiddlExternalAnnotator
         .create()
     }
 
-  /** Map RIDDL message severity to IntelliJ highlight severity. */
-  private def mapSeverity(msg: Message): HighlightSeverity =
+  /** Map RIDDL message severity to IntelliJ highlight severity.
+    *
+    * Package-private rather than private so RiddlExternalAnnotatorSpec can
+    * pin the mapping; it is not part of the annotator's public surface.
+    */
+  private[annotator] def mapSeverity(msg: Message): HighlightSeverity =
     msg.kind match
       case SevereError         => HighlightSeverity.ERROR
       case Error               => HighlightSeverity.ERROR

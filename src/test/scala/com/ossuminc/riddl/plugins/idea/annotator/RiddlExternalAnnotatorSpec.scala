@@ -6,7 +6,22 @@
 
 package com.ossuminc.riddl.plugins.idea.annotator
 
-import com.ossuminc.riddl.language.Messages.{Error, SevereError}
+import com.intellij.lang.annotation.HighlightSeverity
+import com.ossuminc.riddl.language.At
+import com.ossuminc.riddl.language.Messages.{
+  CompletenessWarning,
+  Deprecation,
+  Error,
+  Info,
+  KindOfMessage,
+  Message,
+  MissingWarning,
+  SevereError,
+  StyleWarning,
+  Tip,
+  UsageWarning,
+  Warning
+}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -74,11 +89,14 @@ class RiddlExternalAnnotatorSpec extends AnyWordSpec with Matchers {
 
     "handle complex valid RIDDL without errors" in {
       val annotator = new RiddlExternalAnnotator()
-      // Use a simpler but valid RIDDL structure
+      // Use a simpler but valid RIDDL structure. Avoid naming the type
+      // UserId: riddl 2.0 made UserId a predefined type, so redefining it
+      // is an Error ("redefines built-in type") and the model would no
+      // longer be the valid one this test intends to exercise.
       val text =
         """domain Example is {
           |  context UserContext is {
-          |    type UserId is String
+          |    type CustomerId is String
           |  }
           |}""".stripMargin
       val info = RiddlAnnotationInfo(text, "/test/example.riddl")
@@ -123,6 +141,57 @@ class RiddlExternalAnnotatorSpec extends AnyWordSpec with Matchers {
 
       // Fragment should parse OK via nebula fallback
       result.messages mustBe empty
+    }
+  }
+
+  "RiddlExternalAnnotator severity mapping" must {
+
+    // riddl 2.0 added Tip, Deprecation and CompletenessWarning to
+    // KindOfMessage. The compiler's exhaustivity check under -Werror is what
+    // guarantees every kind is HANDLED; these cases pin WHICH severity each
+    // one is handled AS, which is a judgement call the compiler cannot make.
+    val expected: Seq[(KindOfMessage, HighlightSeverity)] = Seq(
+      SevereError -> HighlightSeverity.ERROR,
+      Error -> HighlightSeverity.ERROR,
+      Warning -> HighlightSeverity.WARNING,
+      CompletenessWarning -> HighlightSeverity.WARNING,
+      MissingWarning -> HighlightSeverity.WARNING,
+      UsageWarning -> HighlightSeverity.WEAK_WARNING,
+      Deprecation -> HighlightSeverity.WEAK_WARNING,
+      StyleWarning -> HighlightSeverity.WEAK_WARNING,
+      Info -> HighlightSeverity.INFORMATION,
+      Tip -> HighlightSeverity.INFORMATION
+    )
+
+    expected.foreach { case (kind, severity) =>
+      s"map $kind to $severity" in {
+        val annotator = new RiddlExternalAnnotator()
+        val msg = Message(At.empty, s"a $kind message", kind)
+
+        annotator.mapSeverity(msg) mustBe severity
+      }
+    }
+
+    "treat an error as at least as severe as any warning" in {
+      val annotator = new RiddlExternalAnnotator()
+      val errorSeverity =
+        annotator.mapSeverity(Message(At.empty, "boom", Error))
+      val warningSeverity =
+        annotator.mapSeverity(Message(At.empty, "meh", Warning))
+
+      errorSeverity.compareTo(warningSeverity) must be > 0
+    }
+
+    "escalate CompletenessWarning above the advisory warning kinds" in {
+      // CompletenessWarning is riddl's isActionable threshold, so it must not
+      // be demoted to the weak treatment given Deprecation/Style/Usage.
+      val annotator = new RiddlExternalAnnotator()
+      val completeness =
+        annotator.mapSeverity(Message(At.empty, "incomplete", CompletenessWarning))
+      val deprecation =
+        annotator.mapSeverity(Message(At.empty, "old", Deprecation))
+
+      completeness.compareTo(deprecation) must be > 0
     }
   }
 

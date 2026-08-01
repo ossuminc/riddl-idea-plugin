@@ -4,6 +4,12 @@
 .idea
 .bsp
 
+# macOS Finder metadata
+.DS_Store
+
+# sbt task output captured to a file by packageArtifactZip runs
+packageArtifactZip.out
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 .scalafmt.conf

@@ -57,7 +57,10 @@ lazy val riddlIdeaPlugin: Project =
       Test / parallelExecution := false,
       ThisBuild / intellijPluginName := "RIDDL4IDEA",
       ThisBuild / intellijBuild := "253.29346.240",
-      ThisBuild / intellijPlatform := IntelliJPlatform.IdeaCommunity,
+      // IntelliJPlatform.Idea is the unified 2025.3+ distribution (ideaIU).
+      // It replaces the deprecated IdeaCommunity (ideaIC) -- a change of
+      // target SDK, not a rename. Take care not to use Ultimate-only APIs.
+      ThisBuild / intellijPlatform := IntelliJPlatform.Idea,
       ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
       intellijPlugins ++= Seq("com.intellij.properties".toPlugin),
       Global / intellijAttachSources := true,

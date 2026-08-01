@@ -156,7 +156,7 @@ package object utils {
       filePathOrEditor: Either[Editor, String],
       forConsole: Boolean = false
   ): Unit = {
-    val (filePath, editorOpt): (String, Option[Editor]) =
+    val (filePath, editorOpt) =
       filePathOrEditor match {
         case Right(fPath) =>
           (fPath, getCurrentEditorForFile(fPath))

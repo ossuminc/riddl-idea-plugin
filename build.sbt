@@ -36,7 +36,7 @@ lazy val riddlIdeaPlugin: Project =
     spdx = "Apache-2.0"
   ).configure(
       With.basic,
-      With.Scala3.configure(version = Some("3.7.4")),
+      With.Scala3.configure(version = Some("3.9.0-RC4")),
       With.Scalatest(V.scalatest),
       With.coverage(0),
       With.BuildInfo,

@@ -137,12 +137,26 @@ consent.
    before continuing:
    ```
    sbt runPluginVerifier
+   cat target/verifier/reports/*/plugins/*/<VERSION>/verification-verdict.txt
    ```
-   Internal/experimental/deprecated API usages are review material
-   for the Marketplace. They do not automatically block a release,
-   but the user should see the count and decide. Since the build
-   targets `ideaIU`, **nothing else checks that the plugin still
-   runs on IDEA Community** — this is that check.
+   The verdict line is what matters — it should start with
+   `Compatible`. `build.sbt` narrows `failureLevels` to genuine
+   blockers, so the task passing means no compatibility problems,
+   not that the report is empty. Read the counts of internal,
+   experimental, deprecated and scheduled-for-removal API usage out
+   of the verdict and report them: they are review material for the
+   Marketplace, and a rising count is a warning sign. As of 0.10.0
+   the baseline is 8 internal, 13 experimental, 8 deprecated and 12
+   scheduled-for-removal.
+
+   **This does NOT prove the plugin runs on IDEA Community.** The
+   verifier checks against the SDK the build targets, which is now
+   `ideaIU`. Since the move to the unified distribution, nothing in
+   the build or this check fails on an Ultimate-only API. To
+   actually verify Community, point `pluginVerifierOptions`'
+   `overrideIDEs` at an IC installation. Until that is wired up,
+   treat Community compatibility as unverified and review new
+   platform API use by hand.
 
 8. Confirm the packaged descriptor carries the right version. The
    zip filename comes from dynver and the descriptor does not, so

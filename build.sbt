@@ -1,5 +1,6 @@
 import sbt.ThisBuild
 import org.jetbrains.sbtidea.Keys.*
+import org.jetbrains.sbtidea.verifier.FailureLevel
 import sbt.*
 
 enablePlugins(OssumIncPlugin)
@@ -69,6 +70,22 @@ lazy val riddlIdeaPlugin: Project =
       intellijPlugins ++= Seq("com.intellij.properties".toPlugin),
       Global / intellijAttachSources := true,
       Compile / javacOptions ++= "--release" :: "21" :: Nil,
+      // sbt-idea-plugin defaults pluginVerifierOptions.failureLevels to
+      // FailureLevel.values().toSet, so runPluginVerifier fails on ANY notice --
+      // including deprecated/experimental/internal API usage, of which this
+      // plugin has plenty while the verifier's own verdict is still
+      // "Compatible". That makes the task useless as a release gate. Fail only
+      // on the levels that actually stop a plugin from working, and let the
+      // API-usage notices be advisory (they still appear in the report and are
+      // worth reviewing before a Marketplace submission).
+      pluginVerifierOptions := pluginVerifierOptions.value.copy(
+        failureLevels = Set(
+          FailureLevel.COMPATIBILITY_PROBLEMS,
+          FailureLevel.INVALID_PLUGIN,
+          FailureLevel.MISSING_DEPENDENCIES,
+          FailureLevel.PLUGIN_STRUCTURE_WARNINGS
+        )
+      ),
       Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
       Test / unmanagedResourceDirectories += baseDirectory.value / "testResources",
       runIDE / javaOptions

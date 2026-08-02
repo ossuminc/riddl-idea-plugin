@@ -12,44 +12,51 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+      # sbt needs this to resolve riddl from GitHub Packages.
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          # sbt-dynver derives the version from git describe, which needs
+          # the full history and tags rather than a shallow clone.
+          fetch-depth: 0
 
       - name: Set Up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'adopt-hotspot'
+          distribution: 'temurin'
 
       - name: Coursier Caching
         uses: coursier/cache-action@v6
 
-      #- name: Build, Run Test
-      #  run: |
-      #    sbt -v clean Test/compile test
-      #  env:
-      #    COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #    COVERALLS_FLAG_NAME: Scala ${{ matrix.scala }}
-
-      #- name: Build, Run Test, Coverage
-      #  run: |
-      #    sbt -v clean coverage Test/compile test coverageAggregate
-      #  env:
-      #    COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #    COVERALLS_FLAG_NAME: Scala ${{ matrix.scala }}
-
-      #- name: Archive code coverage results
-      #  uses: actions/upload-artifact@v3
-      #  with:
-      #    name: code-coverage-report
-      #    path: "target/scala-3.4.1/scoverage-report/"
-      - name: Archive code coverage results
-        uses: actions/upload-artifact@v3
+      # The IntelliJ SDK is a multi-GB download that sbt-idea-plugin caches
+      # outside the project. Without this every run re-downloads it.
+      - name: Cache IntelliJ SDK
+        uses: actions/cache@v4
         with:
-          name: code-coverage-report
-          path: "target/scala-3.4.0/scoverage-report/"
+          path: ~/.RIDDL4IDEAPluginIU
+          key: intellij-sdk-${{ runner.os }}-${{ hashFiles('build.sbt') }}
+          restore-keys: intellij-sdk-${{ runner.os }}-
+
+      - name: Check Formatting
+        run: sbt -v scalafmtCheck Test/scalafmtCheck
+
+      - name: Build and Test
+        run: sbt -v Test/compile test
+
+      # Proves the deliverable actually assembles. This is what users install,
+      # and it exercises sbt-idea-plugin's packaging, which plain `test` does not.
+      - name: Package Plugin
+        run: sbt -v packageArtifactZip
+
+      - name: Archive Plugin Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-zip
+          path: target/*.zip
+          if-no-files-found: error
 
       - name: Cleanup Before Caching
         shell: bash

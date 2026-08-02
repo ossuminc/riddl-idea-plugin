@@ -1,9 +1,13 @@
 <idea-plugin>
     <id>com.ossuminc.riddl.plugins.idea</id>
     <name>RIDDL</name>
-    <version>0.9.0-beta</version>
+    <version>0.10.0</version>
     <vendor url="https://github.com/ossuminc">ossuminc</vendor>
-    <idea-version since-build="253.29346.240"/>
+    <!-- since-build is deliberately the branch number, not a full build
+         number: "253" admits every 2025.3.x build, whereas pinning
+         253.29346.240 would lock out users on any earlier 2025.3 build.
+         No until-build, so the plugin stays installable on later releases. -->
+    <idea-version since-build="253"/>
 
     <description><![CDATA[
         <h2>RIDDL Language Support for IntelliJ IDEA</h2>
@@ -46,6 +50,26 @@
             <a href="https://riddl.tech">Documentation</a>
         </p>
     ]]></description>
+
+    <!-- Shown as "What's New" on the Marketplace listing and in the IDE's
+         plugin update dialog. Keep only the most recent few versions;
+         /ship prepends a new section on each release. -->
+    <change-notes><![CDATA[
+        <h3>0.10.0</h3>
+        <ul>
+            <li><b>RIDDL 2.0 support</b> - upgraded to RIDDL 2.0.0-rc.7, including
+                the new message kinds (Tip, Deprecation, Completeness) which are now
+                surfaced with appropriate severity in the editor.</li>
+            <li><b>Structure view, navigation and validation</b> now use the RiddlLib
+                AST rather than regex, with a regex fallback retained so include
+                fragments still work.</li>
+            <li><b>Broader IDE compatibility</b> - installable on all 2025.3+ builds
+                rather than one specific build number.</li>
+            <li><b>Reliability</b> - a missing or unreadable top-level file is now
+                reported as a diagnostic in the tool window instead of surfacing as
+                an exception.</li>
+        </ul>
+    ]]></change-notes>
 
     <depends>com.intellij.modules.java</depends>
     <depends>com.intellij.modules.platform</depends>

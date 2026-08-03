@@ -59,19 +59,29 @@ object RiddlColorSettingsPage {
   )
 
   val DEMO_TEXT: String =
+    // Kept as VALID RIDDL, verified with `riddlc validate` (zero errors).
+    // Nothing parses this text -- it is only tokenized for the colour
+    // preview -- so invalid syntax here fails silently and quietly teaches
+    // users the wrong language. Four things it previously got wrong:
+    //   Integer(0, 150)   Integer takes no arguments; bounded is range(0, 150)
+    //   state ... of X    a state references a record: `of record X`
+    //   @CreateUser.name  the `@` message-field prefix no longer parses
+    //   type UserId       UserId is a predefined type and cannot be redefined
     """// RIDDL Color Settings Demo
       |domain MyDomain is {
-      |  type UserId is Id(User)
+      |  type UserKey is Id(User)
       |  type Name is String(1, 64)
-      |  type Age is Integer(0, 150)
+      |  type Age is range(0, 150)
       |
       |  context UserContext is {
+      |    type UserFields is record { name: Name, age: Age }
+      |    type CreateUser is command { name: Name }
+      |
       |    entity User is {
-      |      state UserState of User.Type is {
+      |      state UserState of record UserFields is {
       |        handler UserHandler is {
       |          on command CreateUser {
-      |            "Create a new user"
-      |            set field name to @CreateUser.name
+      |            set field UserState.name to "Alice"
       |          }
       |        }
       |      }

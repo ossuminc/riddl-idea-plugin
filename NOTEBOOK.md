@@ -1,5 +1,68 @@
 # Engineering Notebook: RIDDL IntelliJ IDEA Plugin
 
+## HANDOFF
+
+**State** (verified 2026-08-04, not recalled):
+
+- Branch `main`, working tree **clean**, nothing pushed since
+  `9ee401c`. Count them with
+  `git log --oneline origin/main..HEAD` rather than trusting a
+  number written here — this line is one commit stale the moment the
+  handoff itself is committed.
+- `sbt test` → **174 passing, 11 suites, 0 failed**. Run this session.
+- riddl dependency: `2.0.0-rc.9-42-37b0db94`.
+- Descriptor `plugin.xml`: version **0.10.0**, `since-build="253"`.
+  Only tag in the repo is still `0.9.0-beta` — 0.10.0 is prepared but
+  **not tagged and not released**.
+
+**In flight / next**
+
+Nothing is half-written; the tree is clean. The next decision is
+BACKLOG.md item 1: the pinned riddl version exists only in
+`~/.ivy2/local` (GitHub Packages 404s), so **pushing turns CI red**.
+Decide whether to wait for riddl to publish, pin back
+to `2.0.0-rc.9`, or accept red CI. Nothing else should be pushed
+before that call.
+
+**Traps that already bit someone here**
+
+1. **Stale `target/` fakes a green build.** `target/streams` and
+   `target/sbtidea.cache` can serve an old classpath to *Test* scope
+   while *Compile* uses the new one. It once ran the whole suite green
+   against riddl 1.13.3 — a version never declared in this repo — and
+   shipped a zip with duplicate riddl jars. `rm -rf target` after any
+   dependency change; deleting `sbtidea.cache` alone is not enough.
+   Full write-up below under "Trap: stale `target/`".
+2. **`export Test/fullClasspath` is unreliable in this build** — it
+   prints stale or empty output. Use `Test/dependencyTree` instead.
+3. **Ivy-local jars are packaged without a version in the filename**
+   (`riddl-lib_3.jar`). Reading the version off a jar name does not
+   work for locally staged builds; compare checksums against
+   `~/.ivy2/local` instead.
+4. **`sbt runPluginVerifier` verifies against `ideaIU` only.** It does
+   not establish Community compatibility. See BACKLOG item 4.
+
+**Certainty**
+
+- Verified this session: git state, test count, riddlc version, the
+  GitHub Packages 404, descriptor contents, Marketplace absence.
+- Assumed, not verified: that the plugin still works on IDEA
+  Community (BACKLOG item 4); that the 41 internal/experimental/
+  deprecated API usages will pass Marketplace review.
+
+**Pointers**
+
+- Open work → `BACKLOG.md` (all of it, with evidence).
+- Durable architecture and API facts → `CLAUDE.md`.
+- Release procedure incl. Marketplace setup → `.claude/skills/ship/`.
+
+**`task/` is empty of untriaged items** — two files sit in
+`task/done/`. Nothing awaits triage, but run
+`/ossuminc-skills:check-tasks` in the new session anyway; that call is
+the driver's, not the handoff's.
+
+---
+
 ## Incoming Tasks
 
 **At session start**, check the `task/` directory for pending
@@ -15,7 +78,8 @@ to the task file and note completion in this notebook.
 
 **Version**: 0.9.0-beta (released 2026-01-21)
 **Branch**: `main`
-**RIDDL**: 2.0.0-rc.7 | **Scala**: 3.9.0-RC4 | **sbt-ossuminc**: 1.4.0
+**RIDDL**: 2.0.0-rc.9-42-37b0db94 | **Scala**: 3.9.0-RC4
+**sbt-ossuminc**: 1.4.0
 **sbt**: 1.12.3 | **sbt-idea-plugin**: 6.0.0-RC3
 **IntelliJ Platform**: 253.29346.240 (2025.3)
 **Tests**: 174 passing across 11 suites
@@ -74,6 +138,24 @@ included in the next version bump.
      - `RiddlParserInput.fromPath` deprecated for `fromPathSafe`,
        which reports load failures as `Messages` instead of
        throwing (`ParsingUtils.scala`)
+
+5. **Release plumbing and further riddl upgrades** (2026-08-01..04)
+   - `/ship` skill added (`.claude/skills/ship/`); CI revived — every
+     build/test step in `build.yaml` had been commented out
+   - `plugin.xml`: version 0.10.0, `change-notes` added,
+     `since-build` relaxed 253.29346.240 -> 253
+   - `runPluginVerifier` made usable as a gate: sbt-idea-plugin
+     defaults `failureLevels` to every level, so it failed on any
+     deprecated/experimental/internal API notice while the verdict
+     was still "Compatible"
+   - RIDDL: 2.0.0-rc.7 -> 2.0.0-rc.9-13 -> 2.0.0-rc.9-42, no source
+     changes required. The only syntax change in that window (saga
+     bodies may hold types and comments) is purely permissive.
+   - Colour-settings DEMO_TEXT rewritten as valid RIDDL, verified
+     with `riddlc validate`. It had four pre-existing defects
+     (`Integer(0,150)`, `state ... of X`, `@msg.field`, redefining
+     the predefined `UserId`) that nothing caught because the text
+     is only tokenized, never parsed.
 
 **Recommended version**: 0.10.0 (new features, no breaking
 changes to user-facing behavior).
@@ -153,51 +235,10 @@ is not enough.
 
 ## Next Steps
 
-### Near-Term (Ready to Do)
-
-1. **Marketplace Submission**
-   - Run plugin verifier (last check: 8 internal, 13
-     experimental, 8 deprecated API usages — acceptable)
-   - Create marketplace assets (icon, screenshots)
-   - Submit for JetBrains review
-
-2. **Test Coverage**
-   - Enable coverage threshold (target 70%)
-   - Scoverage doesn't instrument IntelliJ platform classes;
-     may need to exclude those from reporting
-   - Current unit tests are comprehensive for plugin logic
-
-3. **Update README.md**
-   - Add feature screenshots
-   - Document MCP server setup
-   - Installation instructions
-
-### Medium-Term (Feature Work)
-
-4. **Find Usages** — Reverse reference finding (complement to
-   go-to-definition); RiddlLib.getOutline() could support this
-
-5. **Performance Optimization**
-   - Incremental parsing (don't re-parse on every keystroke)
-   - Cache AST/token results, invalidate on document change
-   - Debounce annotation (300-500ms after typing pause)
-
-6. **Legacy Code Cleanup**
-   - `utils/ParsingUtils.scala` — Uses `Thread.sleep()`,
-     still calls `TopLevelParser.parseNebula()` directly
-   - `files/utils.scala` — Deprecated manual highlighting
-   - `settings/RiddlIdeaSettings.scala` — Window-scoped state
-     model from prototype; should be project-scoped
-
-7. **Hover Documentation** — Show definition info on hover
-   (type signatures, descriptions from RIDDL model)
-
-### Long-Term (Future Consideration)
-
-8. **LSP Server** — Could serve VS Code, Cursor, Neovim from
-   a single codebase; would replace/augment both IDE plugins
-
-9. **Refactoring Support** — Safe rename, extract definition
+All open work now lives in **BACKLOG.md** — features, bugs,
+blockers and open questions, each with the verification already
+done. This section is intentionally a pointer so there is exactly
+one place to look.
 
 ---
 
@@ -314,12 +355,10 @@ Complete rewrite of the plugin over 4 phases:
 Also: legacy code refactoring, performance test suite,
 plugin verification, packaging.
 
+
 ---
 
 ## Open Questions
 
-1. **Marketplace Pricing** — Free or paid plugin?
-2. **MCP Server Deployment** — Where will production server
-   run for end users?
-3. **RIDDL Version Tracking** — Plugin should track RIDDL
-   releases; RiddlLib API may change in future versions
+Moved to **BACKLOG.md** § Open questions, so decisions and open
+work live in one place.

@@ -70,8 +70,8 @@ After packaging with `sbt packageArtifactZip`:
 | Build | sbt | 1.12.3 |
 | Build | sbt-ossuminc | 1.4.0 |
 | Build | sbt-idea-plugin | 6.0.0-RC3 |
-| IDE SDK | IntelliJ Platform | 253.29346.240 |
-| RIDDL | riddl-commands + riddl-lib | 2.0.0-rc.7 |
+| IDE SDK | IntelliJ Platform | 261.26222.65 |
+| RIDDL | riddl-commands + riddl-lib | 2.0.0-rc.10 |
 | Kotlin | stdlib (IntelliJ interop) | 2.0.20 |
 | Tests | ScalaTest | 3.2.19 |
 
@@ -247,6 +247,26 @@ From `com.ossuminc.riddl.language.AST.Token`:
 4. **Disposables** — Properly dispose resources on plugin/project
    close
 
+### Scala codegen vs. the Plugin Verifier
+
+The Plugin Verifier reads **bytecode**, and Scala 3 emits methods that
+are not in the source. Both of these below produced verifier findings
+naming methods that appear nowhere in `src/`. Keep both rules or they
+come straight back — see NOTEBOOK.md "All 40 verifier API notices were
+compiler-generated" (2026-08-08).
+
+1. **Never write `object Foo extends <JavaClass>`.** An object's mirror
+   class carries a `public static` forwarder for every inherited public
+   method — including `@ApiStatus.Internal` ones. Use a `final class`
+   with a private constructor plus a companion holding `INSTANCE`, as
+   `RiddlLanguage` does.
+2. **`build.sbt` sets `-Xmixin-force-forwarders:false`.** Without it,
+   every Java interface `default` method a Scala class inherits becomes
+   a generated override, which the verifier counts as a usage.
+
+Before chasing any verifier finding, `grep` the method name in `src/`.
+Zero hits means the compiler wrote it and no call site exists to fix.
+
 ### Testing Strategy
 
 - **174 tests** across 11 suites, all passing
@@ -305,8 +325,8 @@ RIDDL is a reactive system design language with:
 
 ## Version Compatibility
 
-- **IntelliJ IDEA**: 2025.3+ (build 253+)
-- **RIDDL**: 2.0.0-rc.7
+- **IntelliJ IDEA**: 2026.1+ (build 261+)
+- **RIDDL**: 2.0.0-rc.10
 - **JDK**: 21+ (Temurin recommended)
 - **Scala**: 3.9.0-RC4
 

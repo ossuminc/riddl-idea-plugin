@@ -14,9 +14,9 @@ For info on RIDDL, see https://github.com/ossuminc/riddl
 
 | | |
 |---|---|
-| IntelliJ IDEA | 2025.3+ (build 253+) |
+| IntelliJ IDEA | 2026.1+ (build 261+) |
 | JDK | 21+ (Temurin recommended) |
-| RIDDL | 2.0.0-rc.7 |
+| RIDDL | 2.0.0-rc.10 |
 
 ## Features
 
@@ -62,7 +62,7 @@ the fetch return 304 and the config is never written.
 - `sbt runIDE`
 
 This launches IntelliJ **Ultimate**. The build targets `ideaIU`, the
-unified distribution JetBrains ships from 2025.3 onward, so the
+unified distribution JetBrains ships from 2026.1 onward, so the
 sandbox is Ultimate even though the plugin itself is intended to work
 on Community too. Nothing in the build fails on Ultimate-only APIs,
 so check platform API use by hand if it must stay Community-safe.

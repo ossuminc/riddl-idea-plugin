@@ -33,7 +33,7 @@ import com.intellij.openapi.actionSystem.{
   AnAction,
   DefaultActionGroup
 }
-import com.intellij.terminal.TerminalExecutionConsole
+import com.intellij.terminal.{TerminalExecutionConsole, TerminalExecutionConsoleBuilder}
 import com.ossuminc.riddl.plugins.idea.actions.{EditTabNameAction, RiddlActionGroup}
 
 import scala.jdk.CollectionConverters.*
@@ -125,8 +125,13 @@ object ToolWindowUtils {
     val notConfiguredMessage: String =
       "project's configuration file not configured in settings"
     val processHandler = new OSProcessHandler(new GeneralCommandLine("echo"))
+    // The (Project, ProcessHandler) constructor is deprecated as of 2026.1;
+    // the builder plus an explicit attachToProcess is the sanctioned form and
+    // has identical semantics -- the old constructor simply called
+    // attachToProcess itself when the handler was non-null.
     val console: TerminalExecutionConsole =
-      new TerminalExecutionConsole(project, processHandler)
+      new TerminalExecutionConsoleBuilder(project).build()
+    console.attachToProcess(processHandler)
     setConsoleProps(console)
 
     def putUpdateRunPaneAsClientProperty(): Unit =

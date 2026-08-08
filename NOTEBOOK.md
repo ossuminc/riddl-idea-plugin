@@ -2,27 +2,42 @@
 
 ## HANDOFF
 
-**State** (verified 2026-08-04, not recalled):
+**State** (verified 2026-08-08, not recalled):
 
-- Branch `main`, working tree **clean**, nothing pushed since
-  `9ee401c`. Count them with
+- Branch `main`. Working tree has **uncommitted changes** (9 files) —
+  the 2026.1 platform bump, the riddl rc.10 upgrade, and the API
+  cleanup. Count unpushed commits with
   `git log --oneline origin/main..HEAD` rather than trusting a
-  number written here — this line is one commit stale the moment the
-  handoff itself is committed.
-- `sbt test` → **174 passing, 11 suites, 0 failed**. Run this session.
-- riddl dependency: `2.0.0-rc.9-42-37b0db94`.
-- Descriptor `plugin.xml`: version **0.10.0**, `since-build="253"`.
+  number written here.
+- `sbt test` → **174 passing, 11 suites, 0 failed**. Run this session,
+  after `rm -rf target`.
+- `sbt runPluginVerifier` → verdict **`Compatible`**, with no API-usage
+  notices of any kind. Run this session after `rm -rf target`.
+- riddl dependency: `2.0.0-rc.10-37-1d87a109` (matches `../bin/riddlc`;
+  ivy-local only, so CI is red by choice — BACKLOG item 1).
+- Descriptor `plugin.xml`: version **0.10.0**, `since-build="261"`.
+  Build targets `intellijBuild := "261.26222.65"` (IDEA 2026.1.4).
   Only tag in the repo is still `0.9.0-beta` — 0.10.0 is prepared but
   **not tagged and not released**.
+- Marketplace: plugin **is** uploaded (id 33312) and **Under review**.
+  The submitted zip is stale — built from `1ad6a8f`. BACKLOG item 2.
 
 **In flight / next**
 
-Nothing is half-written; the tree is clean. The next decision is
-BACKLOG.md item 1: the pinned riddl version exists only in
-`~/.ivy2/local` (GitHub Packages 404s), so **pushing turns CI red**.
-Decide whether to wait for riddl to publish, pin back
-to `2.0.0-rc.9`, or accept red CI. Nothing else should be pushed
-before that call.
+Nothing is half-written, but nothing is committed either. Commit the
+working tree first (it is green), then the open questions are
+BACKLOG items 1 (CI red by choice) and 2/2a (resubmit to Marketplace
+with a zip built from HEAD).
+
+**Do not "fix" the two things that look wrong but are not**
+
+1. `RiddlLanguage` is a `class` with a companion holding `INSTANCE`,
+   *not* an `object extends Language`. Changing it back reintroduces
+   28 static forwarders and 5 internal-API verifier findings.
+2. `build.sbt` sets `-Xmixin-force-forwarders:false`. Removing it
+   reintroduces ~35 deprecated/experimental/internal findings.
+   Both are explained below under "All 40 verifier API notices were
+   compiler-generated".
 
 **Traps that already bit someone here**
 
@@ -44,11 +59,15 @@ before that call.
 
 **Certainty**
 
-- Verified this session: git state, test count, riddlc version, the
-  GitHub Packages 404, descriptor contents, Marketplace absence.
+- Verified 2026-08-08: git state, test count (174), verifier verdict
+  (`Compatible`, no usage files emitted), riddlc version, rc.10
+  published to GitHub Packages, descriptor contents, Marketplace
+  status (id 33312, under review, stale zip).
 - Assumed, not verified: that the plugin still works on IDEA
-  Community (BACKLOG item 4); that the 41 internal/experimental/
-  deprecated API usages will pass Marketplace review.
+  Community (BACKLOG item 4); that `-Xmixin-force-forwarders:false`
+  has no runtime consequence — the 174 tests pass, but they do not
+  exercise the IDE, so **`sbt runIDE` is still worth one manual pass**
+  before release.
 
 **Pointers**
 
@@ -56,10 +75,79 @@ before that call.
 - Durable architecture and API facts → `CLAUDE.md`.
 - Release procedure incl. Marketplace setup → `.claude/skills/ship/`.
 
-**`task/` is empty of untriaged items** — two files sit in
-`task/done/`. Nothing awaits triage, but run
+**`task/` is empty of untriaged items** — three files sit in
+`task/done/`, the newest being the 2026-08-06 riddl upgrade completed
+this session. Nothing awaits triage, but run
 `/ossuminc-skills:check-tasks` in the new session anyway; that call is
 the driver's, not the handoff's.
+
+---
+
+## All 40 verifier API notices were compiler-generated (2026-08-08)
+
+JetBrains Marketplace review flagged the 0.10.0 submission with
+**8 internal + 12 scheduled-for-removal + 9 deprecated + 11
+experimental** API usages. The instinct — go find those calls and
+replace them per the Internal API Migration table — was wrong.
+
+**Not one of them existed in `src/`.** `grep -rn` across the whole
+source tree for `isApplicable`, `isDoNotActivateOnStart`, `getAnchor`,
+`manage`, `fileOpenedSync`, `navigationRequest`, `getDisplayNameFast`
+returns **zero hits**. `RiddlLanguage.scala` was 17 lines defining a
+single `val`, yet the verifier reported it using
+`Language.findMyFileType`, `Language.unregisterLanguage`,
+`Language.unregisterDialect` and `UserDataHolderBase.getUserMap`.
+
+The verifier reads **bytecode**, and Scala 3 puts methods in the class
+file that are not in the source. Two separate generators:
+
+1. **Mixin forwarders.** For a Scala class implementing a Java
+   interface, Scala emits a concrete override of each `default` method
+   that just calls the interface implementation. So
+   `RiddlIdeaSettingsConfigurable extends Configurable` produced
+   `getDisplayNameFast()` plus three `isModified(...)` overloads —
+   which the verifier reads as *both* "is overridden in" *and*
+   "is invoked in", which is why each finding appeared twice.
+   Fixed with `Compile / scalacOptions += "-Xmixin-force-forwarders:false"`.
+2. **Static forwarders on an object's mirror class.** `object Foo
+   extends SomeJavaClass` generates a `Foo.class` carrying a `public
+   static` forwarder for *every* inherited public method — 28 of them
+   for `object RiddlLanguage extends Language("RIDDL")`. No scalac flag
+   suppresses these; the object had to become
+   `final class RiddlLanguage private () extends Language("RIDDL")`
+   with `object RiddlLanguage { val INSTANCE = ... }`, and the 14 call
+   sites updated to `RiddlLanguage.INSTANCE`.
+
+Result: verdict went from "Compatible. 12 usages of scheduled for
+removal API and 8 usages of deprecated API. 11 usages of experimental
+API. 8 usages of internal API" to plain **`Compatible`**, with the
+verifier emitting no `*-usages.txt` files at all.
+
+**The general lesson: a bytecode-level report about a JVM language
+that generates code is not a report about your source.** Before
+chasing any such finding, `grep` the method name. Zero hits means the
+compiler wrote it, and the fix is in the build or in the shape of the
+declaration — never at a call site that does not exist.
+
+**Genuinely hand-written, and separately fixed:** exactly one —
+`new TerminalExecutionConsole(project, processHandler)` in
+`utils/ToolWindowUtils.scala`. Its constructor is deprecated as of
+2026.1 in favour of `TerminalExecutionConsoleBuilder(project).build()`
+followed by `attachToProcess(handler)` (identical semantics; the old
+constructor called `attachToProcess` itself). This one was caught by
+**scalac**, not the verifier, and because the build runs `-Werror` it
+was a hard compile error — i.e. **the SDK bump to 2026.1 does not
+build until it is fixed**.
+
+### Trap: the verifier will happily check a stale zip
+
+After fixing `RiddlLanguage`, `javap` confirmed the mirror class was
+down to one `public static` — and `runPluginVerifier` still reported
+`RiddlLanguage.getUserMap()`. It had re-verified a previously packaged
+artifact. `rm -rf target` then re-run; only then did the verdict change.
+This is the same stale-`target/` trap recorded below, in a new costume:
+**a verifier verdict is evidence only if the run began from a clean
+`target/`.**
 
 ---
 
@@ -78,10 +166,10 @@ to the task file and note completion in this notebook.
 
 **Version**: 0.9.0-beta (released 2026-01-21)
 **Branch**: `main`
-**RIDDL**: 2.0.0-rc.9-42-37b0db94 | **Scala**: 3.9.0-RC4
+**RIDDL**: 2.0.0-rc.10-37-1d87a109 | **Scala**: 3.9.0-RC4
 **sbt-ossuminc**: 1.4.0
 **sbt**: 1.12.3 | **sbt-idea-plugin**: 6.0.0-RC3
-**IntelliJ Platform**: 253.29346.240 (2025.3)
+**IntelliJ Platform**: 261.26222.65 (2026.1)
 **Tests**: 174 passing across 11 suites
 
 All core features implemented. Plugin is functional and ready

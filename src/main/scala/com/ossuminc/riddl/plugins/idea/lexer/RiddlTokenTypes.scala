@@ -18,20 +18,20 @@ import com.ossuminc.riddl.language.AST.Token
 object RiddlTokenTypes {
 
   /** File element type for RIDDL files. */
-  val FILE: IFileElementType = new IFileElementType(RiddlLanguage)
+  val FILE: IFileElementType = new IFileElementType(RiddlLanguage.INSTANCE)
 
   // Token types corresponding to RIDDL Token classes
-  val KEYWORD: IElementType = new IElementType("RIDDL_KEYWORD", RiddlLanguage)
-  val IDENTIFIER: IElementType = new IElementType("RIDDL_IDENTIFIER", RiddlLanguage)
-  val READABILITY: IElementType = new IElementType("RIDDL_READABILITY", RiddlLanguage)
-  val PUNCTUATION: IElementType = new IElementType("RIDDL_PUNCTUATION", RiddlLanguage)
-  val PREDEFINED: IElementType = new IElementType("RIDDL_PREDEFINED", RiddlLanguage)
-  val COMMENT: IElementType = new IElementType("RIDDL_COMMENT", RiddlLanguage)
-  val QUOTED_STRING: IElementType = new IElementType("RIDDL_QUOTED_STRING", RiddlLanguage)
-  val MARKDOWN_LINE: IElementType = new IElementType("RIDDL_MARKDOWN_LINE", RiddlLanguage)
-  val LITERAL_CODE: IElementType = new IElementType("RIDDL_LITERAL_CODE", RiddlLanguage)
-  val NUMERIC: IElementType = new IElementType("RIDDL_NUMERIC", RiddlLanguage)
-  val OTHER: IElementType = new IElementType("RIDDL_OTHER", RiddlLanguage)
+  val KEYWORD: IElementType = new IElementType("RIDDL_KEYWORD", RiddlLanguage.INSTANCE)
+  val IDENTIFIER: IElementType = new IElementType("RIDDL_IDENTIFIER", RiddlLanguage.INSTANCE)
+  val READABILITY: IElementType = new IElementType("RIDDL_READABILITY", RiddlLanguage.INSTANCE)
+  val PUNCTUATION: IElementType = new IElementType("RIDDL_PUNCTUATION", RiddlLanguage.INSTANCE)
+  val PREDEFINED: IElementType = new IElementType("RIDDL_PREDEFINED", RiddlLanguage.INSTANCE)
+  val COMMENT: IElementType = new IElementType("RIDDL_COMMENT", RiddlLanguage.INSTANCE)
+  val QUOTED_STRING: IElementType = new IElementType("RIDDL_QUOTED_STRING", RiddlLanguage.INSTANCE)
+  val MARKDOWN_LINE: IElementType = new IElementType("RIDDL_MARKDOWN_LINE", RiddlLanguage.INSTANCE)
+  val LITERAL_CODE: IElementType = new IElementType("RIDDL_LITERAL_CODE", RiddlLanguage.INSTANCE)
+  val NUMERIC: IElementType = new IElementType("RIDDL_NUMERIC", RiddlLanguage.INSTANCE)
+  val OTHER: IElementType = new IElementType("RIDDL_OTHER", RiddlLanguage.INSTANCE)
 
   /** Maps a RIDDL Token to its corresponding IElementType. */
   def fromRiddlToken(token: Token): IElementType = token match {

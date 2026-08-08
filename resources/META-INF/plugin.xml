@@ -4,10 +4,10 @@
     <version>0.10.0</version>
     <vendor url="https://github.com/ossuminc">ossuminc</vendor>
     <!-- since-build is deliberately the branch number, not a full build
-         number: "253" admits every 2025.3.x build, whereas pinning
-         253.29346.240 would lock out users on any earlier 2025.3 build.
+         number: "261" admits every 2026.1.x build, whereas pinning
+         261.26222.65 would lock out users on any earlier 2026.1 build.
          No until-build, so the plugin stays installable on later releases. -->
-    <idea-version since-build="253"/>
+    <idea-version since-build="261"/>
 
     <description><![CDATA[
         <h2>RIDDL Language Support for IntelliJ IDEA</h2>
@@ -57,14 +57,17 @@
     <change-notes><![CDATA[
         <h3>0.10.0</h3>
         <ul>
-            <li><b>RIDDL 2.0 support</b> - upgraded to RIDDL 2.0.0-rc.7, including
+            <li><b>RIDDL 2.0 support</b> - upgraded to RIDDL 2.0.0-rc.10, including
                 the new message kinds (Tip, Deprecation, Completeness) which are now
                 surfaced with appropriate severity in the editor.</li>
             <li><b>Structure view, navigation and validation</b> now use the RiddlLib
                 AST rather than regex, with a regex fallback retained so include
                 fragments still work.</li>
-            <li><b>Broader IDE compatibility</b> - installable on all 2025.3+ builds
-                rather than one specific build number.</li>
+            <li><b>Requires IntelliJ IDEA 2026.1 or later</b>, and builds against the
+                2026.1 platform.</li>
+            <li><b>Clean API surface</b> - the plugin no longer uses any deprecated,
+                scheduled-for-removal, experimental or internal IntelliJ Platform API;
+                the Plugin Verifier reports plain "Compatible".</li>
             <li><b>Reliability</b> - a missing or unreadable top-level file is now
                 reported as a diagnostic in the tool window instead of surfacing as
                 an exception.</li>

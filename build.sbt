@@ -61,7 +61,7 @@ lazy val riddlIdeaPlugin: Project =
       ),
       Test / parallelExecution := false,
       ThisBuild / intellijPluginName := "RIDDL4IDEA",
-      ThisBuild / intellijBuild := "253.29346.240",
+      ThisBuild / intellijBuild := "261.26222.65",
       // IntelliJPlatform.Idea is the unified 2025.3+ distribution (ideaIU).
       // It replaces the deprecated IdeaCommunity (ideaIC) -- a change of
       // target SDK, not a rename. Take care not to use Ultimate-only APIs.
@@ -70,6 +70,17 @@ lazy val riddlIdeaPlugin: Project =
       intellijPlugins ++= Seq("com.intellij.properties".toPlugin),
       Global / intellijAttachSources := true,
       Compile / javacOptions ++= "--release" :: "21" :: Nil,
+      // Scala emits a concrete "mixin forwarder" override for every default
+      // method of a Java interface a Scala class implements -- each one
+      // overriding the interface method and calling it. The IntelliJ Plugin
+      // Verifier reads bytecode, so it counted those forwarders as our usages
+      // of deprecated/experimental/internal API (Configurable.isModified
+      // overloads, Configurable.getDisplayNameFast, ToolWindowFactory.getIcon /
+      // getAnchor / manage / isApplicable / isDoNotActivateOnStart,
+      // FileEditorManagerListener.fileOpenedSync, Navigatable.navigationRequest)
+      // even though none of those names appears anywhere in src/. Emitting
+      // forwarders only where actually required removes every one of them.
+      Compile / scalacOptions += "-Xmixin-force-forwarders:false",
       // sbt-idea-plugin defaults pluginVerifierOptions.failureLevels to
       // FailureLevel.values().toSet, so runPluginVerifier fails on ANY notice --
       // including deprecated/experimental/internal API usage, of which this

@@ -15,7 +15,7 @@ import javax.swing.Icon
   *
   * Registered in plugin.xml to associate .riddl files with RIDDL language support.
   */
-class RiddlFileType extends LanguageFileType(RiddlLanguage) {
+class RiddlFileType extends LanguageFileType(RiddlLanguage.INSTANCE) {
 
   override def getName: String = "RIDDL"
 

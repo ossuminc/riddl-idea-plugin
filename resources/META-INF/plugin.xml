@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.ossuminc.riddl.plugins.idea</id>
     <name>RIDDL</name>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
     <vendor url="https://github.com/ossuminc">ossuminc</vendor>
     <!-- since-build is deliberately the branch number, not a full build
          number: "261" admits every 2026.1.x build, whereas pinning
@@ -55,19 +55,32 @@
          plugin update dialog. Keep only the most recent few versions;
          /ship prepends a new section on each release. -->
     <change-notes><![CDATA[
+        <h3>0.11.0</h3>
+        <ul>
+            <li><b>Requires IntelliJ IDEA 2026.1 or later.</b> The plugin is
+                built against the 2026.1 platform and is no longer installable
+                on 2025.3.</li>
+            <li><b>Fixed: the RIDDL tool window opened blank.</b> Opening it
+                raised an internal error before its contents were added, so the
+                pane stayed empty. It now opens and populates correctly.</li>
+            <li><b>RIDDL 2.0.0-rc.10</b> - brings the newer language work into
+                validation, the structure view and go-to-definition, including
+                message-envelope support and quieter diagnostics for external
+                contexts.</li>
+            <li><b>Clean platform API surface</b> - the plugin no longer uses
+                any deprecated, scheduled-for-removal, experimental or internal
+                IntelliJ Platform API, so it is less likely to break on future
+                IDE releases.</li>
+        </ul>
+
         <h3>0.10.0</h3>
         <ul>
-            <li><b>RIDDL 2.0 support</b> - upgraded to RIDDL 2.0.0-rc.10, including
+            <li><b>RIDDL 2.0 support</b> - upgraded to RIDDL 2.0, including
                 the new message kinds (Tip, Deprecation, Completeness) which are now
                 surfaced with appropriate severity in the editor.</li>
             <li><b>Structure view, navigation and validation</b> now use the RiddlLib
                 AST rather than regex, with a regex fallback retained so include
                 fragments still work.</li>
-            <li><b>Requires IntelliJ IDEA 2026.1 or later</b>, and builds against the
-                2026.1 platform.</li>
-            <li><b>Clean API surface</b> - the plugin no longer uses any deprecated,
-                scheduled-for-removal, experimental or internal IntelliJ Platform API;
-                the Plugin Verifier reports plain "Compatible".</li>
             <li><b>Reliability</b> - a missing or unreadable top-level file is now
                 reported as a diagnostic in the tool window instead of surfacing as
                 an exception.</li>

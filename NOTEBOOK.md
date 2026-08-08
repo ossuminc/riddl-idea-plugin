@@ -4,30 +4,35 @@
 
 **State** (verified 2026-08-08, not recalled):
 
-- Branch `main`. Working tree has **uncommitted changes** (9 files) —
-  the 2026.1 platform bump, the riddl rc.10 upgrade, and the API
-  cleanup. Count unpushed commits with
-  `git log --oneline origin/main..HEAD` rather than trusting a
-  number written here.
-- `sbt test` → **174 passing, 11 suites, 0 failed**. Run this session,
-  after `rm -rf target`.
-- `sbt runPluginVerifier` → verdict **`Compatible`**, with no API-usage
-  notices of any kind. Run this session after `rm -rf target`.
+- **0.11.0 is released.** Branch `main`, working tree **clean**, tag
+  `0.11.0` pushed at commit `1c7b493`. GitHub release exists with
+  `RIDDL4IDEA-0.11.0.zip` attached:
+  <https://github.com/ossuminc/riddl-idea-plugin/releases/tag/0.11.0>
+- `sbt test` → **174 passing, 11 suites, 0 failed**, from `clean`.
+- `sbt runPluginVerifier` → verdict **`Compatible`** for 0.11.0, with
+  no `*-usages.txt` emitted at all.
 - riddl dependency: `2.0.0-rc.10-37-1d87a109` (matches `../bin/riddlc`;
-  ivy-local only, so CI is red by choice — BACKLOG item 1).
-- Descriptor `plugin.xml`: version **0.10.0**, `since-build="261"`.
+  ivy-local only, so **CI on this push is red by choice** — BACKLOG 1).
+- Descriptor `plugin.xml`: version **0.11.0**, `since-build="261"`.
   Build targets `intellijBuild := "261.26222.65"` (IDEA 2026.1.4).
-  Only tag in the repo is still `0.9.0-beta` — 0.10.0 is prepared but
-  **not tagged and not released**.
-- Marketplace: plugin **is** uploaded (id 33312) and **Under review**.
-  The submitted zip is stale — built from `1ad6a8f`. BACKLOG item 2.
+- Marketplace: 0.11.0 **uploaded successfully** 2026-08-08 13:44 via
+  `sbt publishPlugin`. Plugin id 33312 still reports `approve: false`
+  — the original 0.10.0 first publication is *still in manual review*,
+  and 0.11.0 queues behind it. Nothing is publicly visible yet.
 
 **In flight / next**
 
-Nothing is half-written, but nothing is committed either. Commit the
-working tree first (it is green), then the open questions are
-BACKLOG items 1 (CI red by choice) and 2/2a (resubmit to Marketplace
-with a zip built from HEAD).
+Nothing is in flight. Open items, in order:
+
+1. **Chase the Marketplace review.** 0.10.0 was submitted 2026-08-03;
+   JetBrains suggests emailing marketplace@jetbrains.com after 3–4
+   working days. Worth asking them to review 0.11.0 and discard the
+   0.10.0 submission, whose zip was built from `1ad6a8f` and is
+   superseded.
+2. BACKLOG 1 — CI is red until riddl publishes `rc.10-37` or the pin
+   moves to a published version.
+3. BACKLOG 4a/4b — console theming and two undisposed objects, both
+   deferred as low value.
 
 **Do not "fix" the two things that look wrong but are not**
 
@@ -56,6 +61,14 @@ with a zip built from HEAD).
    `~/.ivy2/local` instead.
 4. **`sbt runPluginVerifier` verifies against `ideaIU` only.** It does
    not establish Community compatibility. See BACKLOG item 4.
+5. **`packageArtifactZip` fails while a sandbox IDE is running.** It
+   ends with `No options search index built for plugin root`, because
+   `buildIntellijOptionsIndex` starts a second, headless IDE against
+   the same `~/.RIDDL4IDEAPluginIU` config/system paths, which the
+   running sandbox holds via `config/.lock`. Nothing is written to
+   `idea.log` and the task fails in about a second. **Quit `runIDE`
+   before packaging** — that alone fixes it. Verified 2026-08-08:
+   failed twice with the IDE up, succeeded immediately once it exited.
 
 **Certainty**
 
@@ -63,11 +76,27 @@ with a zip built from HEAD).
   (`Compatible`, no usage files emitted), riddlc version, rc.10
   published to GitHub Packages, descriptor contents, Marketplace
   status (id 33312, under review, stale zip).
+- Also verified 2026-08-08 by a manual `sbt runIDE` pass on IDEA
+  2026.1.4: the tool window opens and populates, and the session log
+  has 0 `SEVERE`, 0 `NullPointerException` and 0
+  `AbstractMethodError` / `NoSuchMethodError`. That last is the
+  specific failure mode `-Xmixin-force-forwarders:false` could have
+  caused, so the flag is now runtime-exercised, not just compiled.
 - Assumed, not verified: that the plugin still works on IDEA
-  Community (BACKLOG item 4); that `-Xmixin-force-forwarders:false`
-  has no runtime consequence — the 174 tests pass, but they do not
-  exercise the IDE, so **`sbt runIDE` is still worth one manual pass**
-  before release.
+  Community (BACKLOG item 4). Also unverified: *why* the tool window
+  NPE appeared only on 2026.1 — the fix removes the timing dependency
+  rather than relying on the explanation, so this was not chased.
+
+**Two log-reading traps, both hit this session**
+
+1. **`~/.RIDDL4IDEAPluginIU/system/log/idea.log` is years long and is
+   never truncated.** Two separate "findings" turned out to be dated
+   **2025-01-13** (a `RiddlFileType` name error from plugin 1.0.0, and
+   a `TraverseUIStarter` crash on IDEA 2024.3). Always mark the line
+   count before a run and read only past it.
+2. **This plugin logs nothing on the happy path**, so "no `ossuminc`
+   frames in the log" does *not* mean it failed to load — it usually
+   means it ran cleanly. Judge a run by whether the UI did the thing.
 
 **Pointers**
 
@@ -164,7 +193,7 @@ to the task file and note completion in this notebook.
 
 ## Current Status
 
-**Version**: 0.9.0-beta (released 2026-01-21)
+**Version**: 0.11.0 (released 2026-08-08)
 **Branch**: `main`
 **RIDDL**: 2.0.0-rc.10-37-1d87a109 | **Scala**: 3.9.0-RC4
 **sbt-ossuminc**: 1.4.0
@@ -177,7 +206,7 @@ for beta testing. RiddlLib integration complete (2026-02-11).
 
 ---
 
-## Changes Since 0.9.0-beta
+## Changes Since 0.11.0
 
 These changes have been made since the beta tag. They should be
 included in the next version bump.

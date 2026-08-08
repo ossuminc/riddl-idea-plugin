@@ -55,6 +55,16 @@ object ToolWindowUtils {
     ): Unit = {
       val windowName: String = genWindowName(windowNumber)
 
+      // Use the ToolWindow the platform handed us instead of looking it up by
+      // id. This runs inside ToolWindowFactory.createToolWindowContent, which
+      // the manager calls from doShowWindow -> createContentIfNeeded *before*
+      // the window is answerable by id, so
+      // ToolWindowManager.getInstance(project).getToolWindow("riddl") returns
+      // null here and anything dereferencing it NPEs. That crash left the pane
+      // blank because it aborted before addContent. See NOTEBOOK.md
+      // "Tool window NPE" (2026-08-08).
+      val contentManager = toolWindow.getContentManager
+
       val content = ContentFactory
         .getInstance()
         .createContent(
@@ -67,21 +77,18 @@ object ToolWindowUtils {
           isLockable
         )
       content.setCloseable(!isLockable)
-      listenForContentRemoval(project, windowName, windowNumber)
-      getContentManager.addContent(content)
-      updateToolWindowRunPane(windowNumber)
+      listenForContentRemoval(contentManager, windowName, windowNumber)
+      contentManager.addContent(content)
+      // Update through the Content we just created rather than re-finding it
+      // by number, which would go through the same by-id lookup.
+      updateRunPaneOf(content, windowNumber)
     }
 
     private def listenForContentRemoval(
-      project: Project,
+      riddlContentManager: ContentManager,
       windowDisplayName: String,
       windowNum: Int
     ): Unit = {
-      val riddlContentManager = ToolWindowManager
-        .getInstance(project)
-        .getToolWindow("riddl")
-        .getContentManager
-
       riddlContentManager.addContentManagerListener(
         new ContentManagerListener() {
           private val windowName: String = windowDisplayName
@@ -181,7 +188,10 @@ object ToolWindowUtils {
 
       val confFile = File(statePath)
 
-      val tabContent: Content = getToolWindowContent(numWindow)
+      // Resolve through the ToolWindow in scope, not by id: this runs during
+      // tool window creation, when the id lookup still returns null.
+      val tabContent: Content =
+        contentOf(toolWindow.getContentManager, numWindow)
       if tabContent.getTabName.isBlank then tabContent.setDisplayName(genWindowName(numWindow))
       tabContent.getComponent.addMouseListener(new MouseAdapter {
         override def mousePressed(e: MouseEvent): Unit = {
@@ -268,12 +278,21 @@ object ToolWindowUtils {
     .getContentManager
 
   def getToolWindowContent(numWindow: Int): Content =
-    getContentManager.getContents
+    contentOf(getContentManager, numWindow)
+
+  /** Find a window's [[Content]] in a caller-supplied [[ContentManager]].
+    *
+    * Callers running while the tool window is still being created must pass
+    * `toolWindow.getContentManager`; [[getToolWindowContent]] resolves the manager by tool-window
+    * id, which is not answerable until creation is finished.
+    */
+  def contentOf(contentManager: ContentManager, numWindow: Int): Content =
+    contentManager.getContents
       .find(_.getTabName == genWindowName(numWindow))
       .getOrElse(
-        getContentManager.getContents
+        contentManager.getContents
           .find(_.getTabName.count(_.isDigit) == 0)
-          .getOrElse(getContentManager.getContents.head)
+          .getOrElse(contentManager.getContents.head)
       )
 
   def updateToolWindowPanes(
@@ -286,7 +305,21 @@ object ToolWindowUtils {
     numWindow: Int,
     fromReload: Boolean = false,
     fromLogger: Boolean = false
-  ): Unit = getToolWindowContent(numWindow).getComponent
+  ): Unit =
+    updateRunPaneOf(getToolWindowContent(numWindow), numWindow, fromReload, fromLogger)
+
+  /** Update a run pane given its [[Content]] directly.
+    *
+    * Callers that already hold the Content must use this rather than [[updateToolWindowRunPane]],
+    * which re-finds it via `ToolWindowManager.getToolWindow("riddl")` -- a lookup that returns null
+    * while the tool window is still being created.
+    */
+  private def updateRunPaneOf(
+    content: Content,
+    numWindow: Int,
+    fromReload: Boolean = false,
+    fromLogger: Boolean = false
+  ): Unit = content.getComponent
     .getClientProperty(genUpdateRunPaneLabelName(numWindow))
     .asInstanceOf[(fromReload: Boolean, fromLogger: Boolean) => Unit](
       fromReload,

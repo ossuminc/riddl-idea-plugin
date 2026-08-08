@@ -115,6 +115,47 @@ is intended to work on Community. Wire `pluginVerifierOptions`'
 `overrideIDEs` at an IC installation so this is actually checked.
 Until then treat Community support as an assumption.
 
+### 4a. Tool window console ignores the IDE theme
+
+Observed 2026-08-08 in `sbt runIDE` on 2026.1: the run pane renders
+"project's configuration file not configured in settings" as **black
+text on a white background**, which does not match the surrounding UI
+in a dark theme.
+
+**Not a regression from the 0.11.0 builder change.** Both the
+deprecated `TerminalExecutionConsole(project, processHandler)`
+constructor and the `TerminalExecutionConsoleBuilder` path call the
+same `createDefaultConsoleSettingsProvider()` with the same
+`DEFAULT_INITIAL_TERM_SIZE`, so colours are identical either way
+(verified against the 261 SDK sources).
+
+The console is a `TerminalExecutionConsole` whose colours come from
+`JBTerminalSystemSettingsProviderBase`. Fix means supplying a settings
+provider that follows `EditorColorsManager`'s scheme via
+`TerminalExecutionConsoleBuilder.settingsProvider(...)` — which is
+precisely what that builder method exists for. Cosmetic only.
+
+### 4b. Two objects are never disposed
+
+Both reported as `SEVERE ... Memory leak detected` at sandbox IDE
+shutdown on 2026-08-08, each registered in the Disposer as a child of
+`ROOT_DISPOSABLE` and never disposed:
+
+- `RiddlProject$$Lambda` — the document listener registered by the
+  `postStartupActivity`.
+- `TerminalExecutionConsole` — created per run pane in
+  `ToolWindowUtils.createRunConsole`.
+
+Both are **pre-existing**, not introduced by the 0.11.0 work: the
+console registers itself through `TerminalConsoleContentHelper`, which
+is built in a *field initializer* of `TerminalExecutionConsole` and so
+runs on every constructor path, old and new.
+
+Reid's call 2026-08-08: **low value, deferred.** They leak once per
+tool window per IDE session, not per edit. Fixing means giving both a
+real parent `Disposable` (the tool window's `Content`, or the project)
+instead of the default root.
+
 ### 5. Flaky performance test
 
 `performance/RiddlPerformanceSpec` → "should show consistent

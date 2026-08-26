@@ -8,71 +8,58 @@ facts to CLAUDE.md.
 
 ## Blocking a release
 
-### 1. riddl dependency is local-only, so CI cannot build
+### 1. riddl pin is 16 release candidates behind, and CI is red for it
 
-`project/Dependencies.scala` pins `2.0.0-rc.10-37-1d87a109`, which
-exists **only** in `~/.ivy2/local`. It matches `../bin/riddlc`
-(verified 2026-08-08).
+`project/Dependencies.scala:7` pins `2.0.0-rc.10-37-1d87a109`, which
+exists **only** in `~/.ivy2/local`. Verified 2026-08-26: still staged
+there for all three consumed coordinates (`riddl-lib_3`,
+`riddl-commands_3`, `riddl-language_3`), so the repo still builds
+locally — `sbt test` gives 174 passing, 11 suites.
 
-The Build workflow was revived in `6f6e1d9` and runs on push to
-`main`, so **pushing turns CI red** — GitHub Actions has no
-`~/.ivy2/local`.
+Because GitHub Actions has no `~/.ivy2/local`, **CI on `main` is red**:
+`gh run list` shows failures for both 0.11.0 release commits.
 
-**A published forward option now exists.** `2.0.0-rc.10` was published
-to GitHub Packages on 2026-08-05 (verified 2026-08-08 via
-`gh api /orgs/ossuminc/packages/maven/com.ossuminc.riddl-lib_3/versions`;
-this supersedes the earlier note that `2.0.0-rc.9` was the newest
-published). `37b0db94` is an ancestor of the `2.0.0-rc.10` tag, so
-pinning to published `2.0.0-rc.10` moves *forward* from where this repo
-was on 2026-08-04 — it is no longer a rollback. It costs the 37 staged
-commits (A56, A57, `Riddl.Envelope`, the `external context` unused-warning
-suppression).
+**The tradeoff that justified this pin has evaporated.** In August the
+choice was "staged build with the new language work" versus "published
+build that is 37 commits older". As of 2026-08-26 riddl has published
+through **`2.0.0-rc.26`** to GitHub Packages, and `../bin/riddlc` is
+itself `2.0.0-rc.26`. Moving to published `2.0.0-rc.26` now goes
+*forward* by 16 release candidates **and** turns CI green. There is no
+longer a cost on either side.
 
-Resolve by one of:
-- pin to published `2.0.0-rc.10`, turning CI green at the cost of the
-  staged language work; or
-- riddl publishes `rc.10-37` or a later rc, then bump here; or
-- decide CI stays red until 2.0.0 final and say so out loud.
+Do this first — it is the cheapest win in this file, and every other
+item is easier to judge against a green CI.
 
-**Reid's call 2026-08-08: stay on the staged `rc.10-37`** — the newest
-work matters more than green CI for now. CI is therefore red *by
-choice*. Revisit at release time.
+Caveats to check when doing it, not before:
+- 16 RCs is a lot of language change. Expect the `RiddlLib` facade to
+  have moved; the plugin uses `validateString`, `getTree`, `getOutline`
+  (see CLAUDE.md § RIDDL API Integration).
+- `rm -rf target` first. This repo's stale-`target/` trap is real and
+  documented in NOTEBOOK.md.
+- No upgrade task ever arrived in `task/` for rc.11..rc.26, so nobody
+  has assessed the delta for this consumer.
 
-### 2. Marketplace submission is under review; assets still missing
+### 2. Marketplace assets are still missing
 
-**The plugin IS on the Marketplace** — plugin id **33312**, xmlId
-`com.ossuminc.riddl.plugins.idea`, uploaded 2026-08-03. This supersedes
-the 2026-08-04 note that it was absent; the first manual upload has
-happened, so that blocker is cleared.
+**The plugin is published and public.** Verified 2026-08-26: update
+`1130942` for version **0.11.0** reports `approve: true, listed: true`,
+and the public endpoint
+`/api/plugins/intellij/com.ossuminc.riddl.plugins.idea` returns `200`.
+The stale 0.10.0 submission is **gone from the updates list entirely** —
+JetBrains superseded rather than reviewed it, so the "resubmit a
+non-stale zip" item is moot and has been removed.
 
-Verified 2026-08-08 via `gh`-free `curl` against the Marketplace API:
-`"approve": false`, `"listed": false` — i.e. **status "Under review"**.
-Update id `1123790` is labelled version `0.10.0`, but the uploaded file
-is `RIDDL4IDEA-0.9.0-beta-23-1ad6a8f8-20260802-2220.zip`, built from
-commit `1ad6a8f` against riddl `2.0.0-rc.9-13`. **The submitted artifact
-is not what HEAD builds** — a resubmission is needed regardless of the
-review outcome.
+(The plugin-level `approve` field still reads `false` while the update
+reads `true`. The update-level flags plus the 200 are the ones that
+track reality; do not chase the plugin-level field.)
 
-Still outstanding:
-- A permanent upload token at `~/.ij-plugin-repo-token`. Verified
-  2026-08-08: neither that file nor `IJ_PLUGIN_REPO_TOKEN` exists, so
-  `sbt publishPlugin` would still fail today.
-- Marketplace assets (icon, screenshots).
-- Resubmit a zip built from current HEAD — see item 2a.
+What is genuinely still missing:
 
-### 2a. Resubmit with the 2026.1 / clean-API build
-
-Done in the working tree, not yet released: platform floor raised to
-2026.1 and every API notice eliminated (see NOTEBOOK.md § "All 40
-verifier API notices were compiler-generated"). Verified 2026-08-08 by
-`sbt runPluginVerifier` after `rm -rf target`: verdict is plain
-**`Compatible`**, and the verifier emits no `internal-api-usages.txt`,
-`deprecated-usages.txt` or `experimental-api-usages.txt` at all — down
-from 8 internal + 12 scheduled-for-removal + 9 deprecated + 11
-experimental.
-
-Note this narrows the audience: the plugin no longer installs on
-2025.3, which the current Marketplace listing advertises.
+- **Marketplace assets** — a real icon and screenshots. The listing has
+  neither. This is the main thing holding back a listing anyone would
+  install from.
+- Nothing else. The upload token at `~/.ij-plugin-repo-token` exists and
+  works (0.11.0 went up through `sbt publishPlugin` on 2026-08-08).
 
 ---
 
@@ -108,7 +95,7 @@ worth doing properly rather than patching one entry.
 Since `f8de90d` the build targets `ideaIU` (unified distribution).
 Nothing now fails on an Ultimate-only API: the compiler does not, and
 `runPluginVerifier` checks only against the SDK the build targets
-(observed: `IU-253.29346.240`).
+(observed 2026-08-08: `IU-261.26222.65`).
 
 The plugin declares `<depends>com.intellij.modules.java</depends>` and
 is intended to work on Community. Wire `pluginVerifierOptions`'
@@ -183,6 +170,18 @@ time, making the git tag the single source of truth and deleting the
 error class. Deferred because it changes local build behaviour: between
 tags dynver yields `0.10.0-3-abc…`, which would land in the descriptor
 for local builds.
+
+### 6a. `/ship` does not say that step 12 completes the upload
+
+`.claude/skills/ship/SKILL.md` step 12 runs `sbt publishPlugin`, which
+uploads the zip. Nothing in the skill says so plainly, so it is easy to
+follow the release, then upload the same zip by hand and have JetBrains
+reject it as a duplicate version. That happened on 2026-08-08 with
+0.11.0 — harmless, but confusing, and a duplicate-rejected version
+cannot be re-uploaded under the same number.
+
+One or two sentences in step 12 fixes it: the upload is already done;
+only bump and re-ship if the Marketplace *rejects* the version.
 
 ### 7. sbt 2.0 / sbt-ossuminc 3.x remains blocked
 

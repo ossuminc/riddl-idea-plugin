@@ -2,111 +2,70 @@
 
 ## HANDOFF
 
-**State** (verified 2026-08-08, not recalled):
+**State** (verified 2026-08-26 by running the commands, not recalled):
 
-- **0.11.0 is released.** Branch `main`, working tree **clean**, tag
-  `0.11.0` pushed at commit `1c7b493`. GitHub release exists with
-  `RIDDL4IDEA-0.11.0.zip` attached:
-  <https://github.com/ossuminc/riddl-idea-plugin/releases/tag/0.11.0>
-- `sbt test` → **174 passing, 11 suites, 0 failed**, from `clean`.
-- `sbt runPluginVerifier` → verdict **`Compatible`** for 0.11.0, with
-  no `*-usages.txt` emitted at all.
-- riddl dependency: `2.0.0-rc.10-37-1d87a109` (matches `../bin/riddlc`;
-  ivy-local only, so **CI on this push is red by choice** — BACKLOG 1).
-- Descriptor `plugin.xml`: version **0.11.0**, `since-build="261"`.
-  Build targets `intellijBuild := "261.26222.65"` (IDEA 2026.1.4).
-- Marketplace: 0.11.0 **uploaded successfully** 2026-08-08 13:44 via
-  `sbt publishPlugin`. Plugin id 33312 still reports `approve: false`
-  — the original 0.10.0 first publication is *still in manual review*,
-  and 0.11.0 queues behind it. Nothing is publicly visible yet.
+- Branch `main`. Build: riddl pinned to `2.0.0-rc.10-37-1d87a109`,
+  IntelliJ SDK `261.26222.65`, descriptor `plugin.xml` at **0.11.0**
+  with `since-build="261"`.
+- `sbt test` → **174 passing, 11 suites, 0 failed**.
+- **0.11.0 is released and public on JetBrains Marketplace.** Update
+  `1130942` reports `approve: true, listed: true`; the public endpoint
+  returns `200`. Tag `0.11.0`, GitHub release with the zip attached.
+- **CI on `main` is red**, and expected to be: the pinned riddl exists
+  only in `~/.ivy2/local`, which GitHub Actions does not have.
 
-**In flight / next**
+**In flight**
 
-Nothing is in flight. Open items, in order:
+Nothing. The 0.11.0 release completed end to end and the tree is clean.
 
-1. **Chase the Marketplace review.** 0.10.0 was submitted 2026-08-03;
-   JetBrains suggests emailing marketplace@jetbrains.com after 3–4
-   working days. Worth asking them to review 0.11.0 and discard the
-   0.10.0 submission, whose zip was built from `1ad6a8f` and is
-   superseded.
-2. BACKLOG 1 — CI is red until riddl publishes `rc.10-37` or the pin
-   moves to a published version.
-3. BACKLOG 4a/4b — console theming and two undisposed objects, both
-   deferred as low value.
+**Start here**
 
-**Do not "fix" the two things that look wrong but are not**
+BACKLOG item 1, which changed character while nobody was looking.
+riddl now publishes through **`2.0.0-rc.26`**, so moving off the
+ivy-local pin goes *forward* 16 release candidates **and** turns CI
+green. In August that swap cost the staged language work; it no longer
+costs anything. Do it before judging anything else in the backlog.
 
-1. `RiddlLanguage` is a `class` with a companion holding `INSTANCE`,
-   *not* an `object extends Language`. Changing it back reintroduces
-   28 static forwarders and 5 internal-API verifier findings.
-2. `build.sbt` sets `-Xmixin-force-forwarders:false`. Removing it
-   reintroduces ~35 deprecated/experimental/internal findings.
-   Both are explained below under "All 40 verifier API notices were
-   compiler-generated".
+**Traps a fresh session would fall into**
 
-**Traps that already bit someone here**
-
-1. **Stale `target/` fakes a green build.** `target/streams` and
-   `target/sbtidea.cache` can serve an old classpath to *Test* scope
-   while *Compile* uses the new one. It once ran the whole suite green
-   against riddl 1.13.3 — a version never declared in this repo — and
-   shipped a zip with duplicate riddl jars. `rm -rf target` after any
-   dependency change; deleting `sbtidea.cache` alone is not enough.
-   Full write-up below under "Trap: stale `target/`".
-2. **`export Test/fullClasspath` is unreliable in this build** — it
-   prints stale or empty output. Use `Test/dependencyTree` instead.
-3. **Ivy-local jars are packaged without a version in the filename**
-   (`riddl-lib_3.jar`). Reading the version off a jar name does not
-   work for locally staged builds; compare checksums against
-   `~/.ivy2/local` instead.
-4. **`sbt runPluginVerifier` verifies against `ideaIU` only.** It does
-   not establish Community compatibility. See BACKLOG item 4.
-5. **`packageArtifactZip` fails while a sandbox IDE is running.** It
-   ends with `No options search index built for plugin root`, because
-   `buildIntellijOptionsIndex` starts a second, headless IDE against
-   the same `~/.RIDDL4IDEAPluginIU` config/system paths, which the
-   running sandbox holds via `config/.lock`. Nothing is written to
-   `idea.log` and the task fails in about a second. **Quit `runIDE`
-   before packaging** — that alone fixes it. Verified 2026-08-08:
-   failed twice with the IDE up, succeeded immediately once it exited.
+1. **Stale `target/` fakes a green build**, and a stale zip fakes a
+   verifier verdict. `rm -rf target` after any dependency change.
+   Full write-up below.
+2. **`packageArtifactZip` fails while a sandbox IDE is running** —
+   `No options search index built for plugin root`. Quit `runIDE`
+   first. Below, trap 5.
+3. **Do not "fix" two things that look wrong.** `RiddlLanguage` is a
+   `class` with a companion holding `INSTANCE`, not an `object extends
+   Language`; and `build.sbt` sets `-Xmixin-force-forwarders:false`.
+   Reverting either reintroduces ~40 verifier API findings. See
+   "All 40 verifier API notices were compiler-generated" below and
+   CLAUDE.md § "Scala codegen vs. the Plugin Verifier".
+4. **`idea.log` is years long and never truncated.** Mark the line
+   count before a run and read only past it; two "findings" this
+   August were dated 2025-01-13.
+5. **This plugin logs nothing on the happy path.** No `ossuminc`
+   frames in the log is not evidence it failed to load.
+6. **`runPluginVerifier` verifies against `ideaIU` only** — it does
+   not establish Community compatibility (BACKLOG item 4).
 
 **Certainty**
 
-- Verified 2026-08-08: git state, test count (174), verifier verdict
-  (`Compatible`, no usage files emitted), riddlc version, rc.10
-  published to GitHub Packages, descriptor contents, Marketplace
-  status (id 33312, under review, stale zip).
-- Also verified 2026-08-08 by a manual `sbt runIDE` pass on IDEA
-  2026.1.4: the tool window opens and populates, and the session log
-  has 0 `SEVERE`, 0 `NullPointerException` and 0
-  `AbstractMethodError` / `NoSuchMethodError`. That last is the
-  specific failure mode `-Xmixin-force-forwarders:false` could have
-  caused, so the flag is now runtime-exercised, not just compiled.
-- Assumed, not verified: that the plugin still works on IDEA
-  Community (BACKLOG item 4). Also unverified: *why* the tool window
-  NPE appeared only on 2026.1 — the fix removes the timing dependency
-  rather than relying on the explanation, so this was not chased.
-
-**Two log-reading traps, both hit this session**
-
-1. **`~/.RIDDL4IDEAPluginIU/system/log/idea.log` is years long and is
-   never truncated.** Two separate "findings" turned out to be dated
-   **2025-01-13** (a `RiddlFileType` name error from plugin 1.0.0, and
-   a `TraverseUIStarter` crash on IDEA 2024.3). Always mark the line
-   count before a run and read only past it.
-2. **This plugin logs nothing on the happy path**, so "no `ossuminc`
-   frames in the log" does *not* mean it failed to load — it usually
-   means it ran cleanly. Judge a run by whether the UI did the thing.
+- Verified 2026-08-26: git state, test count, the riddl pin still
+  resolvable from `~/.ivy2/local`, riddl published through rc.26,
+  `../bin/riddlc` at rc.26, Marketplace approved/listed, CI red.
+- Assumed, not verified: that the plugin works on IDEA Community
+  (BACKLOG 4); that the rc.26 upgrade is mechanical — 16 RCs is a lot
+  of language change and nobody has assessed the delta for this
+  consumer.
 
 **Pointers**
 
-- Open work → `BACKLOG.md` (all of it, with evidence).
+- Open work → `BACKLOG.md`, all of it, with the evidence attached.
 - Durable architecture and API facts → `CLAUDE.md`.
-- Release procedure incl. Marketplace setup → `.claude/skills/ship/`.
+- Release procedure → `.claude/skills/ship/`.
 
-**`task/` is empty of untriaged items** — three files sit in
-`task/done/`, the newest being the 2026-08-06 riddl upgrade completed
-this session. Nothing awaits triage, but run
+**`task/` holds no untriaged items** — it contains only `done/` (three
+files). Notably no upgrade task ever arrived for rc.11..rc.26. Run
 `/ossuminc-skills:check-tasks` in the new session anyway; that call is
 the driver's, not the handoff's.
 
@@ -201,8 +160,9 @@ to the task file and note completion in this notebook.
 **IntelliJ Platform**: 261.26222.65 (2026.1)
 **Tests**: 174 passing across 11 suites
 
-All core features implemented. Plugin is functional and ready
-for beta testing. RiddlLib integration complete (2026-02-11).
+All core features implemented. **Published and publicly listed on
+JetBrains Marketplace** (plugin id 33312) as of 0.11.0.
+RiddlLib integration complete (2026-02-11).
 
 ---
 
